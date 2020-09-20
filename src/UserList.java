@@ -59,7 +59,7 @@ public class UserList implements java.io.Serializable {
          */
         private static final long serialVersionUID = -6699986336399821598L;
         private ArrayList<String> groups;
-        private ArrayList<String> ownership;
+        private ArrayList<String> ownership; // this is there own group
 
         public User() {
             groups = new ArrayList<String>();
