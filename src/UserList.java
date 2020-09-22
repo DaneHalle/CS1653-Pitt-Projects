@@ -2,6 +2,8 @@
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import java.util.Enumeration;
+
 public class UserList implements java.io.Serializable {
 
     /**
@@ -49,6 +51,23 @@ public class UserList implements java.io.Serializable {
 
     public synchronized void removeOwnership(String user, String groupname) {
         list.get(user).removeOwnership(groupname);
+    }
+
+    /**
+     * Function to get all groups accessible to any given user. To be used by 
+     * groupList. 
+     *
+     * @return ArrayList<String> of all groups accessible to users within the Server
+     */
+    public synchronized ArrayList<String> getAllGroups() {
+        ArrayList<String> out = new ArrayList<String>();
+        Enumeration<String> enumeration = list.keys();
+
+        while(enumeration.hasMoreElements()){
+            String key = enumeration.nextElement();
+            out.addAll(list.get(key).getGroups());
+        }
+        return out;
     }
 
 
