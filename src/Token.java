@@ -1,22 +1,24 @@
 import java.util.List;
-class Token implements UserToken
+import java.util.ArrayList;
+class Token implements UserToken, java.io.Serializable
 {
+    private static final long serialVersionUID = 4600343803563417992L;
 	private String issuer;
 	private String subject;
 	private List<String> groups;
 
-	public Token(String inIssuer, String inSubject, List<String> inGroup)
+	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup)
 	{
 		issuer=inIssuer;
-		subject=inSubject
+		subject=inSubject;
 		groups=inGroup;
 	}
 
 	public Token()
 	{
 		issuer=null;
-		subject=null
-		groups=new List<String>();
+		subject=null;
+		groups=new ArrayList<String>();
 	}
 
 	public void setIssuer(String inIssuer)
@@ -31,7 +33,7 @@ class Token implements UserToken
 
 	public boolean addToGroup(String toAdd)
 	{
-		return groups.add(toAdd)
+		return groups.add(toAdd);
 	}
 
     public String getIssuer()
