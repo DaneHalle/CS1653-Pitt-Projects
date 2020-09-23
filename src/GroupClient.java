@@ -64,12 +64,15 @@ public class GroupClient extends Client implements GroupClientInterface {
                 System.out.println("Invalid format");
                 return false;
             }
-            // if(deleteGroup(args[1], token)) {
-            //     System.out.printf("Deleted group %s\n", args[1]);
-            //     return true;
-            // } else {
-            //     System.out.printf("Need to get token %s\n", args[1]);
-            // }
+            List<String> members = listMembers(args[1], token);
+            if(members!=null) {
+                System.out.printf("Here are the members within group %s:\n", args[1]);
+                for(int index=0; index < members.size(); index++) {
+                    System.out.printf("\t%s\n", members.get(index));
+                }
+            }else{
+                System.out.printf("Need to get token %s\n", args[1]);
+            }
             break;
         case "AUSERTOGROUP":
             if (args.length != 2) {

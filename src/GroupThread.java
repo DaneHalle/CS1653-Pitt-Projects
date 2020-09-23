@@ -119,6 +119,23 @@ public class GroupThread extends Thread {
                     output.writeObject(response);
                 } else if(message.getMessage().equals("LMEMBERS")) { //Client wants a list of members in a group
                     /* TODO:  Write this handler */
+                     if(message.getObjContents().size() < 2) {
+                        response = new Envelope("FAIL");
+                    } else {
+                        response = new Envelope("FAIL");
+
+                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null) {
+                            String groupname = (String)message.getObjContents().get(0); //Extract desired group name
+                            UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
+
+                            String requester = yourToken.getSubject();
+
+                            if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
+                                response = new Envelope("OK"); //Success
+                            }
+                        }
+                    }
+                    output.writeObject(response);
                 } else if(message.getMessage().equals("AUSERTOGROUP")) { //Client wants to add user to a group
                     /* TODO:  Write this handler */
                 } else if(message.getMessage().equals("RUSERFROMGROUP")) { //Client wants to remove user from a group
@@ -273,5 +290,15 @@ public class GroupThread extends Thread {
             return false;
         }
     }
+
+    // private ArrayList<String> listMembersInGroup(String groupname, UserToken token) {
+    //     String requester = token.getSubject();
+
+    //     if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
+    //         return true;
+    //     } else {
+    //         return null;
+    //     }
+    // }
 
 }
