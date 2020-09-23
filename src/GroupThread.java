@@ -99,6 +99,7 @@ public class GroupThread extends Thread {
                             }
                         }
                     }
+                    output.writeObject(response);
                 } else if(message.getMessage().equals("DGROUP")) { //Client wants to delete a group
                     /* TODO:  Write this handler */
                     if(message.getObjContents().size() < 2) {
@@ -115,6 +116,7 @@ public class GroupThread extends Thread {
                             }
                         }
                     }
+                    output.writeObject(response);
                 } else if(message.getMessage().equals("LMEMBERS")) { //Client wants a list of members in a group
                     /* TODO:  Write this handler */
                 } else if(message.getMessage().equals("AUSERTOGROUP")) { //Client wants to add user to a group
@@ -231,12 +233,25 @@ public class GroupThread extends Thread {
     private boolean deleteGroup(String groupname, UserToken token) {
         // TODO: Delete the group
         String requester = token.getSubject();
-        String groupOwner = my_gs.groupList.getGroupOwner(requester);
-        if(my_gs.userList.checkUser(requester) && requester.equals(groupOwner)) {
-            my_gs.groupList.deleteGroup(groupname);
-            my_gs.userList.removeOwnership(requester, groupname);
-            my_gs.userList.removeGroup(requester, groupname);
-            return true;
+
+        if(my_gs.userList.checkUser(requester)) {
+            if(my_gs.groupList.checkGroup(groupname)) {
+                String groupOwner = my_gs.groupList.getGroupOwner(groupname);
+                if(requester.equals(groupOwner)) {
+                    ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname);
+                    for(int index = 0; index < groupUsers.size(); index++) {
+                        my_gs.userList.removeGroup(groupUsers.get(index), groupname);
+                    }
+                    my_gs.groupList.deleteGroup(groupname);
+                    my_gs.userList.removeGroup(requester, groupname);
+                    my_gs.userList.removeOwnership(requester, groupname);
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         } else {
             return false;
         }
@@ -246,10 +261,14 @@ public class GroupThread extends Thread {
         String requester = token.getSubject();
 
         if(my_gs.userList.checkUser(requester)) {
-            my_gs.userList.addGroup(requester, groupname);
-            my_gs.userList.addOwnership(requester, groupname);
-            my_gs.groupList.addGroup(requester, groupname);
-            return true;
+            if(my_gs.groupList.checkGroup(groupname)){
+                return false;
+            } else {
+                my_gs.userList.addGroup(requester, groupname);
+                my_gs.groupList.addGroup(groupname, requester);
+                my_gs.userList.addOwnership(requester, groupname);
+                return true;
+            }
         } else {
             return false;
         }

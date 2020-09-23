@@ -2,6 +2,7 @@
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.Enumeration;
 
 public class GroupList implements java.io.Serializable {
     
@@ -61,6 +62,17 @@ public class GroupList implements java.io.Serializable {
             return false;
         }
     }
+
+
+    // Good for checking groups
+    // public synchronized void getKeys() {
+    //     Enumeration<String> enumeration = list.keys();
+
+    //     while(enumeration.hasMoreElements()){
+    //         String key = enumeration.nextElement();
+    //         System.out.println(key);
+    //     }
+    // }
 
     public synchronized ArrayList<String> getGroupUsers(String group) {
         return list.get(group).getUsers();

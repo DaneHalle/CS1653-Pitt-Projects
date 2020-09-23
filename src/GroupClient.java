@@ -10,7 +10,7 @@ import java.io.InputStreamReader;   // Needed to read from the console
 public class GroupClient extends Client implements GroupClientInterface {
 
     public boolean mapCommand(String args[]) {
-        switch(args[0]) {
+        switch(args[0].toUpperCase()) {
         case "CUSER":
             if (args.length != 2) {
                 System.out.println("Invalid format");
@@ -23,6 +23,90 @@ public class GroupClient extends Client implements GroupClientInterface {
                 System.out.printf("Need to get token %s\n", args[1]);
             }
             break;
+        case "DUSER":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            if(deleteUser(args[1], token)) {
+                System.out.printf("Deleted user %s\n", args[1]);
+                return true;
+            } else {
+                System.out.printf("Need to get token %s\n", args[1]);
+            }
+            break;
+        case "CGROUP":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            if(createGroup(args[1], token)) {
+                System.out.printf("Created group %s\n", args[1]);
+                return true;
+            } else {
+                System.out.printf("Need to get token %s\n", args[1]);
+            }
+            break;
+        case "DGROUP":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            if(deleteGroup(args[1], token)) {
+                System.out.printf("Deleted group %s\n", args[1]);
+                return true;
+            } else {
+                System.out.printf("Need to get token %s\n", args[1]);
+            }
+            break;
+        case "LMEMBERS":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            // if(deleteGroup(args[1], token)) {
+            //     System.out.printf("Deleted group %s\n", args[1]);
+            //     return true;
+            // } else {
+            //     System.out.printf("Need to get token %s\n", args[1]);
+            // }
+            break;
+        case "AUSERTOGROUP":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            // if(deleteGroup(args[1], token)) {
+            //     System.out.printf("Deleted group %s\n", args[1]);
+            //     return true;
+            // } else {
+            //     System.out.printf("Need to get token %s\n", args[1]);
+            // }
+            break;
+        case "RUSERFROMGROUP":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            // if(deleteGroup(args[1], token)) {
+            //     System.out.printf("Deleted group %s\n", args[1]);
+            //     return true;
+            // } else {
+            //     System.out.printf("Need to get token %s\n", args[1]);
+            // }
+            break;
+        case "DISCONNECT":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            // if(deleteGroup(args[1], token)) {
+            //     System.out.printf("Deleted group %s\n", args[1]);
+            //     return true;
+            // } else {
+            //     System.out.printf("Need to get token %s\n", args[1]);
+            // }
+            break;  
         default:
             System.out.println("Command does not exist");
             return false;
@@ -259,7 +343,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             
             if (parsed.length == 0) {
                 continue;
-            } else if (parsed[0].compareTo("GET") == 0) {
+            } else if (parsed[0].toUpperCase().compareTo("GET") == 0) {
                 if (parsed.length == 1) {
                     System.out.println("Please provide a username");
                 } else {
@@ -267,8 +351,9 @@ public class GroupClient extends Client implements GroupClientInterface {
                     if (cli.token == null) {
                         System.out.println("Failed to get token");
                     }
+                    System.out.printf("Gotten token for user %s\n", parsed[1]);
                 }
-            } else if (parsed[0].compareTo("EXIT") == 0) {
+            } else if (parsed[0].toUpperCase().compareTo("EXIT") == 0) {
                 break;
             } else {
                 cli.mapCommand(parsed);
