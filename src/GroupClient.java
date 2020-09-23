@@ -3,12 +3,37 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;  // Used to write objects to the server
+import java.io.BufferedReader;      // Needed to read from the console
+import java.io.InputStreamReader;   // Needed to read from the console
 
 public class GroupClient extends Client implements GroupClientInterface {
 
+    public boolean mapCommand(String args[]) {
+        switch(args[0]) {
+        case "CUSER":
+            if (args.length != 2) {
+                System.out.println("Invalid format");
+                return false;
+            }
+            if(createUser(args[1], token)) {
+                System.out.printf("Created user %s\n", args[1]);
+                return true;
+            } else {
+                System.out.printf("Need to get token %s\n", args[1]);
+            }
+            break;
+        default:
+            System.out.println("Command does not exist");
+            return false;
+        }
+
+        return false;
+    }
+
     public UserToken getToken(String username) {
         try {
-            UserToken token = null;
+            // UserToken token = null;
             Envelope message = null, response = null;
 
             //Tell the server to return a token.
@@ -210,4 +235,62 @@ public class GroupClient extends Client implements GroupClientInterface {
         }
     }
 
+    public static void main(String args[]) {
+        // Eror checking for arguments
+        if(args.length != 2) {
+            System.err.println("Not enough arguments.\n");
+            System.err.println("Usage: java GroupClient <Server name or IP> <PORT>");
+            System.exit(-1);
+        }
+
+        final String server = args[0];
+        final int port = Integer.parseInt(args[1]);
+
+        GroupClient cli = new GroupClient();
+
+
+        // Connect to the server
+        boolean connected = cli.connect(server, port);
+
+        while(connected) {
+            // Read some commands and run them
+            String command = readInput();
+            String[] parsed = command.split(" ");
+            
+            if (parsed.length == 0) {
+                continue;
+            } else if (parsed[0].compareTo("GET") == 0) {
+                if (parsed.length == 1) {
+                    System.out.println("Please provide a username");
+                } else {
+                    cli.getToken(parsed[1]);
+                    if (cli.token == null) {
+                        System.out.println("Failed to get token");
+                    }
+                }
+            } else if (parsed[0].compareTo("EXIT") == 0) {
+                break;
+            } else {
+                cli.mapCommand(parsed);
+            }
+
+            connected = cli.isConnected();
+        } 
+        
+        cli.disconnect();
+    }
+
+    private static String readInput() {
+        try{
+            System.out.println("Enter a command, or type \"EXIT\" to quit.");
+            System.out.print(" > ");	
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            return in.readLine();
+        } catch(Exception e){
+            // Uh oh...
+            System.err.println("Buffer Reader Error");
+            e.printStackTrace();
+            return "";
+        }
+    }
 }

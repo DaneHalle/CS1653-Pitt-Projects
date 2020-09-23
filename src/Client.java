@@ -10,6 +10,7 @@ public abstract class Client {
     protected Socket sock;
     protected ObjectOutputStream output;
     protected ObjectInputStream input;
+    protected UserToken token;
 
     public boolean connect(final String server, final int port) {
         System.out.println("attempting to connect");
@@ -21,6 +22,10 @@ public abstract class Client {
                 server,
                 port
             );
+
+            output = new ObjectOutputStream(sock.getOutputStream());
+            input = new ObjectInputStream(sock.getInputStream());
+
             return true;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
