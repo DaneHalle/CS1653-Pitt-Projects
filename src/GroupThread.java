@@ -200,4 +200,8 @@ public class GroupThread extends Thread {
         }
     }
 
+    private void deleteGroup(String group, UserToken token) {
+        // TODO: Delete the group
+    }
+
 }

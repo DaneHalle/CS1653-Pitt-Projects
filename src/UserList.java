@@ -59,13 +59,13 @@ public class UserList implements java.io.Serializable {
      *
      * @return ArrayList<String> of all groups accessible to users within the Server
      */
-    public synchronized ArrayList<String> getAllGroups() {
+    public synchronized ArrayList<String> getAllUsers() {
         ArrayList<String> out = new ArrayList<String>();
         Enumeration<String> enumeration = list.keys();
 
         while(enumeration.hasMoreElements()){
             String key = enumeration.nextElement();
-            out.addAll(list.get(key).getGroups());
+            out.add(key);
         }
         return out;
     }

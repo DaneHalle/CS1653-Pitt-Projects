@@ -22,6 +22,7 @@ import java.util.Scanner;
 public class GroupServer extends Server {
 
     public UserList userList;
+    public GroupList groupList;
 
     public GroupServer(int _port) {
         super(_port, "alpha");
@@ -44,6 +45,7 @@ public class GroupServer extends Server {
             FileInputStream fis = new FileInputStream(userFile);
             userStream = new ObjectInputStream(fis);
             userList = (UserList)userStream.readObject();
+            groupList = new GroupList(userList);
         } catch(FileNotFoundException e) {
             System.out.println("UserList File Does Not Exist. Creating UserList...");
             System.out.println("No users currently exist. Your account will be the administrator.");
