@@ -57,6 +57,7 @@ public class GroupServer extends Server {
             userList.addUser(username);
             userList.addGroup(username, "ADMIN");
             userList.addOwnership(username, "ADMIN");
+            groupList = new GroupList(userList);
         } catch(IOException e) {
             System.out.println("Error reading from UserList file");
             System.exit(-1);

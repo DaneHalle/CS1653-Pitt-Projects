@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.lang.Thread;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 public class GroupThread extends Thread {
     private final Socket socket;
@@ -132,7 +133,9 @@ public class GroupThread extends Thread {
 
                             if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
                                 response = new Envelope("OK"); //Success
-                                response.addObject(my_gs.groupList.getGroupUsers(groupname));
+                                List<String> members = my_gs.groupList.getGroupUsers(groupname);
+                                members.add(0, requester);
+                                response.addObject(members);
                             } else {
                                 response.addObject(null);
                             }
@@ -293,15 +296,5 @@ public class GroupThread extends Thread {
             return false;
         }
     }
-
-    // private ArrayList<String> listMembersInGroup(String groupname, UserToken token) {
-    //     String requester = token.getSubject();
-
-    //     if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
-    //         return true;
-    //     } else {
-    //         return null;
-    //     }
-    // }
 
 }
