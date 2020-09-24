@@ -132,6 +132,9 @@ public class GroupThread extends Thread {
 
                             if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
                                 response = new Envelope("OK"); //Success
+                                response.addObject(my_gs.groupList.getGroupUsers(groupname));
+                            } else {
+                                response.addObject(null);
                             }
                         }
                     }
@@ -278,13 +281,13 @@ public class GroupThread extends Thread {
         String requester = token.getSubject();
 
         if(my_gs.userList.checkUser(requester)) {
-            if(my_gs.groupList.checkGroup(groupname)){
-                return false;
-            } else {
+            if(!my_gs.groupList.checkGroup(groupname)){
                 my_gs.userList.addGroup(requester, groupname);
                 my_gs.groupList.addGroup(groupname, requester);
                 my_gs.userList.addOwnership(requester, groupname);
                 return true;
+            } else {
+                return false;
             }
         } else {
             return false;
