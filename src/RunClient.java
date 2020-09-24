@@ -64,11 +64,7 @@ public class RunClient {
         String user;
         String group;
 
-        if (token == null) {
-            System.out.println("Please retrieve token first");
-            return false;
-        }
-
+        System.out.println("args: " + args.countTokens());
         switch(cmd) {
         case "CUSER":
             if (args.countTokens() != 1) {
@@ -139,11 +135,6 @@ public class RunClient {
         String dst_file;
         String group;
 
-        if (token == null) {
-            System.out.println("Please retrieve token first");
-            return false;
-        }
-
         switch(cmd) {
         case "UPLOADF":
             if (args.countTokens() != 3) {
@@ -207,13 +198,19 @@ public class RunClient {
             return false;
 
         case "GET":
-            getToken(cmds);
+            if (g_cli.isConnected())
+                getToken(cmds);
+            else
+                System.out.println("Not connected to group client");
             break;
         default:
             // Handle as Group Command or File Command
-            if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
-                System.out.printf("Command %s does not exist\n", preformat);
-                return false;
+            System.out.println("fadsfsdafdsa");
+            if (token == null) {
+                System.out.println("Please retrieve token first");
+                if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
+                    System.out.printf("Command %s does not exist\n", preformat);
+                }
             }
         }
 
