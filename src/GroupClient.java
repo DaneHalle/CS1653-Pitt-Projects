@@ -87,16 +87,16 @@ public class GroupClient extends Client implements GroupClientInterface {
             }
             break;
         case "RUSERFROMGROUP":
-            if (args.length != 2) {
+            if (args.length != 3) {
                 System.out.println("Invalid format");
                 return false;
             }
-            // if(deleteGroup(args[1], token)) {
-            //     System.out.printf("Deleted group %s\n", args[1]);
-            //     return true;
-            // } else {
-            //     System.out.printf("Need to get token %s\n", args[1]);
-            // }
+            if(deleteUserFromGroup(args[1], args[2], token)) {
+                System.out.printf("Removed user %s from group %s\n", args[1], args[2]);
+                return true;
+            } else {
+                System.out.printf("Need to get token for owner of group %s\n", args[2]);
+            }
             break;
         default:
             System.out.println("Command does not exist");
@@ -254,7 +254,15 @@ public class GroupClient extends Client implements GroupClientInterface {
 
             //If server indicates success, return the member list
             if(response.getMessage().equals("OK")) {
-                return (List<String>)response.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
+                List<String> toReturn = new ArrayList<String>();
+                for(int index = 0; index<response.getObjContents().size(); index++) {
+                    String toAdd = (String)response.getObjContents().get(index);
+                    if(!toReturn.contains(toAdd)) {
+                        toReturn.add(toAdd);
+                    }
+                }
+                return toReturn;
+                // return (List<String>)response.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
 
             System.out.printf("FAILED: %s\n", response.getMessage());
