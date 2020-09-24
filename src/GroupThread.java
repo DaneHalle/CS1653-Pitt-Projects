@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.lang.Thread;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 
 public class GroupThread extends Thread {
     private final Socket socket;
@@ -315,23 +314,14 @@ public class GroupThread extends Thread {
         }
     }
 
-    private boolean addUserToGroup(String toAdd, String groupname, UserToken token) {
-        String requester = token.getSubject();
+    // private ArrayList<String> listMembersInGroup(String groupname, UserToken token) {
+    //     String requester = token.getSubject();
 
-        //Both toAdd and requester are in groups and group exists
-        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd)) { 
-            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
-            String owner = my_gs.groupList.getGroupOwner(groupname);
+    //     if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
+    //         return true;
+    //     } else {
+    //         return null;
+    //     }
+    // }
 
-            if(!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
-                my_gs.userList.addGroup(toAdd, groupname);
-                my_gs.groupList.addMember(toAdd, groupname);
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
 }

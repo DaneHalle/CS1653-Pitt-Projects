@@ -135,7 +135,57 @@ public class RunClient {
     }
 
     private boolean mapFileCommand(String cmd, StringTokenizer args) {
-        return false;
+        String src_file;
+        String dst_file;
+        String group;
+
+        if (token == null) {
+            System.out.println("Please retrieve token first");
+            return false;
+        }
+
+        switch(cmd) {
+        case "UPLOADF":
+            if (args.countTokens() != 3) {
+                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE> <GROUP>");
+                return false;
+            }
+
+            src_file = args.nextToken();
+            dst_file = args.nextToken();
+            group = args.nextToken();
+            if(f_cli.upload(src_file, dst_file, token))
+                System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
+            break;
+        case "LFILES":
+            throw new UnsupportedOperationException("LFILES");
+            break;
+        case "DOWNLOADF":
+            if (args.countTokens() != 2) {
+                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
+                return false;
+            }
+
+            src_file = args.nextToken();
+            dst_file = args.nextToken();
+            if(f_cli.download(src_file, dst_file, token))
+                System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
+            break;
+        case "DELETEF":
+            if (args.countTokens() != 1) {
+                System.out.println("Usage: DELETEF <FILENAME>");
+                return false;
+            }
+
+            src_file = args.nextToken();
+            if(f_cli.delete(filename, token))
+                System.out.printf("Deleted file %s\n", src_file);
+            break;
+        default:
+            return false;
+        }
+
+        return true;
     }
 
     public boolean mapCommand(StringTokenizer cmds) {
