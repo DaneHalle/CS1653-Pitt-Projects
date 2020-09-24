@@ -18,7 +18,6 @@ public class GroupList implements java.io.Serializable {
         for(int i=0; i < users.size(); i++) {
             ArrayList<String> ownership = ul.getUserOwnership(users.get(i));
             ArrayList<String> groups = ul.getUserGroups(users.get(i));
-
             // Get all the ownerships from the user
             for(int j=0; j < ownership.size(); j++) {
                 Group group = list.get(ownership.get(j));
@@ -31,7 +30,8 @@ public class GroupList implements java.io.Serializable {
                 }
             }
             for(int j=0; j < groups.size(); j++) {
-                Group group = list.get(ownership.get(j));
+                System.out.println(groups.get(j));
+                Group group = list.get(groups.get(j));
                 if (group == null) {
                     // Create a new group with no owner
                     Group new_group = new Group();

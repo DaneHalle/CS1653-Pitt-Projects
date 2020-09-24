@@ -56,7 +56,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 System.out.printf("Deleted group %s\n", args[1]);
                 return true;
             } else {
-                System.out.printf("Need to get token %s\n", args[1]);
+                System.out.printf("Need to get token owner of group %s\n", args[1]);
             }
             break;
         case "LMEMBERS":
@@ -71,20 +71,20 @@ public class GroupClient extends Client implements GroupClientInterface {
                     System.out.printf("\t%s\n", members.get(index));
                 }
             }else{
-                System.out.printf("Need to get token %s\n", args[1]);
+                System.out.printf("Need to get token for owner of group %s\n", args[1]);
             }
             break;
         case "AUSERTOGROUP":
-            if (args.length != 2) {
+            if (args.length != 3) {
                 System.out.println("Invalid format");
                 return false;
             }
-            // if(deleteGroup(args[1], token)) {
-            //     System.out.printf("Deleted group %s\n", args[1]);
-            //     return true;
-            // } else {
-            //     System.out.printf("Need to get token %s\n", args[1]);
-            // }
+            if(addUserToGroup(args[1], args[2], token)) {
+                System.out.printf("Added user %s to group %s\n", args[1], args[2]);
+                return true;
+            } else {
+                System.out.printf("Need to get token for owner of group %s\n", args[2]);
+            }
             break;
         case "RUSERFROMGROUP":
             if (args.length != 2) {
@@ -98,18 +98,6 @@ public class GroupClient extends Client implements GroupClientInterface {
             //     System.out.printf("Need to get token %s\n", args[1]);
             // }
             break;
-        case "DISCONNECT":
-            if (args.length != 2) {
-                System.out.println("Invalid format");
-                return false;
-            }
-            // if(deleteGroup(args[1], token)) {
-            //     System.out.printf("Deleted group %s\n", args[1]);
-            //     return true;
-            // } else {
-            //     System.out.printf("Need to get token %s\n", args[1]);
-            // }
-            break;  
         default:
             System.out.println("Command does not exist");
             return false;

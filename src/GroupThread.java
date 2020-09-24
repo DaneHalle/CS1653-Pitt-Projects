@@ -144,6 +144,22 @@ public class GroupThread extends Thread {
                     output.writeObject(response);
                 } else if(message.getMessage().equals("AUSERTOGROUP")) { //Client wants to add user to a group
                     /* TODO:  Write this handler */
+                    if(message.getObjContents().size() < 3) {
+                        response = new Envelope("FAIL");
+                    } else {
+                        response = new Envelope("FAIL");
+
+                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null && message.getObjContents().get(2) != null) {
+                            String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
+                            String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
+                            UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
+
+                            if(addUserToGroup(toAddUsername, groupName, yourToken)){
+                                response = new Envelope("OK");
+                            }
+                        }
+                    }
+                    output.writeObject(response);
                 } else if(message.getMessage().equals("RUSERFROMGROUP")) { //Client wants to remove user from a group
                     /* TODO:  Write this handler */
                 } else if(message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
@@ -297,4 +313,23 @@ public class GroupThread extends Thread {
         }
     }
 
+    private boolean addUserToGroup(String toAdd, String groupname, UserToken token) {
+        String requester = token.getSubject();
+
+        //Both toAdd and requester are in groups and group exists
+        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd)) { 
+            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
+            String owner = my_gs.groupList.getGroupOwner(groupname);
+
+            if(!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
+                my_gs.userList.addGroup(toAdd, groupname);
+                my_gs.groupList.addMember(toAdd, groupname);
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 }
