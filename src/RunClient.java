@@ -154,12 +154,11 @@ public class RunClient {
             src_file = args.nextToken();
             dst_file = args.nextToken();
             group = args.nextToken();
-            if(f_cli.upload(src_file, dst_file, token))
+            if(f_cli.upload(src_file, dst_file, group, token))
                 System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
             break;
         case "LFILES":
             throw new UnsupportedOperationException("LFILES");
-            break;
         case "DOWNLOADF":
             if (args.countTokens() != 2) {
                 System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
@@ -178,7 +177,7 @@ public class RunClient {
             }
 
             src_file = args.nextToken();
-            if(f_cli.delete(filename, token))
+            if(f_cli.delete(src_file, token))
                 System.out.printf("Deleted file %s\n", src_file);
             break;
         default:
