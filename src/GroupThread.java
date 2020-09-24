@@ -131,6 +131,8 @@ public class GroupThread extends Thread {
 
                             String requester = yourToken.getSubject();
 
+                                        System.out.println(requester+" "+my_gs.groupList.getGroupOwner(groupname));
+
                             if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
                                 response = new Envelope("OK"); //Success
                                 List<String> members = my_gs.groupList.getGroupUsers(groupname);
