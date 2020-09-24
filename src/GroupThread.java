@@ -131,13 +131,17 @@ public class GroupThread extends Thread {
 
                             String requester = yourToken.getSubject();
 
-                                        System.out.println(requester+" "+my_gs.groupList.getGroupOwner(groupname));
-
                             if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
                                 response = new Envelope("OK"); //Success
                                 List<String> members = my_gs.groupList.getGroupUsers(groupname);
                                 members.add(0, requester);
-                                response.addObject(members);
+
+                                for(int i=0; i<members.size(); i++){
+                                    response.addObject(members.get(i));
+                                }
+                                // System.out.println();
+
+                                // response.addObject(members);
                             } else {
                                 response.addObject(null);
                             }
@@ -164,6 +168,22 @@ public class GroupThread extends Thread {
                     output.writeObject(response);
                 } else if(message.getMessage().equals("RUSERFROMGROUP")) { //Client wants to remove user from a group
                     /* TODO:  Write this handler */
+                    if(message.getObjContents().size() < 3) {
+                        response = new Envelope("FAIL");
+                    } else {
+                        response = new Envelope("FAIL");
+
+                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null && message.getObjContents().get(2) != null) {
+                            String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
+                            String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
+                            UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
+
+                            if(removeUserFromGroup(toAddUsername, groupName, yourToken)){
+                                response = new Envelope("OK");
+                            }
+                        }
+                    }
+                    output.writeObject(response);
                 } else if(message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop
@@ -326,6 +346,26 @@ public class GroupThread extends Thread {
             if(!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.addGroup(toAdd, groupname);
                 my_gs.groupList.addMember(toAdd, groupname);
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    private boolean removeUserFromGroup(String toRemove, String groupname, UserToken token) {
+        String requester = token.getSubject();
+
+        //Both toRemove and requester are in groups and group exists
+        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove)) { 
+            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
+            String owner = my_gs.groupList.getGroupOwner(groupname);
+
+            if(currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
+                my_gs.userList.removeGroup(toRemove, groupname);
+                my_gs.groupList.removeMember(toRemove, groupname);
                 return true;
             } else {
                 return false;

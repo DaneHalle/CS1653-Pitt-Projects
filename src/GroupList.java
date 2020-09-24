@@ -66,7 +66,6 @@ public class GroupList implements java.io.Serializable {
         }
     }
 
-
     // Good for checking groups
     // public synchronized void getKeys() {
     //     Enumeration<String> enumeration = list.keys();
@@ -77,8 +76,8 @@ public class GroupList implements java.io.Serializable {
     //     }
     // }
 
-    public synchronized ArrayList<String> getGroupUsers(String group) {
-        return list.get(group).getUsers();
+    public synchronized ArrayList<String> getGroupUsers(String groupname) {
+        return list.get(groupname).getUsers();
     }
 
     public synchronized String getGroupOwner(String group) {
