@@ -18,29 +18,32 @@ public class GroupList implements java.io.Serializable {
         for(int i=0; i < users.size(); i++) {
             ArrayList<String> ownership = ul.getUserOwnership(users.get(i));
             ArrayList<String> groups = ul.getUserGroups(users.get(i));
-
             // Get all the ownerships from the user
             for(int j=0; j < ownership.size(); j++) {
                 Group group = list.get(ownership.get(j));
                 if (group == null) {
                     // If group does not exist create new one with user
-                    list.put(ownership.get(j), new Group(ownership.get(j)));
+                    list.put(ownership.get(j), new Group(users.get(i)));
                 } else {
                     // If it does exist set the user to the owner
-                    group.setOwner(ownership.get(j));
+                    group.setOwner(users.get(i));
                 }
             }
             for(int j=0; j < groups.size(); j++) {
-                Group group = list.get(ownership.get(j));
+                // System.out.println(groups.get(j));
+                Group group = list.get(groups.get(j));
+                if (ownership.contains(groups.get(j))){
+                    continue;
+                }
                 if (group == null) {
                     // Create a new group with no owner
                     Group new_group = new Group();
                     list.put(groups.get(j), new_group);
                     // Add user to the group
-                    new_group.addUser(groups.get(j));
+                    new_group.addUser(users.get(i));
                 } else {
                     // Group exists so add user to it
-                    group.addUser(groups.get(j));
+                    group.addUser(users.get(i));
                 }
             }
         }

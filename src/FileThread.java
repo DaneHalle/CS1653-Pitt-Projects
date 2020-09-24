@@ -31,6 +31,18 @@ public class FileThread extends Thread {
                 // Handler to list files that this user is allowed to see
                 if(e.getMessage().equals("LFILES")) {
                     /* TODO: Write this handler */
+                    // if(e.getObjContents().size() < 1){
+                    //     response = new Envelope("FAIL-BADCONTENTS");
+                    // } else {
+                    //     if(e.getObjContents().get(0) == null) {
+                    //         response = new Envelope("FAIL-BADTOKEN");
+                    //     } else {
+                    //         UserToken token = (UserToken)e.getObjContents().get(0);
+                    //         String requester = token.getSubject();
+
+                    //         ArrayList<String> groups = 
+                    //     }
+                    // }
                 }
                 if(e.getMessage().equals("UPLOADF")) {
 
