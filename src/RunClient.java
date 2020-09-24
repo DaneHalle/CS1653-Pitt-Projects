@@ -95,7 +95,7 @@ public class RunClient {
             break;
         case "DGROUP":
             if (args.countTokens() != 1) {
-                System.out.println("Usage: DGROUP <USER>");
+                System.out.println("Usage: DGROUP <GROUP>");
                 return false;
             }
             group = args.nextToken();
@@ -103,8 +103,8 @@ public class RunClient {
                 System.out.printf("Deleted group: %s\n", group);
             break;
         case "LMEMBERS":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: LMEMBERS <USER>");
+            if (args.countTokens() != 2) {
+                System.out.println("Usage: LMEMBERS <GROUP>");
                 return false;
             }
             group = args.nextToken();
@@ -120,9 +120,31 @@ public class RunClient {
             }
             break;
         case "AUSERTOGROUP":
-            throw new UnsupportedOperationException("AUSERTOGROUP");
+            if (args.countTokens() != 3) {
+                System.out.println("Usage: AUSERTOGROUP <USER> <GROUP>");
+                return false;
+            }
+            user = args.nextToken();
+            group = args.nextToken();
+            if(g_cli.addUserToGroup(user, group, token)) {
+                System.out.printf("Added user %s to group %s\n", user, group);
+            } else {
+                return false;
+            }
+            break;
         case "RUSERFROMGROUP":
-            throw new UnsupportedOperationException("RUSERFROMGROUP");
+            if (args.countTokens() != 3) {
+                System.out.println("Usage: RUSERFROMGROUP <USER> <GROUP>");
+                return false;
+            }
+            user = args.nextToken();
+            group = args.nextToken();
+            if(g_cli.deleteUserFromGroup(user, group, token)) {
+                System.out.printf("Removed user %s from group %s\n", user, group);
+            } else {
+                return false;
+            }
+            break;
         default:
             return false;
         }
@@ -205,13 +227,15 @@ public class RunClient {
             break;
         default:
             // Handle as Group Command or File Command
-            System.out.println("fadsfsdafdsa");
             if (token == null) {
                 System.out.println("Please retrieve token first");
-                if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
-                    System.out.printf("Command %s does not exist\n", preformat);
-                }
+                break;
             }
+            if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
+                System.out.printf("Command %s does not exist\n", preformat);
+                break;
+            }
+            break;
         }
 
         return true;
