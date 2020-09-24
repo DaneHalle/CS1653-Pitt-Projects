@@ -64,11 +64,13 @@ public class RunClient {
         String user;
         String group;
 
-        System.out.println("args: " + args.countTokens());
         switch(cmd) {
         case "CUSER":
             if (args.countTokens() != 1) {
                 System.out.println("Usage: CUSER <USER>");
+                return false;
+            } else if (!g_cli.isConnected()) {
+                System.out.println("Group Server is not Connected");
                 return false;
             }
             user = args.nextToken();
@@ -79,6 +81,9 @@ public class RunClient {
             if (args.countTokens() != 1) {
                 System.out.println("Usage: DUSER <USER>");
                 return false;
+            } else if (!g_cli.isConnected()) {
+                System.out.println("Group Server is not Connected");
+                return false;
             }
             user = args.nextToken();
             if(g_cli.deleteUser(user, token))
@@ -87,6 +92,9 @@ public class RunClient {
         case "CGROUP":
             if (args.countTokens() != 1) {
                 System.out.println("Usage: CGROUP <GROUP>");
+                return false;
+            } else if (!g_cli.isConnected()) {
+                System.out.println("Group Server is not Connected");
                 return false;
             }
             group = args.nextToken();
@@ -97,6 +105,9 @@ public class RunClient {
             if (args.countTokens() != 1) {
                 System.out.println("Usage: DGROUP <USER>");
                 return false;
+            } else if (!g_cli.isConnected()) {
+                System.out.println("Group Server is not Connected");
+                return false;
             }
             group = args.nextToken();
             if(g_cli.deleteGroup(group, token))
@@ -105,6 +116,9 @@ public class RunClient {
         case "LMEMBERS":
             if (args.countTokens() != 1) {
                 System.out.println("Usage: LMEMBERS <USER>");
+                return false;
+            } else if (!g_cli.isConnected()) {
+                System.out.println("Group Server is not Connected");
                 return false;
             }
             group = args.nextToken();
@@ -140,6 +154,9 @@ public class RunClient {
             if (args.countTokens() != 3) {
                 System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE> <GROUP>");
                 return false;
+            } else if (!f_cli.isConnected()) {
+                System.out.println("File Server is not Connected");
+                return false;
             }
 
             src_file = args.nextToken();
@@ -154,6 +171,9 @@ public class RunClient {
             if (args.countTokens() != 2) {
                 System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
                 return false;
+            } else if (!f_cli.isConnected()) {
+                System.out.println("File Server is not Connected");
+                return false;
             }
 
             src_file = args.nextToken();
@@ -164,6 +184,9 @@ public class RunClient {
         case "DELETEF":
             if (args.countTokens() != 1) {
                 System.out.println("Usage: DELETEF <FILENAME>");
+                return false;
+            } else if (!f_cli.isConnected()) {
+                System.out.println("File Server is not Connected");
                 return false;
             }
 
@@ -205,7 +228,6 @@ public class RunClient {
             break;
         default:
             // Handle as Group Command or File Command
-            System.out.println("fadsfsdafdsa");
             if (token == null) {
                 System.out.println("Please retrieve token first");
                 if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
