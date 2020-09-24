@@ -13,7 +13,7 @@ public abstract class Client {
     protected UserToken token;
 
     public boolean connect(final String server, final int port) {
-        System.out.println("attempting to connect");
+        System.out.println("Attempting to connect...");
 
         try {
             sock = new Socket(server, port);
@@ -28,8 +28,7 @@ public abstract class Client {
 
             return true;
         } catch(Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace(System.err);
+            System.err.println("Unable to Connect");
             return false;
         }
     }

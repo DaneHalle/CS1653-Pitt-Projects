@@ -120,7 +120,7 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     public UserToken getToken(String username) {
         try {
-            // UserToken token = null;
+            UserToken token = null;
             Envelope message = null, response = null;
 
             //Tell the server to return a token.
@@ -167,7 +167,8 @@ public class GroupClient extends Client implements GroupClientInterface {
             if(response.getMessage().equals("OK")) {
                 return true;
             }
-
+            
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -193,6 +194,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -217,6 +219,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -240,6 +243,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -265,6 +269,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return (List<String>)response.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return null;
 
         } catch(Exception e) {
@@ -290,6 +295,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -314,6 +320,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
+            System.out.printf("FAILED: %s\n", response.getMessage());
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -334,7 +341,6 @@ public class GroupClient extends Client implements GroupClientInterface {
         final int port = Integer.parseInt(args[1]);
 
         GroupClient cli = new GroupClient();
-
 
         // Connect to the server
         boolean connected = cli.connect(server, port);
