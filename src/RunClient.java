@@ -63,104 +63,104 @@ public class RunClient {
     private boolean mapGroupCommand(String cmd, StringTokenizer args) {
         String user;
         String group;
-
+        
         switch(cmd) {
-        case "CUSER":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: CUSER <USER>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
-            user = args.nextToken();
-            if(g_cli.createUser(user, token))
-                System.out.printf("Created user: %s\n", user);
-            break;
-        case "DUSER":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DUSER <USER>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
-            user = args.nextToken();
-            if(g_cli.deleteUser(user, token))
-                System.out.printf("Deleted user: %s\n", user);
-            break;
-        case "CGROUP":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: CGROUP <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
-            group = args.nextToken();
-            if(g_cli.createGroup(group, token))
-                System.out.printf("Created group: %s\n", group);
-            break;
-        case "DGROUP":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DGROUP <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
-            group = args.nextToken();
-            if(g_cli.deleteGroup(group, token))
-                System.out.printf("Deleted group: %s\n", group);
-            break;
-        case "LMEMBERS":
-            if (args.countTokens() != 2) {
-                System.out.println("Usage: LMEMBERS <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
-            group = args.nextToken();
-            List<String> members = g_cli.listMembers(group, token);
-
-            if (members != null) {
-                System.out.printf("Here are the members within group %s:\n", group);
-                for(int index=0; index < members.size(); index++) {
-                    System.out.printf("\t%s\n", members.get(index));
+            case "CUSER":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: CUSER <USER>");
+                    // return false;
+                } else if (!g_cli.isConnected()) {
+                    System.out.println("Group Server is not Connected");
+                    // return false;
                 }
-            } else {
+                user = args.nextToken();
+                if(g_cli.createUser(user, token))
+                    System.out.printf("Created user: %s\n", user);
+                break;
+            case "DUSER":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: DUSER <USER>");
+                    // return false;
+                } else if (!g_cli.isConnected()) {
+                    System.out.println("Group Server is not Connected");
+                    // return false;
+                }
+                user = args.nextToken();
+                if(g_cli.deleteUser(user, token))
+                    System.out.printf("Deleted user: %s\n", user);
+                break;
+            case "CGROUP":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: CGROUP <GROUP>");
+                    // return false;
+                } else if (!g_cli.isConnected()) {
+                    System.out.println("Group Server is not Connected");
+                    // return false;
+                }
+                group = args.nextToken();
+                if(g_cli.createGroup(group, token))
+                    System.out.printf("Created group: %s\n", group);
+                break;
+            case "DGROUP":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: DGROUP <GROUP>");
+                    // return false;
+                } else if (!g_cli.isConnected()) {
+                    System.out.println("Group Server is not Connected");
+                    // return false;
+                }
+                group = args.nextToken();
+                if(g_cli.deleteGroup(group, token))
+                    System.out.printf("Deleted group: %s\n", group);
+                break;
+            case "LMEMBERS":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: LMEMBERS <GROUP>");
+                    // return false;
+                } else if (!g_cli.isConnected()) {
+                    System.out.println("Group Server is not Connected");
+                    // return false;
+                }
+                group = args.nextToken();
+                List<String> members = g_cli.listMembers(group, token);
+
+                if (members != null) {
+                    System.out.printf("Here are the members within group %s:\n", group);
+                    for(int index=0; index < members.size(); index++) {
+                        System.out.printf("\t%s\n", members.get(index));
+                    }
+                } else {
+                    // return false;
+                }
+                break;
+            case "AUSERTOGROUP":
+                if (args.countTokens() != 2) {
+                    System.out.println("Usage: AUSERTOGROUP <USER> <GROUP>");
+                    // return false;
+                }
+                user = args.nextToken();
+                group = args.nextToken();
+                if(g_cli.addUserToGroup(user, group, token)) {
+                    System.out.printf("Added user %s to group %s\n", user, group);
+                } else {
+                    // return false;
+                }
+                break;
+            case "RUSERFROMGROUP":
+                if (args.countTokens() != 2) {
+                    System.out.println("Usage: RUSERFROMGROUP <USER> <GROUP>");
+                    // return false;
+                }
+                user = args.nextToken();
+                group = args.nextToken();
+                if(g_cli.deleteUserFromGroup(user, group, token)) {
+                    System.out.printf("Removed user %s from group %s\n", user, group);
+                } else {
+                    // return false;
+                }
+                break;
+            default:
                 return false;
-            }
-            break;
-        case "AUSERTOGROUP":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: AUSERTOGROUP <USER> <GROUP>");
-                return false;
-            }
-            user = args.nextToken();
-            group = args.nextToken();
-            if(g_cli.addUserToGroup(user, group, token)) {
-                System.out.printf("Added user %s to group %s\n", user, group);
-            } else {
-                return false;
-            }
-            break;
-        case "RUSERFROMGROUP":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: RUSERFROMGROUP <USER> <GROUP>");
-                return false;
-            }
-            user = args.nextToken();
-            group = args.nextToken();
-            if(g_cli.deleteUserFromGroup(user, group, token)) {
-                System.out.printf("Removed user %s from group %s\n", user, group);
-            } else {
-                return false;
-            }
-            break;
-        default:
-            return false;
         }
 
         return true;
@@ -172,52 +172,52 @@ public class RunClient {
         String group;
 
         switch(cmd) {
-        case "UPLOADF":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE> <GROUP>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
+            case "UPLOADF":
+                if (args.countTokens() != 3) {
+                    System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE> <GROUP>");
+                    // return false;
+                } else if (!f_cli.isConnected()) {
+                    System.out.println("File Server is not Connected");
+                    // return false;
+                }
 
-            src_file = args.nextToken();
-            dst_file = args.nextToken();
-            group = args.nextToken();
-            if(f_cli.upload(src_file, dst_file, group, token))
-                System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
-            break;
-        case "LFILES":
-            throw new UnsupportedOperationException("LFILES");
-        case "DOWNLOADF":
-            if (args.countTokens() != 2) {
-                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
+                src_file = args.nextToken();
+                dst_file = args.nextToken();
+                group = args.nextToken();
+                if(f_cli.upload(src_file, dst_file, group, token))
+                    System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
+                break;
+            case "LFILES":
+                throw new UnsupportedOperationException("LFILES");
+            case "DOWNLOADF":
+                if (args.countTokens() != 2) {
+                    System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
+                    // return false;
+                } else if (!f_cli.isConnected()) {
+                    System.out.println("File Server is not Connected");
+                    // return false;
+                }
 
-            src_file = args.nextToken();
-            dst_file = args.nextToken();
-            if(f_cli.download(src_file, dst_file, token))
-                System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
-            break;
-        case "DELETEF":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DELETEF <FILENAME>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
+                src_file = args.nextToken();
+                dst_file = args.nextToken();
+                if(f_cli.download(src_file, dst_file, token))
+                    System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
+                break;
+            case "DELETEF":
+                if (args.countTokens() != 1) {
+                    System.out.println("Usage: DELETEF <FILENAME>");
+                    // return false;
+                } else if (!f_cli.isConnected()) {
+                    System.out.println("File Server is not Connected");
+                    // return false;
+                }
 
-            src_file = args.nextToken();
-            if(f_cli.delete(src_file, token))
-                System.out.printf("Deleted file %s\n", src_file);
-            break;
-        default:
-            return false;
+                src_file = args.nextToken();
+                if(f_cli.delete(src_file, token))
+                    System.out.printf("Deleted file %s\n", src_file);
+                break;
+            default:
+                return false;
         }
 
         return true;

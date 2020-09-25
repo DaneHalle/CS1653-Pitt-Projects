@@ -139,9 +139,6 @@ public class GroupThread extends Thread {
                                 for(int i=0; i<members.size(); i++){
                                     response.addObject(members.get(i));
                                 }
-                                // System.out.println();
-
-                                // response.addObject(members);
                             } else {
                                 response.addObject(null);
                             }
@@ -302,10 +299,13 @@ public class GroupThread extends Thread {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname);
                     for(int index = 0; index < groupUsers.size(); index++) {
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
+                        UserToken remove = createToken(groupUsers.get(index));
+                        remove.removeFromGroup(groupname);
                     }
                     my_gs.groupList.deleteGroup(groupname);
                     my_gs.userList.removeGroup(requester, groupname);
                     my_gs.userList.removeOwnership(requester, groupname);
+                    token.removeFromGroup(groupname);
                     return true;
                 } else {
                     return false;
@@ -326,6 +326,7 @@ public class GroupThread extends Thread {
                 my_gs.userList.addGroup(requester, groupname);
                 my_gs.groupList.addGroup(groupname, requester);
                 my_gs.userList.addOwnership(requester, groupname);
+                token.addToGroup(groupname);
                 return true;
             } else {
                 return false;
@@ -337,15 +338,17 @@ public class GroupThread extends Thread {
 
     private boolean addUserToGroup(String toAdd, String groupname, UserToken token) {
         String requester = token.getSubject();
+        UserToken toAddToken = createToken(toAdd);
 
         //Both toAdd and requester are in groups and group exists
-        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd)) { 
+        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
             String owner = my_gs.groupList.getGroupOwner(groupname);
 
             if(!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.addGroup(toAdd, groupname);
                 my_gs.groupList.addMember(toAdd, groupname);
+                toAddToken.addToGroup(groupname);
                 return true;
             } else {
                 return false;
@@ -366,6 +369,7 @@ public class GroupThread extends Thread {
             if(currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.removeGroup(toRemove, groupname);
                 my_gs.groupList.removeMember(toRemove, groupname);
+                token.removeFromGroup(groupname);
                 return true;
             } else {
                 return false;

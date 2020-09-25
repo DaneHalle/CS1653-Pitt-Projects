@@ -36,6 +36,14 @@ class Token implements UserToken, java.io.Serializable
 		return groups.add(toAdd);
 	}
 
+	public boolean removeFromGroup(String toRemove)
+	{
+		if(groups.contains(toRemove)) {
+			return groups.remove(toRemove);
+		}
+		return false;
+	}
+
     public String getIssuer()
     {
     	return issuer;
