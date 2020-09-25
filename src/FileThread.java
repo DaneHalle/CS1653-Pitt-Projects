@@ -11,9 +11,11 @@ import java.io.ObjectOutputStream;
 
 public class FileThread extends Thread {
     private final Socket socket;
+    private FileServer my_fs;
 
-    public FileThread(Socket _socket) {
+    public FileThread(Socket _socket, FileServer _fs) {
         socket = _socket;
+        my_fs = _fs;
     }
 
     public void run() {
@@ -39,12 +41,20 @@ public class FileThread extends Thread {
                         } else {
                             UserToken token = (UserToken)e.getObjContents().get(0);
                             String requester = token.getSubject();
+                            response = new Envelope("OK");
 
-                            List<String> groups = token.getGroups();
-
+                            List<String> requesterGroups = token.getGroups();
+                            List<ShareFile> filesInServer = my_fs.fileList.getFiles();
+                            for(int index = 0; index < filesInServer.size(); index++) {
+                                if(requesterGroups.contains(filesInServer.get(index).getGroup())) {
+                                    response.addObject(filesInServer.get(index).getPath());
+                                    // output.add(filesInServer.get(index).getPath());
+                                }
+                            }
 
                         }
                     }
+                    output.writeObject(response);
                 }
                 if(e.getMessage().equals("UPLOADF")) {
 
