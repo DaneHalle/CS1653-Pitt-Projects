@@ -15,6 +15,12 @@ public class RunClient {
         f_cli = new FileClient();
     }
 
+    private enum CommandResult {
+        NOTCMD,
+        ARGS,
+        SUCCESS
+    }
+
     private boolean connect(StringTokenizer cmds) {
         String server_type;
         String server;
@@ -47,6 +53,9 @@ public class RunClient {
         if (args.countTokens() != 1) {
             System.out.println("Usage: GET <USERNAME>");
             return false;
+        } else if (!g_cli.isConnected()) {
+            System.out.println("Group server is not connected");
+            return false;
         }
 
         token = g_cli.getToken(args.nextToken());
@@ -60,67 +69,67 @@ public class RunClient {
         return true;
     }
 
-    private boolean mapGroupCommand(String cmd, StringTokenizer args) {
+    private boolean checkCmd(
+        StringTokenizer args,
+        int args_num,
+        String usage,
+        boolean is_group
+    ) {
+        if (args.countTokens() != args_num) {
+            System.out.println(usage);
+            return false;
+        } else if (is_group && !g_cli.isConnected()) {
+            System.out.println("ERROR: Group server is not connected");
+            return false;
+        } else if (!is_group && !f_cli.isConnected()) {
+            System.out.println("ERROR: File server is not connected");
+            return false;
+        }
+
+        return true;
+    }
+
+    private CommandResult mapServerCommand(String cmd, StringTokenizer args) {
+        // For the group server
         String user;
+        
+        // For the file server
+        String src_file;
+        String dst_file;
         String group;
 
         switch(cmd) {
         case "CUSER":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: CUSER <USER>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 1, "Usage: CUSER <USER>", true))
+                return CommandResult.ARGS;
             user = args.nextToken();
             if(g_cli.createUser(user, token))
                 System.out.printf("Created user: %s\n", user);
             break;
         case "DUSER":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DUSER <USER>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 1, "Usage: DUSER <USER>", true))
+                return CommandResult.ARGS;
             user = args.nextToken();
             if(g_cli.deleteUser(user, token))
                 System.out.printf("Deleted user: %s\n", user);
             break;
         case "CGROUP":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: CGROUP <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 1, "Usage: CGROUP <GROUP>", true))
+                return CommandResult.ARGS;
             group = args.nextToken();
             if(g_cli.createGroup(group, token))
                 System.out.printf("Created group: %s\n", group);
             break;
         case "DGROUP":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DGROUP <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 1, "Usage: DGROUP <GROUP>", true))
+                return CommandResult.ARGS;
             group = args.nextToken();
             if(g_cli.deleteGroup(group, token))
                 System.out.printf("Deleted group: %s\n", group);
             break;
         case "LMEMBERS":
-            if (args.countTokens() != 2) {
-                System.out.println("Usage: LMEMBERS <GROUP>");
-                return false;
-            } else if (!g_cli.isConnected()) {
-                System.out.println("Group Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 1, "Usage: LMEMBERS <GROUP>", true))
+                return CommandResult.ARGS;
             group = args.nextToken();
             List<String> members = g_cli.listMembers(group, token);
 
@@ -129,58 +138,29 @@ public class RunClient {
                 for(int index=0; index < members.size(); index++) {
                     System.out.printf("\t%s\n", members.get(index));
                 }
-            } else {
-                return false;
             }
             break;
         case "AUSERTOGROUP":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: AUSERTOGROUP <USER> <GROUP>");
-                return false;
-            }
+            if (!checkCmd(args, 2, "Usage: AUSERTOGROUP <USER> <GROUP>", true))
+                return CommandResult.ARGS;
             user = args.nextToken();
             group = args.nextToken();
             if(g_cli.addUserToGroup(user, group, token)) {
                 System.out.printf("Added user %s to group %s\n", user, group);
-            } else {
-                return false;
             }
             break;
         case "RUSERFROMGROUP":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: RUSERFROMGROUP <USER> <GROUP>");
-                return false;
-            }
+            if (!checkCmd(args, 2, "Usage: RUSERTOGROUP <USER> <GROUP>", true))
+                return CommandResult.ARGS;
             user = args.nextToken();
             group = args.nextToken();
             if(g_cli.deleteUserFromGroup(user, group, token)) {
                 System.out.printf("Removed user %s from group %s\n", user, group);
-            } else {
-                return false;
             }
             break;
-        default:
-            return false;
-        }
-
-        return true;
-    }
-
-    private boolean mapFileCommand(String cmd, StringTokenizer args) {
-        String src_file;
-        String dst_file;
-        String group;
-
-        switch(cmd) {
         case "UPLOADF":
-            if (args.countTokens() != 3) {
-                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE> <GROUP>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
-
+            if (!checkCmd(args, 3, "Usage: UPLOADF <SRC-FILE> <DST-FILE> <GROUP>", false))
+                return CommandResult.ARGS;
             src_file = args.nextToken();
             dst_file = args.nextToken();
             group = args.nextToken();
@@ -188,39 +168,36 @@ public class RunClient {
                 System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
             break;
         case "LFILES":
-            throw new UnsupportedOperationException("LFILES");
-        case "DOWNLOADF":
-            if (args.countTokens() != 2) {
-                System.out.println("Usage: DELETEF <SRC-FILE> <DST-FILE>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
+            if (!checkCmd(args, 0, "Usage: LFILES", false))
+                return CommandResult.ARGS;
+            List<String> files = f_cli.listFiles(token);
 
+            if (files != null) {
+                System.out.printf("Here are the files available to %s:\n", token.getSubject());
+                for(int index=0; index < files.size(); index++) {
+                    System.out.printf("\t%s\n", files.get(index));
+                }
+            }
+        case "DOWNLOADF":
+            if (!checkCmd(args, 2, "Usage: DELETEF <SRC-FILE> <DST-FILE>", false))
+                return CommandResult.ARGS;
             src_file = args.nextToken();
             dst_file = args.nextToken();
             if(f_cli.download(src_file, dst_file, token))
                 System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
             break;
         case "DELETEF":
-            if (args.countTokens() != 1) {
-                System.out.println("Usage: DELETEF <FILENAME>");
-                return false;
-            } else if (!f_cli.isConnected()) {
-                System.out.println("File Server is not Connected");
-                return false;
-            }
-
+            if (!checkCmd(args, 2, "Usage: DELETEF <FILENAME>", false))
+                return CommandResult.ARGS;
             src_file = args.nextToken();
             if(f_cli.delete(src_file, token))
                 System.out.printf("Deleted file %s\n", src_file);
             break;
         default:
-            return false;
+            return CommandResult.NOTCMD;
         }
 
-        return true;
+        return CommandResult.SUCCESS;
     }
 
     public boolean mapCommand(StringTokenizer cmds) {
@@ -243,18 +220,11 @@ public class RunClient {
             return false;
 
         case "GET":
-            if (g_cli.isConnected())
-                getToken(cmds);
-            else
-                System.out.println("Not connected to group client");
+            getToken(cmds);
             break;
         default:
             // Handle as Group Command or File Command
-            if (token == null) {
-                System.out.println("Please retrieve token first");
-                break;
-            }
-            if(!(mapGroupCommand(cmd, cmds) || mapFileCommand(cmd, cmds))) {
+            if(mapServerCommand(cmd, cmds) == CommandResult.NOTCMD) {
                 System.out.printf("Command %s does not exist\n", preformat);
                 break;
             }
