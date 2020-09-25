@@ -301,13 +301,13 @@ public class GroupThread extends Thread {
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
                         UserToken remove = createToken(groupUsers.get(index));
                         remove.removeFromGroup(groupname);
-                            System.out.println(remove.getGroups().contains(groupname));
+                            // System.out.println(remove.getGroups().contains(groupname));
                     }
                     my_gs.groupList.deleteGroup(groupname);
                     my_gs.userList.removeGroup(requester, groupname);
                     my_gs.userList.removeOwnership(requester, groupname);
                     token.removeFromGroup(groupname);
-                        System.out.println(token.getGroups().contains(groupname));
+                        // System.out.println(token.getGroups().contains(groupname));
                     return true;
                 } else {
                     return false;
@@ -329,7 +329,7 @@ public class GroupThread extends Thread {
                 my_gs.groupList.addGroup(groupname, requester);
                 my_gs.userList.addOwnership(requester, groupname);
                 token.addToGroup(groupname);
-                    System.out.println(token.getGroups().contains(groupname));
+                    // System.out.println(token.getGroups().contains(groupname));
                 return true;
             } else {
                 return false;
@@ -352,7 +352,7 @@ public class GroupThread extends Thread {
                 my_gs.userList.addGroup(toAdd, groupname);
                 my_gs.groupList.addMember(toAdd, groupname);
                 toAddToken.addToGroup(groupname);
-                    System.out.println(toAddToken.getGroups().contains(groupname));
+                    // System.out.println(toAddToken.getGroups().contains(groupname));
                 return true;
             } else {
                 return false;
@@ -374,7 +374,7 @@ public class GroupThread extends Thread {
                 my_gs.userList.removeGroup(toRemove, groupname);
                 my_gs.groupList.removeMember(toRemove, groupname);
                 token.removeFromGroup(groupname);
-                    System.out.println(token.getGroups().contains(groupname));
+                    // System.out.println(token.getGroups().contains(groupname));
                 return true;
             } else {
                 return false;
