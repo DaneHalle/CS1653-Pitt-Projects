@@ -77,10 +77,10 @@ public class FileThread extends Thread {
                                 System.out.printf("Error: file already exists at %s\n", remotePath);
                                 response = new Envelope("FAIL-FILEEXISTS"); //Success
                             } else if (!yourToken.getGroups().contains(group)) {
-                                List<String> groups = yourToken.getGroups();
-                                for(int i=0; i<groups.size(); i++){
-                                    System.out.println("\t"+groups.get(i));
-                                }
+                                // List<String> groups = yourToken.getGroups();
+                                // for(int i=0; i<groups.size(); i++){
+                                //     System.out.println("\t"+groups.get(i));
+                                // }
                                 System.out.printf("Error: user missing valid token for group %s\n", group);
                                 response = new Envelope("FAIL-UNAUTHORIZED"); //Success
                             } else  {
