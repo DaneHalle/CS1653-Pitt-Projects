@@ -97,7 +97,7 @@ public class RunClient {
         String src_file;
         String dst_file;
         String group;
-
+        
         switch(cmd) {
         case "CUSER":
             if (!checkCmd(args, 1, "Usage: CUSER <USER>", true))

@@ -47,4 +47,8 @@ public interface UserToken {
      */
     public List<String> getGroups();
 
+    public boolean addToGroup(String name);
+
+    public boolean removeFromGroup(String name);
+
 }   //-- end interface UserToken

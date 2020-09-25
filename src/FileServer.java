@@ -69,7 +69,7 @@ public class FileServer extends Server {
 
             while(true) {
                 sock = serverSock.accept();
-                thread = new FileThread(sock);
+                thread = new FileThread(sock, this);
                 thread.start();
             }
         } catch(Exception e) {

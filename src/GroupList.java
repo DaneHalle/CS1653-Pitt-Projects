@@ -30,7 +30,6 @@ public class GroupList implements java.io.Serializable {
                 }
             }
             for(int j=0; j < groups.size(); j++) {
-                // System.out.println(groups.get(j));
                 Group group = list.get(groups.get(j));
                 if (ownership.contains(groups.get(j))){
                     continue;
@@ -65,16 +64,6 @@ public class GroupList implements java.io.Serializable {
             return false;
         }
     }
-
-    // Good for checking groups
-    // public synchronized void getKeys() {
-    //     Enumeration<String> enumeration = list.keys();
-
-    //     while(enumeration.hasMoreElements()){
-    //         String key = enumeration.nextElement();
-    //         System.out.println(key);
-    //     }
-    // }
 
     public synchronized ArrayList<String> getGroupUsers(String groupname) {
         return list.get(groupname).getUsers();
