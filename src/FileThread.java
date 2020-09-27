@@ -26,6 +26,10 @@ public class FileThread extends Thread {
             final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
+            response = new Envelope("FILE");
+            response.addObject(null);
+            output.writeObject(response);
+
             do {
                 Envelope e = (Envelope)input.readObject();
                 System.out.println("Request received: " + e.getMessage());
