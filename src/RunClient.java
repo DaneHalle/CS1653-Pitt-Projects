@@ -105,8 +105,6 @@ public class RunClient {
             return false;
         }
 
-        // Successful Command, then refresh token with current token
-        token = g_cli.refreshToken(token);
         return true;
     }
 
@@ -224,6 +222,8 @@ public class RunClient {
             return CommandResult.NOTCMD;
         }
 
+        // Successful Command, then refresh token with current token
+        token = g_cli.refreshToken(token);
         return CommandResult.SUCCESS;
     }
 
