@@ -95,22 +95,6 @@ public class RunClient {
         return true;
     }
 
-    // private boolean update() {
-
-
-    //     g_cli.connect(groupIp, groupPort);
-    //     f_cli.connect(fileIp, filePort);
-
-    //     token = g_cli.getToken(userT);
-        
-    //     if(token == null) {
-    //         System.out.println("Failed to retrieve token");
-    //         return false;
-    //     }
-
-    //     return true;
-    // }
-
     private boolean checkCmd(
         StringTokenizer args,
         int args_num,
