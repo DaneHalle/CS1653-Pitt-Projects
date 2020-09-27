@@ -58,6 +58,16 @@ public class RunClient {
         System.out.println("FILE SERVER: " + f_connection);
     }
 
+    public void printToken() {
+        System.out.println("Issuer: " + token.getIssuer());
+        System.out.println("Subject: " + token.getSubject());
+        List<String> groups = token.getGroups();
+        System.out.println("Groups: ");
+        for(int i=0; i < groups.size(); i++) {
+            System.out.println(" - " + groups.get(i));
+        }
+    }
+
     private boolean getToken(StringTokenizer args) {
         if (args.countTokens() != 1) {
             System.out.println("Usage: GET <USERNAME>");
@@ -233,6 +243,8 @@ public class RunClient {
             return CommandResult.NOTCMD;
         }
 
+        // Successful Command, then refresh token with current token
+        token = g_cli.refreshToken(token);
         return CommandResult.SUCCESS;
     }
 
@@ -249,6 +261,7 @@ public class RunClient {
             break;
         case "STATUS":
             connectionStatus();
+            printToken();
             break;
         case "EXIT":
             if (g_cli.isConnected())

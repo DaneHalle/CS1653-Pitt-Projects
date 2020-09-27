@@ -33,6 +33,7 @@ public class GroupThread extends Thread {
 
             do {
                 Envelope message = (Envelope)input.readObject();
+                output.reset();
                 System.out.println("Request received: " + message.getMessage());
 
                 if(message.getMessage().equals("GET")) { //Client wants a token
@@ -47,6 +48,22 @@ public class GroupThread extends Thread {
                         //Respond to the client. On error, the client will receive a null token
                         response = new Envelope("OK");
                         response.addObject(yourToken);
+                        output.writeObject(response);
+                    }
+                } else if (message.getMessage().equals("REFRESH")) {
+                    if(message.getObjContents().size() < 1) {
+                        response = new Envelope("FAIL");
+                    } else {
+                        response = new Envelope("FAIL");
+                        
+                        if(message.getObjContents().get(0) != null) {
+                            UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
+                            String username = yourToken.getSubject();
+                            UserToken newToken = createToken(username);
+                            // Response to the client. On eror, the clien will reveive a null token
+                            response = new Envelope("OK");
+                            response.addObject(newToken);
+                        }
                         output.writeObject(response);
                     }
                 } else if(message.getMessage().equals("CUSER")) { //Client wants to create a user
