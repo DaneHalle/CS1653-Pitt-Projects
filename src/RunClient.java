@@ -173,13 +173,18 @@ public class RunClient {
             List<String> files = f_cli.listFiles(token);
 
             if (files != null) {
-                System.out.printf("Here are the files available to %s:\n", token.getSubject());
-                for(int index=0; index < files.size(); index++) {
-                    System.out.printf("\t%s\n", files.get(index));
+                if(files.size()>0){
+                    System.out.printf("Here are the files available to %s:\n", token.getSubject());
+                    for(int index=0; index < files.size(); index++) {
+                        System.out.printf("\t%s\n", files.get(index));
+                    }
+                } else {
+                    System.out.printf("There are no files available to %s\n", token.getSubject());
                 }
             }
+            break;
         case "DOWNLOADF":
-            if (!checkCmd(args, 2, "Usage: DELETEF <SRC-FILE> <DST-FILE>", false))
+            if (!checkCmd(args, 2, "Usage: DOWNLOADF <SRC-FILE> <DST-FILE>", false))
                 return CommandResult.ARGS;
             src_file = args.nextToken();
             dst_file = args.nextToken();
@@ -187,7 +192,8 @@ public class RunClient {
                 System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
             break;
         case "DELETEF":
-            if (!checkCmd(args, 2, "Usage: DELETEF <FILENAME>", false))
+            System.out.println("TEST");
+            if (!checkCmd(args, 1, "Usage: DELETEF <FILENAME>", false))
                 return CommandResult.ARGS;
             src_file = args.nextToken();
             if(f_cli.delete(src_file, token))
