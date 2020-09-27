@@ -59,14 +59,12 @@ public class GroupThread extends Thread {
                         if(message.getObjContents().get(0) != null) {
                             UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                             String username = yourToken.getSubject();
-
                             UserToken newToken = createToken(username);
-
                             // Response to the client. On eror, the clien will reveive a null token
                             response = new Envelope("OK");
                             response.addObject(newToken);
-                            output.writeObject(response);
                         }
+                        output.writeObject(response);
                     }
                 } else if(message.getMessage().equals("CUSER")) { //Client wants to create a user
                     if(message.getObjContents().size() < 2) {
