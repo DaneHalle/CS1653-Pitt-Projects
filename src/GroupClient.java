@@ -43,6 +43,43 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     }
 
+    public UserToken refreshToken(UserToken token) {
+        try {
+            UserToken newToken = null;
+            Envelope message = null, response = null;
+
+            //Tell the server to return a token.
+            message = new Envelope("REFRESH");
+            message.addObject(token); //Add user name string
+            output.writeObject(message);
+
+            //Get the response from the server
+            response = (Envelope)input.readObject();
+
+            //Successful response
+            if(response.getMessage().equals("OK")) {
+                //If there is a token in the Envelope, return it
+                ArrayList<Object> temp = null;
+                temp = response.getObjContents();
+
+
+                System.out.println(temp.size());
+                if(temp.size() == 1) {
+                    newToken = (UserToken)temp.get(0);
+                    
+                    return newToken;
+                }
+            }
+
+            return null;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+
+    }
+
     public boolean createUser(String username, UserToken token) {
         try {
             Envelope message = null, response = null;
