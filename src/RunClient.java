@@ -9,7 +9,7 @@ public class RunClient {
     private GroupClient g_cli;
     private FileClient f_cli;
     private UserToken token;
-    
+
     public RunClient() {
         g_cli = new GroupClient();
         f_cli = new FileClient();
@@ -38,9 +38,13 @@ public class RunClient {
         switch(server_type) {
         case "GROUP":
             g_cli.connect(server, port);
+            // groupIp=server;
+            // groupPort=port;
             break;            
         case "FILE":
             f_cli.connect(server, port);
+            // fileIp=server;
+            // filePort=port;
             break;
         default:
             return false;
@@ -68,6 +72,22 @@ public class RunClient {
         System.out.println("Successfully retrieved token");
         return true;
     }
+
+    // private boolean update() {
+
+
+    //     g_cli.connect(groupIp, groupPort);
+    //     f_cli.connect(fileIp, filePort);
+
+    //     token = g_cli.getToken(userT);
+        
+    //     if(token == null) {
+    //         System.out.println("Failed to retrieve token");
+    //         return false;
+    //     }
+
+    //     return true;
+    // }
 
     private boolean checkCmd(
         StringTokenizer args,
@@ -97,6 +117,7 @@ public class RunClient {
         String src_file;
         String dst_file;
         String group;
+
         
         switch(cmd) {
         case "CUSER":
@@ -117,15 +138,19 @@ public class RunClient {
             if (!checkCmd(args, 1, "Usage: CGROUP <GROUP>", true))
                 return CommandResult.ARGS;
             group = args.nextToken();
-            if(g_cli.createGroup(group, token))
+            if(g_cli.createGroup(group, token)){
                 System.out.printf("Created group: %s\n", group);
+                token.addToGroup(group);
+            }
             break;
         case "DGROUP":
             if (!checkCmd(args, 1, "Usage: DGROUP <GROUP>", true))
                 return CommandResult.ARGS;
             group = args.nextToken();
-            if(g_cli.deleteGroup(group, token))
+            if(g_cli.deleteGroup(group, token)){
                 System.out.printf("Deleted group: %s\n", group);
+                token.removeFromGroup(group);
+            }
             break;
         case "LMEMBERS":
             if (!checkCmd(args, 1, "Usage: LMEMBERS <GROUP>", true))
@@ -210,7 +235,6 @@ public class RunClient {
         if (!cmds.hasMoreTokens()) {
             return true;
         }
-
         String preformat = cmds.nextToken();
         String cmd = preformat.toUpperCase();
 
@@ -244,8 +268,8 @@ public class RunClient {
         RunClient rcli = new RunClient();
         StringTokenizer cmd;
 
-        System.out.println("Enter a command, or type \"EXIT\" to quit.");
         do {
+            System.out.println("Enter a command, or type \"EXIT\" to quit.");
             cmd = new StringTokenizer(readInput());
         } while (rcli.mapCommand(cmd));
     }
