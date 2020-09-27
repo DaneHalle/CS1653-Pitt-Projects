@@ -25,11 +25,15 @@ public class GroupThread extends Thread {
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
             final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+            Envelope response;
+
+            response = new Envelope("GROUP");
+            response.addObject(null);
+            output.writeObject(response);
 
             do {
                 Envelope message = (Envelope)input.readObject();
                 System.out.println("Request received: " + message.getMessage());
-                Envelope response;
 
                 if(message.getMessage().equals("GET")) { //Client wants a token
                     String username = (String)message.getObjContents().get(0); //Get the username

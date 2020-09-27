@@ -38,19 +38,24 @@ public class RunClient {
         switch(server_type) {
         case "GROUP":
             g_cli.connect(server, port);
-            // groupIp=server;
-            // groupPort=port;
+            g_cli.verify("GROUP");
             break;            
         case "FILE":
             f_cli.connect(server, port);
-            // fileIp=server;
-            // filePort=port;
+            f_cli.verify("FILE");
             break;
         default:
             return false;
         }
 
         return true;
+    }
+
+    public void connectionStatus() {
+        String g_connection = g_cli.isConnected() ? "CONNECTED" : "DISCONNECTED";
+        String f_connection = f_cli.isConnected() ? "CONNECTED" : "DISCONNECTED";
+        System.out.println("GROUP SERVER: " + g_connection);
+        System.out.println("FILE SERVER: " + f_connection);
     }
 
     private boolean getToken(StringTokenizer args) {
@@ -241,6 +246,9 @@ public class RunClient {
         switch(cmd) {
         case "CONNECT":
             connect(cmds);
+            break;
+        case "STATUS":
+            connectionStatus();
             break;
         case "EXIT":
             if (g_cli.isConnected())

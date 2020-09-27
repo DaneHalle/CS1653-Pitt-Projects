@@ -34,7 +34,7 @@ public abstract class Client {
     }
 
     public boolean isConnected() {
-        if (sock == null || !sock.isConnected()) {
+        if (sock == null || sock.isClosed()) {
             return false;
         } else {
             return true;
@@ -46,10 +46,31 @@ public abstract class Client {
             try {
                 Envelope message = new Envelope("DISCONNECT");
                 output.writeObject(message);
+
+                sock.close();
+                output.close();
+                input.close();
             } catch(Exception e) {
                 System.err.println("Error: " + e.getMessage());
                 e.printStackTrace(System.err);
             }
+        }
+    }
+
+    public boolean verify(String sign) {
+        try {
+            Envelope server_type = (Envelope)input.readObject();
+            if (!server_type.getMessage().equals(sign)) {
+                System.out.printf("Server is not a %s server\n", sign);
+                disconnect();
+                return false;
+            }
+
+            return true;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
         }
     }
 }
