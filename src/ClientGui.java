@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.PrintStream;
 
 import java.util.StringTokenizer;
 import java.util.ArrayList;
@@ -314,7 +315,7 @@ public class ClientGui{
                   String ip = JOptionPane.showInputDialog("Enter IP");
                   String port = JOptionPane.showInputDialog("Enter Port");
 
-                  String temp = "connect group " +ip + " " + port;
+                  String temp = "connect group " + ip + " " + port;
                   StringTokenizer cmd = new StringTokenizer(temp);
 
                   rcli.mapCommand(cmd);
@@ -340,9 +341,15 @@ public class ClientGui{
       connection_bar.add(group_menu);
       connection_bar.add(file_menu);
 
+      JTextArea textArea = new JTextArea(50, 10);
+      textArea.setEditable(false);
+      PrintStream printStream = new PrintStream(new GuiConsole(textArea));
+      System.setOut(printStream);
+      System.setErr(printStream);
 
       //layout
       frame.add(connection_bar, BorderLayout.NORTH);
+      frame.add(textArea, BorderLayout.CENTER);
 
 
       frame.setVisible(true);
