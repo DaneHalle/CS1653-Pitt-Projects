@@ -42,6 +42,7 @@ public class UserList implements java.io.Serializable {
     }
 
     public synchronized void addGroup(String user, String groupname) {
+        // System.out.println(user+" "+groupname);
         list.get(user).addGroup(groupname);
     }
 
@@ -63,6 +64,10 @@ public class UserList implements java.io.Serializable {
 
     public synchronized void removeShown(String user, String groupname) {
         list.get(user).removeShown(groupname);
+    }
+
+    public synchronized void resetShown(String user) {
+        list.get(user).resetShown();
     }
 
     /**
@@ -112,7 +117,9 @@ public class UserList implements java.io.Serializable {
         }
 
         public void addGroup(String group) {
-            groups.add(group);
+            if(!groups.contains(group)){
+                groups.add(group);
+            }
         }
 
         public void removeGroup(String group) {
@@ -124,7 +131,9 @@ public class UserList implements java.io.Serializable {
         }
 
         public void addOwnership(String group) {
-            ownership.add(group);
+            if(!ownership.contains(group)){
+                ownership.add(group);
+            }
         }
 
         public void removeOwnership(String group) {
@@ -136,7 +145,9 @@ public class UserList implements java.io.Serializable {
         }
 
         public void addShown(String group) {
-            shown.add(group);
+            if(!shown.contains(group)){
+                shown.add(group);
+            }
         }
 
         public void removeShown(String group) {
@@ -145,6 +156,10 @@ public class UserList implements java.io.Serializable {
                     shown.remove(shown.indexOf(group));
                 }
             }
+        }
+
+        public void resetShown() {
+            shown=new ArrayList<String>();
         }
     }
 

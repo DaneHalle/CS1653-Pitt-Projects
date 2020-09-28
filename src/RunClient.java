@@ -100,6 +100,7 @@ public class RunClient {
             String least=token.getGroups().size()>0 ? "\tSHOW <GROUPNAME> - Adds GROUPNAME to scope to allow commands and management\n\tSHOWALL - Adds all available groups to scope to allow commands and management\n\tHIDE <GROUPNAME> - Removes GROUPNAME from scope to disallow commands and management\n\tHIDEALL - Removes all available groups from scope to disallow commands and management" : "";
             System.out.print(least);
         }
+        System.out.println("\tHELP - shows available commands to you dynamically\n\tEXIT - disconnects the client from any server they are connected to and ends the program");
     }
 
     private boolean getToken(StringTokenizer args) {

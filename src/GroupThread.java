@@ -47,7 +47,7 @@ public class GroupThread extends Thread {
                             response.addObject(null);
                             System.out.println("\tFAIL-GET | as given username was null");
                         } else {
-                            UserToken yourToken = createToken(username, false); //Create a token
+                            UserToken yourToken = createToken(username, false, true); //Create a token
     
                             //Respond to the client. On error, the client will receive a null token
                             response = new Envelope("OK");
@@ -63,7 +63,7 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject();
-                        UserToken newToken = createToken(username, true);
+                        UserToken newToken = createToken(username, true, false);
                         // Response to the client. On eror, the clien will reveive a null token
                         response = new Envelope("OK");
                         response.addObject(newToken);
@@ -431,7 +431,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    private UserToken createToken(String username, boolean flag) {
+    private UserToken createToken(String username, boolean flag, boolean reset) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
@@ -441,6 +441,9 @@ public class GroupThread extends Thread {
             } else {
                 //Issue a new token with server's name, user's name, and user's groups
                 UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+                if(reset){
+                    my_gs.userList.resetShown(username);
+                }
                 return yourToken;
             }
         } else {
@@ -564,7 +567,7 @@ public class GroupThread extends Thread {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname);
                     for(int index = 0; index < groupUsers.size(); index++) {
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
-                        UserToken remove = createToken(groupUsers.get(index), false);
+                        UserToken remove = createToken(groupUsers.get(index), false, false);
                         remove.removeFromGroup(groupname);
                     }
                     my_gs.groupList.deleteGroup(groupname);
@@ -607,7 +610,7 @@ public class GroupThread extends Thread {
 
     private String addUserToGroup(String toAdd, String groupname, UserToken token) {
         String requester = token.getSubject();
-        UserToken toAddToken = createToken(toAdd, false);
+        UserToken toAddToken = createToken(toAdd, false, false);
 
         if (!token.getShownGroups().contains(groupname)) {
             return "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
@@ -656,7 +659,7 @@ public class GroupThread extends Thread {
 
     private String removeUserFromGroup(String toRemove, String groupname, UserToken token) {
         String requester = token.getSubject();
-        UserToken toRemoveToken = createToken(toRemove, false);
+        UserToken toRemoveToken = createToken(toRemove, false, false);
 
         if (!token.getShownGroups().contains(groupname) && token.getGroups().contains(groupname)) {
             return"\t"+requester+" has not escalated permissions for group "+groupname+"\n";

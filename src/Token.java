@@ -43,8 +43,9 @@ class Token implements UserToken, java.io.Serializable
 	}
 
 	public boolean addToGroup(String toAdd)
-	{
-		return groups.add(toAdd);
+	{	if(!groups.contains(toAdd))
+			return groups.add(toAdd);
+		return false;
 	}
 
 	public boolean removeFromGroup(String toRemove)
@@ -57,7 +58,9 @@ class Token implements UserToken, java.io.Serializable
 
 	public boolean addToShown(String toAdd)
 	{
-		return shownGroups.add(toAdd);
+		if(!shownGroups.contains(toAdd))
+			return shownGroups.add(toAdd);
+		return false;
 	}
 
 	public boolean removeFromShown(String toRemove)
