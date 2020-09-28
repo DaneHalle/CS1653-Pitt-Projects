@@ -436,9 +436,14 @@ public class GroupThread extends Thread {
         UserToken toAddToken = createToken(toAdd);
 
         //Both toAdd and requester are in groups and group exists
+
+        System.out.println(String.valueOf(my_gs.userList.checkUser(requester))+" "+String.valueOf(my_gs.userList.checkUser(toAdd))+" "+String.valueOf(my_gs.groupList.checkGroup(groupname))+" "+String.valueOf(!requester.equals(toAdd))+" "+String.valueOf(toAddToken!=null));
+
         if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
             String owner = my_gs.groupList.getGroupOwner(groupname);
+
+            System.out.println(String.valueOf(!currentGroupsForNewUser.contains(groupname))+" "+String.valueOf(requester.equals(owner)));
 
             if (!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.addGroup(toAdd, groupname);
@@ -455,16 +460,17 @@ public class GroupThread extends Thread {
 
     private boolean removeUserFromGroup(String toRemove, String groupname, UserToken token) {
         String requester = token.getSubject();
+        UserToken toRemoveToken = createToken(toRemove);
 
         //Both toRemove and requester are in groups and group exists
-        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove)) { 
+        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove) && toRemoveToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
             String owner = my_gs.groupList.getGroupOwner(groupname);
 
             if (currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.removeGroup(toRemove, groupname);
                 my_gs.groupList.removeMember(toRemove, groupname);
-                token.removeFromGroup(groupname);
+                toRemoveToken.removeFromGroup(groupname);
                 return true;
             } else {
                 return false;
