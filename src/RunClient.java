@@ -367,7 +367,7 @@ public class RunClient {
             } else if (res == CommandResult.GNOT) {
                 System.out.println("The Group Server is not connected.");
             } else if (res == CommandResult.FAIL) {
-                System.out.printf("Unable to use command %s\n", cmd);
+                // System.out.printf("Unable to use command %s\n", cmd);
             }
             break;
         }

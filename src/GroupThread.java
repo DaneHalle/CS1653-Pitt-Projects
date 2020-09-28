@@ -47,7 +47,7 @@ public class GroupThread extends Thread {
                             response.addObject(null);
                             System.out.println("\tFAIL-GET | as given username was null");
                         } else {
-                            UserToken yourToken = createToken(username); //Create a token
+                            UserToken yourToken = createToken(username, false); //Create a token
     
                             //Respond to the client. On error, the client will receive a null token
                             response = new Envelope("OK");
@@ -63,7 +63,7 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject();
-                        UserToken newToken = createToken(username, yourToken.getShownGroups());
+                        UserToken newToken = createToken(username, true);
                         // Response to the client. On eror, the clien will reveive a null token
                         response = new Envelope("OK");
                         response.addObject(newToken);
@@ -86,12 +86,14 @@ public class GroupThread extends Thread {
                             String username = (String)message.getObjContents().get(0); //Extract the username
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if (createUser(username, yourToken)) {
+                            String action = createUser(username, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-CUSER");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -112,12 +114,14 @@ public class GroupThread extends Thread {
                             String username = (String)message.getObjContents().get(0); //Extract the username
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if (deleteUser(username, yourToken)) {
+                            String action = deleteUser(username, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-DUSER");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -139,12 +143,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if (createGroup(groupName, yourToken)) {
+                            String action = createGroup(groupName, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-CGROUP");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -166,12 +172,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if (deleteGroup(groupName, yourToken)) {
+                            String action = deleteGroup(groupName, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-DGROUP");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -195,19 +203,41 @@ public class GroupThread extends Thread {
 
                             String requester = yourToken.getSubject();
 
-                            if (my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
-                                response = new Envelope("OK"); //Success
-                                List<String> members = my_gs.groupList.getGroupUsers(groupname);
-                                members.add(0, requester);
-
-                                for(int i=0; i<members.size(); i++){
-                                    response.addObject(members.get(i));
+                            if (my_gs.userList.checkUser(requester)) {
+                                if (my_gs.groupList.checkGroup(groupname)) {
+                                    if (my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
+                                        if (my_gs.userList.getShown(requester).contains(groupname)) {
+                                            response = new Envelope("OK"); //Success
+                                            List<String> members = my_gs.groupList.getGroupUsers(groupname);
+                                            members.add(0, requester);
+            
+                                            for(int i=0; i<members.size(); i++){
+                                                response.addObject(members.get(i));
+                                            }
+                                            System.out.println("\tSuccess");
+                                        } else {
+                                            response = new Envelope("FAIL-LMEMBERS");
+                                            String action = "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
+                                            response.addObject(action.substring(1,action.length()-1));
+                                            System.out.printf("%s", action);
+                                        }
+                                    } else {
+                                        response = new Envelope("FAIL-LMEMBERS");
+                                        String action = "\t"+requester+" is not owner of group "+groupname+"\n";
+                                        response.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
+                                    }
+                                } else {
+                                    response = new Envelope("FAIL-LMEMBERS");
+                                    String action = "\t"+requester+" is not a member of group "+groupname+"\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
                                 }
-                                System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-LMEMBERS");
-                                response.addObject(null);
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                String action = "\t"+requester+" is not a user on the server \n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -234,12 +264,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            if (addUserToGroup(toAddUsername, groupName, yourToken)){
+                            String action = addUserToGroup(toAddUsername, groupName, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-AUSERTOGROUP");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -266,12 +298,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            if (removeUserFromGroup(toAddUsername, groupName, yourToken)){
+                            String action = removeUserFromGroup(toAddUsername, groupName, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-RUSERFROMGROUP");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -293,12 +327,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(0);
                             UserToken yourToken = (UserToken)message.getObjContents().get(1);
 
-                            if (showGroup(groupName, yourToken)){
+                            String action = showGroup(groupName,yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-SHOW");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -315,12 +351,14 @@ public class GroupThread extends Thread {
                         } else {
                             UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
 
-                            if (showAll(yourToken)){
+                            String action = showAll(yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-SHOWALL");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -342,12 +380,14 @@ public class GroupThread extends Thread {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the user's token
 
-                            if (hideGroup(groupName, yourToken)){
+                            String action = hideGroup(groupName, yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-HIDE");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -364,12 +404,14 @@ public class GroupThread extends Thread {
                         } else {
                             UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
 
-                            if (hideAll(yourToken)){
+                            String action = hideAll(yourToken);
+                            if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-HIDEALL");
-                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
                         }
                     }
@@ -389,69 +431,70 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    private UserToken createToken(String username) {
+    private UserToken createToken(String username, boolean flag) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
-            //Issue a new token with server's name, user's name, and user's groups
-            UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
-            return yourToken;
+            if (flag) {
+                //Issue a new token with server's name, user's name, and user's groups
+                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), my_gs.userList.getShown(username));
+                return yourToken;
+            } else {
+                //Issue a new token with server's name, user's name, and user's groups
+                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+                return yourToken;
+            }
         } else {
             return null;
         }
     }
-
-    private UserToken createToken(String username, List<String> inShown) {
-        //Check that user exists
-        if (my_gs.userList.checkUser(username)) {
-            //Issue a new token with server's name, user's name, and user's groups
-            UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), new ArrayList<String>(inShown));
-            return yourToken;
-        } else {
-            return null;
-        }
-    }
-
 
     //Method to create a user
-    private boolean createUser(String username, UserToken yourToken) {
+    private String createUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
-        if (!token.getShownGroups().contains("ADMIN")) {
-            return false;
+        if (!yourToken.getShownGroups().contains("ADMIN") && yourToken.getGroups().contains("ADMIN")) {
+            return "\t"+requester+" has not escalated permissions for group ADMIN\n";
         }
+
+        String out="FAIL";
 
         //Check if requester exists
         if (my_gs.userList.checkUser(requester)) {
             //Get the user's groups
-            ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
+            ArrayList<String> temp = my_gs.userList.getShown(requester);
             //requester needs to be an administrator
             if (temp.contains("ADMIN")) {
                 //Does user already exist?
                 if (my_gs.userList.checkUser(username)) {
-                    return false; //User already exists
+                    out="\t"+username+" is already a user within the system\n";
+                    return out; //User already exists
                 } else {
                     my_gs.userList.addUser(username);
-                    return true;
+                    return "OK";
                 }
             } else {
-                return false; //requester not an administrator
+                out="\t"+requester+" is not an ADMIN within the system\n";
+                return out; //requester not an administrator
             }
         } else {
-            return false; //requester does not exist
+            out="\t"+requester+" is not a user within the system\n";
+            return out; //requester does not exist
         }
     }
 
     //Method to delete a user
-    private boolean deleteUser(String username, UserToken yourToken) {
+    private String deleteUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
-        if (!token.getShownGroups().contains("ADMIN")) {
-            return false;
+        if (!yourToken.getShownGroups().contains("ADMIN") && yourToken.getGroups().contains("ADMIN")) {
+            return "\t"+requester+" has not escalated permissions for group ADMIN\n";
         }
+
+        String out="FAIL";
 
         //Does requester exist?
         if (my_gs.userList.checkUser(requester)) {
-            ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
+            ArrayList<String> temp = my_gs.userList.getShown(requester);
             //requester needs to be an administer
             if (temp.contains("ADMIN")) {
                 //Does user exist?
@@ -487,26 +530,32 @@ public class GroupThread extends Thread {
                     //Delete the user from the user list
                     my_gs.userList.deleteUser(username);
 
-                    return true;
+                    out="OK";
+                    return out;
                 } else {
-                    return false; //User does not exist
+                    out="\t"+username+" is not a user within the system\n";
+                    return out; //User does not exist
 
                 }
             } else {
-                return false; //requester is not an administer
+                out="\t"+requester+" is not an ADMIN within the system\n";
+                return out; //requester is not an administer
             }
         } else {
-            return false; //requester does not exist
+            out="\t"+requester+" is not a user within the system\n";
+            return out; //requester does not exist
         }
     }
 
-    private boolean deleteGroup(String groupname, UserToken token) {
+    private String deleteGroup(String groupname, UserToken token) {
         // TODO: Delete the group
         String requester = token.getSubject();        
 
         if (!token.getShownGroups().contains(groupname)) {
-            return false;
+            return "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
         }
+
+        String out="FAIL";
 
         if (my_gs.userList.checkUser(requester)) {
             if (my_gs.groupList.checkGroup(groupname)) {
@@ -515,27 +564,30 @@ public class GroupThread extends Thread {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname);
                     for(int index = 0; index < groupUsers.size(); index++) {
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
-                        UserToken remove = createToken(groupUsers.get(index));
+                        UserToken remove = createToken(groupUsers.get(index), false);
                         remove.removeFromGroup(groupname);
                     }
                     my_gs.groupList.deleteGroup(groupname);
                     my_gs.userList.removeGroup(requester, groupname);
                     my_gs.userList.removeOwnership(requester, groupname);
                     token.removeFromGroup(groupname);
-                    return true;
+                    return "OK";
                 } else {
-                    return false;
+                    out="\t"+requester+" is not owner of group "+groupname+"\n";
                 }
             } else {
-                return false;
+                out="\t"+groupname+" is not already a group within the system\n";
             }
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean createGroup(String groupname, UserToken token) {
+    private String createGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
+
+        String out="FAIL";
 
         if (my_gs.userList.checkUser(requester)) {
             if (!my_gs.groupList.checkGroup(groupname)){
@@ -543,129 +595,192 @@ public class GroupThread extends Thread {
                 my_gs.groupList.addGroup(groupname, requester);
                 my_gs.userList.addOwnership(requester, groupname);
                 token.addToGroup(groupname);
-                return true;
+                return "OK";
             } else {
-                return false;
+                out="\t"+groupname+" is already a group within the system\n";
             }
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean addUserToGroup(String toAdd, String groupname, UserToken token) {
+    private String addUserToGroup(String toAdd, String groupname, UserToken token) {
         String requester = token.getSubject();
-        UserToken toAddToken = createToken(toAdd);
+        UserToken toAddToken = createToken(toAdd, false);
 
         if (!token.getShownGroups().contains(groupname)) {
-            return false;
+            return "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
         }
+
+        String out="FAIL";
 
         //Both toAdd and requester are in groups and group exists
-        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
-            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
-            String owner = my_gs.groupList.getGroupOwner(groupname);
-
-            if (!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
-                my_gs.userList.addGroup(toAdd, groupname);
-                my_gs.groupList.addMember(toAdd, groupname);
-                toAddToken.addToGroup(groupname);
-                return true;
+        if (my_gs.userList.checkUser(requester)) {
+            if (my_gs.userList.checkUser(toAdd)) {
+                if (my_gs.groupList.checkGroup(groupname)) {
+                    if (!requester.equals(toAdd)) {
+                        if (toAddToken!=null) { 
+                            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
+                            String owner = my_gs.groupList.getGroupOwner(groupname);
+                
+                            if (!currentGroupsForNewUser.contains(groupname)) {
+                                if (requester.equals(owner)) {
+                                    my_gs.userList.addGroup(toAdd, groupname);
+                                    my_gs.groupList.addMember(toAdd, groupname);
+                                    toAddToken.addToGroup(groupname);
+                                    return "OK";
+                                } else {
+                                    out="\t"+requester+" is not owner of group "+groupname+"\n";
+                                }
+                            } else {
+                                out="\t"+toAdd+" is already apart of group "+groupname+"\n";
+                            }
+                        } else {
+                            out="\tToken is null\n";
+                        }
+                    } else {
+                        out="\t"+requester+" and "+toAdd+" are the same. This would create a permenant group\n";
+                    }
+                } else {
+                    out="\t"+groupname+" not a group within the system\n";
+                }
             } else {
-                return false;
+                out="\t"+toAdd+" is not a user within the system\n";
             }
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean removeUserFromGroup(String toRemove, String groupname, UserToken token) {
+    private String removeUserFromGroup(String toRemove, String groupname, UserToken token) {
         String requester = token.getSubject();
-        UserToken toRemoveToken = createToken(toRemove);
+        UserToken toRemoveToken = createToken(toRemove, false);
 
-        if (!token.getShownGroups().contains(groupname)) {
-            return false;
+        if (!token.getShownGroups().contains(groupname) && token.getGroups().contains(groupname)) {
+            return"\t"+requester+" has not escalated permissions for group "+groupname+"\n";
         }
+
+        String out="FAIL";
 
         //Both toRemove and requester are in groups and group exists
-        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove) && toRemoveToken!=null) { 
-            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
-            String owner = my_gs.groupList.getGroupOwner(groupname);
-
-            if (currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
-                my_gs.userList.removeGroup(toRemove, groupname);
-                my_gs.groupList.removeMember(toRemove, groupname);
-                toRemoveToken.removeFromGroup(groupname);
-                return true;
+        if (my_gs.userList.checkUser(requester)) {
+            if (my_gs.userList.checkUser(toRemove)) {
+                if (my_gs.groupList.checkGroup(groupname)) { 
+                    if (!requester.equals(toRemove)) {
+                        if (toRemoveToken!=null) {
+                            ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
+                            String owner = my_gs.groupList.getGroupOwner(groupname);
+                
+                            if (currentGroupsForNewUser.contains(groupname)) {
+                                if (requester.equals(owner)) {
+                                    my_gs.userList.removeGroup(toRemove, groupname);
+                                    my_gs.groupList.removeMember(toRemove, groupname);
+                                    toRemoveToken.removeFromGroup(groupname);
+                                    return "OK";
+                                } else {
+                                    out="\t"+requester+" is not owner of group "+groupname+"\n";
+                                }
+                            }else {
+                                out="\t"+toRemove+" is not apart of group "+groupname+"\n";
+                            }
+                        } else {
+                            out="\tToken is null\n";
+                        }
+                    } else {
+                        out="\t"+requester+" and "+toRemove+" are the same. This would create a permenant group\n";
+                    }
+                } else {
+                    out="\t"+groupname+" not a group within the system\n";
+                }
             } else {
-                return false;
+                out="\t"+toRemove+" is not a user within the system\n";
             }
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean showGroup(String groupname, UserToken token) {
+    private String showGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
-        if (my_gs.userList.checkUser(requester) && token.getGroups().contains(groupname) && !token.getShownGroups().contains(groupname)) {
-            token.addToShown(groupname);
-            return true;
+        String out="FAIL";
+
+        if (my_gs.userList.checkUser(requester)){
+            if (token.getGroups().contains(groupname)) {
+                if (!token.getShownGroups().contains(groupname)) {
+                    my_gs.userList.addShown(requester, groupname);
+                    token.addToShown(groupname);
+                    return "OK";
+                } else {
+                    out="\t"+requester+" already escalated to show group "+groupname+"\n";
+                }
+            } else {
+                out="\t"+requester+" is not a member of group "+groupname+"\n";
+            }
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean showAll(UserToken token) {
+    private String showAll(UserToken token) {
         String requester = token.getSubject();
+
+        String out="FAIL";
 
         if (my_gs.userList.checkUser(requester)) {
             List<String> groups = token.getGroups();
             List<String> shownGroups = token.getShownGroups();
             for(int index = 0; index < groups.size(); index++) {
                 if (!shownGroups.contains(groups.get(index))) {
+                    my_gs.userList.addShown(requester, groups.get(index));
                     token.addToShown(groups.get(index));
                 }
             }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean hideGroup(String groupname, UserToken token) {
-        String requester = token.getSubject();
-        System.out.println(groupname);
-
-        if (my_gs.userList.checkUser(requester) && token.getShownGroups().contains(groupname)) {
-            // List<String> groups = token.getShownGroups();
-            // for(int index = 0; index < groups.size(); index++) {
-            //     System.out.println(groups.get(index));
-            // }
-            token.removeFromShown(groupname); 
-            // System.out.println();
-            // groups = token.getShownGroups();
-            // for(int index = 0; index < groups.size(); index++) {
-            //     System.out.println(groups.get(index));
-            // }
-            return true;
+            return "OK";
         } else {
-            return false;
+            out="\t"+requester+" is not a user within the system\n";
         }
+        return out;
     }
 
-    private boolean hideAll(UserToken token) {
+    private String hideGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
+
+        String out="FAIL";
+
+        if (my_gs.userList.checkUser(requester)) { 
+            if (token.getShownGroups().contains(groupname)) {
+                my_gs.userList.removeShown(requester, groupname);
+                token.removeFromShown(groupname); 
+                return "OK";
+            } else {
+                out="\t"+requester+" has not escalated to see group "+groupname+"\n";
+            }
+        } else {
+            out="\t"+requester+" is not a user within the system\n";
+        }
+        return out;
+    }
+
+    private String hideAll(UserToken token) {
+        String requester = token.getSubject();
+
+        String out="FAIL";
 
         if (my_gs.userList.checkUser(requester)) {
             List<String> shownGroups = token.getShownGroups();
             for(int index = 0; index < shownGroups.size(); index++) {
+                my_gs.userList.removeShown(requester, shownGroups.get(index));
                 token.removeFromShown(shownGroups.get(index));
             }
-            // List<String> groups = token.getShownGroups();
-            // for(int index = 0; index < groups.size(); index++) {
-            //     System.out.println(groups.get(index));
-            // }
-            return true;
+            return "OK";
+        } else {
+            System.out.printf("\t%s is not a user within the system\n", requester);
         }
-        return false;
+        return out;
     }
 }

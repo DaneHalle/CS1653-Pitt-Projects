@@ -37,6 +37,10 @@ public class UserList implements java.io.Serializable {
         return list.get(username).getOwnership();
     }
 
+    public synchronized ArrayList<String> getShown(String username) {
+        return list.get(username).getShown();
+    }
+
     public synchronized void addGroup(String user, String groupname) {
         list.get(user).addGroup(groupname);
     }
@@ -51,6 +55,14 @@ public class UserList implements java.io.Serializable {
 
     public synchronized void removeOwnership(String user, String groupname) {
         list.get(user).removeOwnership(groupname);
+    }
+
+    public synchronized void addShown(String user, String groupname) {
+        list.get(user).addShown(groupname);
+    }
+
+    public synchronized void removeShown(String user, String groupname) {
+        list.get(user).removeShown(groupname);
     }
 
     /**
@@ -79,10 +91,12 @@ public class UserList implements java.io.Serializable {
         private static final long serialVersionUID = -6699986336399821598L;
         private ArrayList<String> groups;
         private ArrayList<String> ownership; // this is there own group
+        private ArrayList<String> shown;
 
         public User() {
             groups = new ArrayList<String>();
             ownership = new ArrayList<String>();
+            shown = new ArrayList<String>();
         }
 
         public ArrayList<String> getGroups() {
@@ -91,6 +105,10 @@ public class UserList implements java.io.Serializable {
 
         public ArrayList<String> getOwnership() {
             return ownership;
+        }
+
+        public ArrayList<String> getShown() {
+            return shown;
         }
 
         public void addGroup(String group) {
@@ -117,6 +135,17 @@ public class UserList implements java.io.Serializable {
             }
         }
 
+        public void addShown(String group) {
+            shown.add(group);
+        }
+
+        public void removeShown(String group) {
+            if(!shown.isEmpty()) {
+                if(shown.contains(group)) {
+                    shown.remove(shown.indexOf(group));
+                }
+            }
+        }
     }
 
 }
