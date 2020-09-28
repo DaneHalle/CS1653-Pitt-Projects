@@ -35,11 +35,9 @@ public class ClientGui{
 
 		exit_system.addActionListener(new exitSystem(rcli));
 
-
 		menu_bar.add(group_menu);
 		menu_bar.add(file_menu);
 		menu_bar.add(system_menu);
-
 
 		// console output
 		JTextArea textArea = new JTextArea(50, 10);
@@ -114,8 +112,8 @@ public class ClientGui{
 		String[] status_prompts = {};
 		status_button.addActionListener(new arbAction(rcli, "status", status_prompts));
 
-		JPanel action_panel = new JPanel();
-		action_panel.setLayout(new BoxLayout(action_panel, BoxLayout.Y_AXIS));
+		JPanel action_panel = new JPanel(new GridLayout(13,1));
+		// action_panel.setLayout(new BoxLayout(action_panel, BoxLayout.Y_AXIS));
 		action_panel.add(get_button);
 		action_panel.add(cuser_button);
 		action_panel.add(duser_button);
