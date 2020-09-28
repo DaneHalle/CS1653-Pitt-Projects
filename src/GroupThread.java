@@ -416,6 +416,10 @@ public class GroupThread extends Thread {
     private boolean createUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
+        if (!token.getShownGroups().contains("ADMIN")) {
+            return false;
+        }
+
         //Check if requester exists
         if (my_gs.userList.checkUser(requester)) {
             //Get the user's groups
@@ -440,6 +444,10 @@ public class GroupThread extends Thread {
     //Method to delete a user
     private boolean deleteUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
+
+        if (!token.getShownGroups().contains("ADMIN")) {
+            return false;
+        }
 
         //Does requester exist?
         if (my_gs.userList.checkUser(requester)) {
@@ -494,7 +502,11 @@ public class GroupThread extends Thread {
 
     private boolean deleteGroup(String groupname, UserToken token) {
         // TODO: Delete the group
-        String requester = token.getSubject();
+        String requester = token.getSubject();        
+
+        if (!token.getShownGroups().contains(groupname)) {
+            return false;
+        }
 
         if (my_gs.userList.checkUser(requester)) {
             if (my_gs.groupList.checkGroup(groupname)) {
@@ -624,15 +636,16 @@ public class GroupThread extends Thread {
         System.out.println(groupname);
 
         if (my_gs.userList.checkUser(requester) && token.getShownGroups().contains(groupname)) {
-            List<String> groups = token.getShownGroups();
-            for(int index = 0; index < groups.size(); index++) {
-                System.out.println(groups.get(index));
-            }
-            System.out.println(token.removeFromShown(groupname));
-            groups = token.getShownGroups();
-            for(int index = 0; index < groups.size(); index++) {
-                System.out.println(groups.get(index));
-            }
+            // List<String> groups = token.getShownGroups();
+            // for(int index = 0; index < groups.size(); index++) {
+            //     System.out.println(groups.get(index));
+            // }
+            token.removeFromShown(groupname); 
+            // System.out.println();
+            // groups = token.getShownGroups();
+            // for(int index = 0; index < groups.size(); index++) {
+            //     System.out.println(groups.get(index));
+            // }
             return true;
         } else {
             return false;
