@@ -51,30 +51,68 @@ public class ClientGui{
 		// USER ACTIONS
 		// get a user token
 		JButton get_button = new JButton("GET");
+		String[] get_prompts = {"Enter username"};
+		get_button.addActionListener(new arbAction(rcli, "get", get_prompts));
+
 		// create user
 		JButton cuser_button = new JButton("Create User");
+		String[] cuser_prompts = {"Enter new username"};
+		cuser_button.addActionListener(new arbAction(rcli, "cuser", cuser_prompts));
+
 		// delete user
 		JButton duser_button = new JButton("Delete User");
+		String[] duser_prompts = {"Enter username to be deleted"};
+		duser_button.addActionListener(new arbAction(rcli, "duser", duser_prompts));
+
 		// create group
 		JButton cgroup_button = new JButton("Create Group");
+		String[] cgroup_prompts = {"Enter new group name"};
+		cgroup_button.addActionListener(new arbAction(rcli, "cgroup", cgroup_prompts));
+
 		// delete group
 		JButton dgroup_button = new JButton("Delete Group");
+		String[] dgroup_prompts = {"Enter group to be deleted"};
+		dgroup_button.addActionListener(new arbAction(rcli, "dgroup", dgroup_prompts));
+
 		// list members of group
 		JButton lmembers_button = new JButton("List Members");
+		String[] lmembers_prompts = {"Enter group name"};
+		lmembers_button.addActionListener(new arbAction(rcli, "lmembers", lmembers_prompts));
+
 		// add user to a group
 		JButton ausertogroup_button = new JButton("Add User to Group");
+		String[] ausertogroup_prompts = {"Enter username", "Enter group name"};
+		ausertogroup_button.addActionListener(new arbAction(rcli, "ausertogroup", ausertogroup_prompts));
+
 		// remove a user from a group
-		JButton rusertogroup_button = new JButton("Remove User from Group");
+		JButton ruserfromgroup_button = new JButton("Remove User from Group");
+		String[] ruserfromgroup_prompts = {"Enter username", "Enter group name"};
+		ruserfromgroup_button.addActionListener(new arbAction(rcli, "ruserfromgroup", ruserfromgroup_prompts));
+
 		// upload a file
 		JButton uploadf_button = new JButton("Upload File");
+		String[] uploadf_prompts = {"Enter src filename", "Enter dest filename", "Enter group name"};
+		uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+
 		// list files
-		JButton lfiles_button = new JButton("Add User to Group");
+		JButton lfiles_button = new JButton("List Files");
+		String[] lfiles_prompts = {};
+		lfiles_button.addActionListener(new arbAction(rcli, "lfiles", lfiles_prompts));
+
 		// download a file
 		JButton downloadf_button = new JButton("Download File");
+		String[] downloadf_prompts = {"Enter src filename", "Enter dest filename"};
+		downloadf_button.addActionListener(new arbAction(rcli, "downloadf", downloadf_prompts));
+
 		// delete a file
 		JButton deletef_button = new JButton("Delete File");
+		String[] deletef_prompts = {"Enter file to be deleted"};
+		deletef_button.addActionListener(new arbAction(rcli, "deletef", deletef_prompts));
+
 		// status?
 		JButton status_button = new JButton("Status");
+		String[] status_prompts = {};
+		status_button.addActionListener(new arbAction(rcli, "status", status_prompts));
 
 		JPanel action_panel = new JPanel();
 		action_panel.setLayout(new BoxLayout(action_panel, BoxLayout.Y_AXIS));
@@ -85,7 +123,7 @@ public class ClientGui{
 		action_panel.add(dgroup_button);
 		action_panel.add(lmembers_button);
 		action_panel.add(ausertogroup_button);
-		action_panel.add(rusertogroup_button);
+		action_panel.add(ruserfromgroup_button);
 		action_panel.add(uploadf_button);
 		action_panel.add(lfiles_button);
 		action_panel.add(downloadf_button);
