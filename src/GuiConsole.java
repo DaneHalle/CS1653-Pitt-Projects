@@ -21,6 +21,6 @@ public class GuiConsole extends OutputStream {
         // keeps the textArea up to date
         textArea.update(textArea.getGraphics());
 
-        textArea.setEditable(false);
+        
     }
 }
