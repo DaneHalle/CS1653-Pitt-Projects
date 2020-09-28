@@ -34,125 +34,168 @@ public class GroupThread extends Thread {
             do {
                 Envelope message = (Envelope)input.readObject();
                 output.reset();
-                System.out.println("Request received: " + message.getMessage());
+                System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + message.getMessage());
 
-                if(message.getMessage().equals("GET")) { //Client wants a token
-                    String username = (String)message.getObjContents().get(0); //Get the username
-                    if(username == null) {
-                        response = new Envelope("FAIL");
-                        response.addObject(null);
-                        output.writeObject(response);
+                if (message.getMessage().equals("GET")) { //Client wants a token
+                    if (message.getObjContents().size() != 1) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-GET | as request has bad contents.");
                     } else {
-                        UserToken yourToken = createToken(username); //Create a token
-
-                        //Respond to the client. On error, the client will receive a null token
-                        response = new Envelope("OK");
-                        response.addObject(yourToken);
-                        output.writeObject(response);
-                    }
-                } else if (message.getMessage().equals("REFRESH")) {
-                    if(message.getObjContents().size() < 1) {
-                        response = new Envelope("FAIL");
-                    } else {
-                        response = new Envelope("FAIL");
-                        
-                        if(message.getObjContents().get(0) != null) {
-                            UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
-                            String username = yourToken.getSubject();
-                            UserToken newToken = createToken(username);
-                            // Response to the client. On eror, the clien will reveive a null token
+                        String username = (String)message.getObjContents().get(0); //Get the username
+                        if (username == null) {
+                            response = new Envelope("FAIL");
+                            response.addObject(null);
+                            System.out.println("\tFAIL-GET | as given username was null");
+                        } else {
+                            UserToken yourToken = createToken(username); //Create a token
+    
+                            //Respond to the client. On error, the client will receive a null token
                             response = new Envelope("OK");
-                            response.addObject(newToken);
+                            response.addObject(yourToken);
+                            System.out.println("\tSuccess");
                         }
-                        output.writeObject(response);
                     }
-                } else if(message.getMessage().equals("CUSER")) { //Client wants to create a user
-                    if(message.getObjContents().size() < 2) {
-                        response = new Envelope("FAIL");
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("REFRESH")) {
+                    if (message.getObjContents().size() != 1) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-GET | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
+                        UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
+                        String username = yourToken.getSubject();
+                        UserToken newToken = createToken(username);
+                        // Response to the client. On eror, the clien will reveive a null token
+                        response = new Envelope("OK");
+                        response.addObject(newToken);
+                        System.out.println("\tSuccess");
+                    }
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("CUSER")) { //Client wants to create a user
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-CUSER | as request has bad contents.");
+                    } else {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADUSER");
+                            System.out.println("\tFAIL-GET | as request has bad user.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-GET | as request has bad token.");
+                        } else {
+                            String username = (String)message.getObjContents().get(0); //Extract the username
+                            UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                        if(message.getObjContents().get(0) != null) {
-                            if(message.getObjContents().get(1) != null) {
-                                String username = (String)message.getObjContents().get(0); //Extract the username
-                                UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
-
-                                if(createUser(username, yourToken)) {
-                                    response = new Envelope("OK"); //Success
-                                }
+                            if (createUser(username, yourToken)) {
+                                response = new Envelope("OK"); //Success
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-CUSER");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
-
                     output.writeObject(response);
-                } else if(message.getMessage().equals("DUSER")) { //Client wants to delete a user
-
-                    if(message.getObjContents().size() < 2) {
-                        response = new Envelope("FAIL");
+                } else if (message.getMessage().equals("DUSER")) { //Client wants to delete a user
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-DUSER | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADUSER");
+                            System.out.println("\tFAIL-DUSER | as request has bad user.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-DUSER | as request has bad token.");
+                        } else {
+                            String username = (String)message.getObjContents().get(0); //Extract the username
+                            UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                        if(message.getObjContents().get(0) != null) {
-                            if(message.getObjContents().get(1) != null) {
-                                String username = (String)message.getObjContents().get(0); //Extract the username
-                                UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
-
-                                if(deleteUser(username, yourToken)) {
-                                    response = new Envelope("OK"); //Success
-                                }
+                            if (deleteUser(username, yourToken)) {
+                                response = new Envelope("OK"); //Success
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-DUSER");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
-
                     output.writeObject(response);
-                } else if(message.getMessage().equals("CGROUP")) { //Client wants to create a group
+                } else if (message.getMessage().equals("CGROUP")) { //Client wants to create a group
                     /* TODO:  Write this handler */
-                    if(message.getObjContents().size() < 2) {
-                        response = new Envelope("FAIL");
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-CGROUPC | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
-
-                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null) {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-CGROUPC | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-CGROUPC | as request has bad token.");
+                        } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if(createGroup(groupName, yourToken)) {
+                            if (createGroup(groupName, yourToken)) {
                                 response = new Envelope("OK"); //Success
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-CGROUP");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
                     output.writeObject(response);
-                } else if(message.getMessage().equals("DGROUP")) { //Client wants to delete a group
+                } else if (message.getMessage().equals("DGROUP")) { //Client wants to delete a group
                     /* TODO:  Write this handler */
-                    if(message.getObjContents().size() < 2) {
-                        response = new Envelope("FAIL");
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-DGROUP | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
-
-                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null) {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-DGROUP | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-DGROUP | as request has bad token.");
+                        } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            if(deleteGroup(groupName, yourToken)) {
+                            if (deleteGroup(groupName, yourToken)) {
                                 response = new Envelope("OK"); //Success
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-DGROUP");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
                     output.writeObject(response);
-                } else if(message.getMessage().equals("LMEMBERS")) { //Client wants a list of members in a group
+                } else if (message.getMessage().equals("LMEMBERS")) { //Client wants a list of members in a group
                     /* TODO:  Write this handler */
-                     if(message.getObjContents().size() < 2) {
-                        response = new Envelope("FAIL");
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-LMEMBERS | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
-
-                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null) {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-LMEMBERS | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-LMEMBERS | as request has bad token.");
+                        } else {
                             String groupname = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
                             String requester = yourToken.getSubject();
 
-                            if(my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
+                            if (my_gs.userList.checkUser(requester) && my_gs.groupList.checkGroup(groupname) && my_gs.groupList.getGroupOwner(groupname).equals(requester)) {
                                 response = new Envelope("OK"); //Success
                                 List<String> members = my_gs.groupList.getGroupUsers(groupname);
                                 members.add(0, requester);
@@ -160,49 +203,80 @@ public class GroupThread extends Thread {
                                 for(int i=0; i<members.size(); i++){
                                     response.addObject(members.get(i));
                                 }
+                                System.out.println("\tSuccess");
                             } else {
+                                response = new Envelope("FAIL-LMEMBERS");
                                 response.addObject(null);
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
                     output.writeObject(response);
-                } else if(message.getMessage().equals("AUSERTOGROUP")) { //Client wants to add user to a group
+                } else if (message.getMessage().equals("AUSERTOGROUP")) { //Client wants to add user to a group
                     /* TODO:  Write this handler */
-                    if(message.getObjContents().size() < 3) {
-                        response = new Envelope("FAIL");
+                    if (message.getObjContents().size() != 3) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-AUSERTOGROUP | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
-
-                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null && message.getObjContents().get(2) != null) {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADUSER");
+                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad user.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(2) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad token.");
+                        } else {
                             String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            if(addUserToGroup(toAddUsername, groupName, yourToken)){
+                            if (addUserToGroup(toAddUsername, groupName, yourToken)){
                                 response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-AUSERTOGROUP");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
                     output.writeObject(response);
-                } else if(message.getMessage().equals("RUSERFROMGROUP")) { //Client wants to remove user from a group
+                } else if (message.getMessage().equals("RUSERFROMGROUP")) { //Client wants to remove user from a group
                     /* TODO:  Write this handler */
-                    if(message.getObjContents().size() < 3) {
-                        response = new Envelope("FAIL");
+                    if (message.getObjContents().size() != 3) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad contents.");
                     } else {
-                        response = new Envelope("FAIL");
-
-                        if(message.getObjContents().get(0) != null && message.getObjContents().get(1) != null && message.getObjContents().get(2) != null) {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADUSER");
+                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad user.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(2) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad token.");
+                        } else {
                             String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            if(removeUserFromGroup(toAddUsername, groupName, yourToken)){
+                            if (removeUserFromGroup(toAddUsername, groupName, yourToken)){
                                 response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-RUSERFROMGROUP");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
                             }
                         }
                     }
                     output.writeObject(response);
-                } else if(message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
+                } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop
                 } else {
@@ -219,7 +293,7 @@ public class GroupThread extends Thread {
     //Method to create tokens
     private UserToken createToken(String username) {
         //Check that user exists
-        if(my_gs.userList.checkUser(username)) {
+        if (my_gs.userList.checkUser(username)) {
             //Issue a new token with server's name, user's name, and user's groups
             UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
             return yourToken;
@@ -234,13 +308,13 @@ public class GroupThread extends Thread {
         String requester = yourToken.getSubject();
 
         //Check if requester exists
-        if(my_gs.userList.checkUser(requester)) {
+        if (my_gs.userList.checkUser(requester)) {
             //Get the user's groups
             ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
             //requester needs to be an administrator
-            if(temp.contains("ADMIN")) {
+            if (temp.contains("ADMIN")) {
                 //Does user already exist?
-                if(my_gs.userList.checkUser(username)) {
+                if (my_gs.userList.checkUser(username)) {
                     return false; //User already exists
                 } else {
                     my_gs.userList.addUser(username);
@@ -259,12 +333,12 @@ public class GroupThread extends Thread {
         String requester = yourToken.getSubject();
 
         //Does requester exist?
-        if(my_gs.userList.checkUser(requester)) {
+        if (my_gs.userList.checkUser(requester)) {
             ArrayList<String> temp = my_gs.userList.getUserGroups(requester);
             //requester needs to be an administer
-            if(temp.contains("ADMIN")) {
+            if (temp.contains("ADMIN")) {
                 //Does user exist?
-                if(my_gs.userList.checkUser(username)) {
+                if (my_gs.userList.checkUser(username)) {
                     //User needs deleted from the groups they belong
                     ArrayList<String> deleteFromGroups = new ArrayList<String>();
 
@@ -313,22 +387,20 @@ public class GroupThread extends Thread {
         // TODO: Delete the group
         String requester = token.getSubject();
 
-        if(my_gs.userList.checkUser(requester)) {
-            if(my_gs.groupList.checkGroup(groupname)) {
+        if (my_gs.userList.checkUser(requester)) {
+            if (my_gs.groupList.checkGroup(groupname)) {
                 String groupOwner = my_gs.groupList.getGroupOwner(groupname);
-                if(requester.equals(groupOwner)) {
+                if (requester.equals(groupOwner)) {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname);
                     for(int index = 0; index < groupUsers.size(); index++) {
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
                         UserToken remove = createToken(groupUsers.get(index));
                         remove.removeFromGroup(groupname);
-                            // System.out.println(remove.getGroups().contains(groupname));
                     }
                     my_gs.groupList.deleteGroup(groupname);
                     my_gs.userList.removeGroup(requester, groupname);
                     my_gs.userList.removeOwnership(requester, groupname);
                     token.removeFromGroup(groupname);
-                        // System.out.println(token.getGroups().contains(groupname));
                     return true;
                 } else {
                     return false;
@@ -344,13 +416,12 @@ public class GroupThread extends Thread {
     private boolean createGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
-        if(my_gs.userList.checkUser(requester)) {
-            if(!my_gs.groupList.checkGroup(groupname)){
+        if (my_gs.userList.checkUser(requester)) {
+            if (!my_gs.groupList.checkGroup(groupname)){
                 my_gs.userList.addGroup(requester, groupname);
                 my_gs.groupList.addGroup(groupname, requester);
                 my_gs.userList.addOwnership(requester, groupname);
                 token.addToGroup(groupname);
-                    // System.out.println(token.getGroups().contains(groupname));
                 return true;
             } else {
                 return false;
@@ -365,15 +436,19 @@ public class GroupThread extends Thread {
         UserToken toAddToken = createToken(toAdd);
 
         //Both toAdd and requester are in groups and group exists
-        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
+
+        System.out.println(String.valueOf(my_gs.userList.checkUser(requester))+" "+String.valueOf(my_gs.userList.checkUser(toAdd))+" "+String.valueOf(my_gs.groupList.checkGroup(groupname))+" "+String.valueOf(!requester.equals(toAdd))+" "+String.valueOf(toAddToken!=null));
+
+        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
             String owner = my_gs.groupList.getGroupOwner(groupname);
 
-            if(!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
+            System.out.println(String.valueOf(!currentGroupsForNewUser.contains(groupname))+" "+String.valueOf(requester.equals(owner)));
+
+            if (!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.addGroup(toAdd, groupname);
                 my_gs.groupList.addMember(toAdd, groupname);
                 toAddToken.addToGroup(groupname);
-                    // System.out.println(toAddToken.getGroups().contains(groupname));
                 return true;
             } else {
                 return false;
@@ -385,17 +460,17 @@ public class GroupThread extends Thread {
 
     private boolean removeUserFromGroup(String toRemove, String groupname, UserToken token) {
         String requester = token.getSubject();
+        UserToken toRemoveToken = createToken(toRemove);
 
         //Both toRemove and requester are in groups and group exists
-        if(my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove)) { 
+        if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove) && toRemoveToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
             String owner = my_gs.groupList.getGroupOwner(groupname);
 
-            if(currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
+            if (currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.removeGroup(toRemove, groupname);
                 my_gs.groupList.removeMember(toRemove, groupname);
-                token.removeFromGroup(groupname);
-                    // System.out.println(token.getGroups().contains(groupname));
+                toRemoveToken.removeFromGroup(groupname);
                 return true;
             } else {
                 return false;

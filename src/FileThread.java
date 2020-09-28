@@ -32,7 +32,8 @@ public class FileThread extends Thread {
 
             do {
                 Envelope e = (Envelope)input.readObject();
-                System.out.println("Request received: " + e.getMessage());
+                output.reset();
+                System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + e.getMessage());
 
                 // Handler to list files that this user is allowed to see
                 if(e.getMessage().equals("LFILES")) {
@@ -81,10 +82,6 @@ public class FileThread extends Thread {
                                 System.out.printf("Error: file already exists at %s\n", remotePath);
                                 response = new Envelope("FAIL-FILEEXISTS"); //Success
                             } else if (!yourToken.getGroups().contains(group)) {
-                                // List<String> groups = yourToken.getGroups();
-                                // for(int i=0; i<groups.size(); i++){
-                                //     System.out.println("\t"+groups.get(i));
-                                // }
                                 System.out.printf("Error: user missing valid token for group %s\n", group);
                                 response = new Envelope("FAIL-UNAUTHORIZED"); //Success
                             } else  {
