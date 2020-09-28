@@ -17,7 +17,7 @@ public class ClientGui{
       frame.setSize(700,800);
 
       //connection menu bar
-      JMenuBar connection_bar = new JMenuBar();
+      JMenuBar menu_bar = new JMenuBar();
 
       JMenu group_menu = new JMenu("Group Server");
       JMenuItem connect_group = new JMenuItem("Connect");
@@ -64,9 +64,9 @@ public class ClientGui{
       });
 
 
-      connection_bar.add(group_menu);
-      connection_bar.add(file_menu);
-      connection_bar.add(system_menu);
+      menu_bar.add(group_menu);
+      menu_bar.add(file_menu);
+      menu_bar.add(system_menu);
 
       JTextArea textArea = new JTextArea(50, 10);
       textArea.setEditable(false);
@@ -75,7 +75,7 @@ public class ClientGui{
       System.setErr(printStream);
 
       //layout
-      frame.add(connection_bar, BorderLayout.NORTH);
+      frame.add(menu_bar, BorderLayout.NORTH);
       frame.add(textArea, BorderLayout.CENTER);
 
 
