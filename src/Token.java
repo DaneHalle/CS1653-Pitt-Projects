@@ -6,12 +6,22 @@ class Token implements UserToken, java.io.Serializable
 	private String issuer;
 	private String subject;
 	private List<String> groups;
+	private List<String> shownGroups;
 
 	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup)
 	{
 		issuer=inIssuer;
 		subject=inSubject;
 		groups=inGroup;
+		shownGroups=new ArrayList<String>();
+	}
+
+	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup, ArrayList<String> inShown)
+	{
+		issuer=inIssuer;
+		subject=inSubject;
+		groups=inGroup;
+		shownGroups=inShown;
 	}
 
 	public Token()
@@ -19,6 +29,7 @@ class Token implements UserToken, java.io.Serializable
 		issuer=null;
 		subject=null;
 		groups=new ArrayList<String>();
+		shownGroups=new ArrayList<String>();
 	}
 
 	public void setIssuer(String inIssuer)
@@ -44,6 +55,21 @@ class Token implements UserToken, java.io.Serializable
 		return false;
 	}
 
+	public boolean addToShown(String toAdd)
+	{
+		return shownGroups.add(toAdd);
+	}
+
+	public boolean removeFromShown(String toRemove)
+	{
+		if(shownGroups.contains(toRemove)){
+			System.out.println("AAAAAAAAA");
+			return groups.remove(toRemove);
+		}
+		System.out.println("BBBBBBBBB");
+		return false;
+	}
+
     public String getIssuer()
     {
     	return issuer;
@@ -57,5 +83,10 @@ class Token implements UserToken, java.io.Serializable
     public List<String> getGroups()
     {
     	return new ArrayList<String>(groups);
+    }
+
+    public List<String> getShownGroups()
+    {
+    	return new ArrayList<String>(shownGroups);
     }
 }

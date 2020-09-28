@@ -68,9 +68,15 @@ public class RunClient {
             System.out.println("Issuer: " + token.getIssuer());
             System.out.println("Subject: " + token.getSubject());
             List<String> groups = token.getGroups();
-            System.out.println("Groups: ");
+            List<String> shownGroups = token.getShownGroups();
+            System.out.println("All Groups: ");
             for(int i=0; i < groups.size(); i++) {
                 System.out.println(" - " + groups.get(i));
+            }
+
+            System.out.println("Shown Groups: ");
+            for(int i=0; i < shownGroups.size(); i++) {
+                System.out.println(" - " + shownGroups.get(i));
             }
         }
     }
@@ -261,7 +267,6 @@ public class RunClient {
             case "DELETEF":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
-                System.out.println("TEST");
                 if (!checkCmd(args, 1, "Usage: DELETEF <FILENAME>", false))
                     return CommandResult.ARGS;
                 src_file = args.nextToken();
@@ -270,11 +275,55 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "SHOW":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: SHOW <GROUP-NAME>", true))
+                    return CommandResult.ARGS;
+                group = args.nextToken();
+                if(g_cli.showGroup(group, token))
+                    System.out.printf("Added %s to list of Shown Groups\n", group);
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "SHOWALL":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 0, "Usage: SHOWALL", true))
+                    return CommandResult.ARGS;
+                if(g_cli.showAll(token))
+                    System.out.printf("Added all groups to list of Shown Groups\n");
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "HIDE":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: HIDE <GROUP-NAME>", true))
+                    return CommandResult.ARGS;
+                group = args.nextToken();
+                if(g_cli.hideGroup(group, token))
+                    System.out.printf("Hidden %s to list of Shown Groups\n", group);
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "HIDEALL":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 0, "Usage: HIDEALL", true))
+                    return CommandResult.ARGS;
+                if(g_cli.hideAll(token))
+                    System.out.printf("Hiden all groups to list of Shown Groups\n");
+                else
+                    return CommandResult.FAIL;
+                break;
             default:
                 return CommandResult.NOTCMD;
         }
-
         // Successful Command, then refresh token with current token
+        if (token!=null) {
+            token = g_cli.refreshToken(token);
+        }
         return CommandResult.SUCCESS;
     }
 

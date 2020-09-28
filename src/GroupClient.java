@@ -64,6 +64,10 @@ public class GroupClient extends Client implements GroupClientInterface {
 
                 if(temp.size() == 1) {
                     newToken = (UserToken)temp.get(0);
+                    // List<String> groups = newToken.getShownGroups();
+                    // for(int index = 0; index < groups.size(); index++) {
+                    //     System.out.println(groups.get(index));
+                    // }
 
                     return newToken;
                 }
@@ -276,4 +280,104 @@ public class GroupClient extends Client implements GroupClientInterface {
             return "";
         }
     }
+
+    public boolean showGroup(String group, UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("SHOW");
+            message.addObject(group); //Add group name string
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getMessage());
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
+    public boolean showAll(UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("SHOWALL");
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getMessage());
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }    
+
+    public boolean hideGroup(String group, UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("HIDE");
+            message.addObject(group); //Add group name string
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getMessage());
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+
+    }
+
+    public boolean hideAll(UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("HIDEALL");
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getMessage());
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+
+    }    
 }

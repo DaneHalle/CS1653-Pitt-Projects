@@ -51,4 +51,10 @@ public interface UserToken {
 
     public boolean removeFromGroup(String name);
 
+    public boolean addToShown(String name);
+
+    public boolean removeFromShown(String name);
+
+    public List<String> getShownGroups();
+
 }   //-- end interface UserToken

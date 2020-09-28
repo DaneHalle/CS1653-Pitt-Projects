@@ -63,7 +63,7 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject();
-                        UserToken newToken = createToken(username);
+                        UserToken newToken = createToken(username, yourToken.getShownGroups());
                         // Response to the client. On eror, the clien will reveive a null token
                         response = new Envelope("OK");
                         response.addObject(newToken);
@@ -276,6 +276,104 @@ public class GroupThread extends Thread {
                         }
                     }
                     output.writeObject(response);
+                } else if (message.getMessage().equals("SHOW")) { //Client wants to remove user from a group
+                    /* TODO:  Write this handler */
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-SHOW | as request has bad contents.");
+                    } else {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-SHOW | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-TOKEN");
+                            System.out.println("\tFAIL-SHOW | as request has bad token.");
+                        } else {
+                            String groupName = (String)message.getObjContents().get(0);
+                            UserToken yourToken = (UserToken)message.getObjContents().get(1);
+
+                            if (showGroup(groupName, yourToken)){
+                                response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-SHOW");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                            }
+                        }
+                    }
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("SHOWALL")) { //Client wants to remove user from a group
+                    /* TODO:  Write this handler */
+                    if (message.getObjContents().size() != 1) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-SHOWALL | as request has bad contents.");
+                    } else {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-SHOWALL | as request has bad token.");
+                        } else {
+                            UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
+
+                            if (showAll(yourToken)){
+                                response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-SHOWALL");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                            }
+                        }
+                    }
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("HIDE")) { //Client wants to remove user from a group
+                    /* TODO:  Write this handler */
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-HIDE | as request has bad contents.");
+                    } else {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            System.out.println("\tFAIL-HIDE | as request has bad group.");
+                        }
+                        if (message.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-HIDE | as request has bad token.");
+                        } else {
+                            String groupName = (String)message.getObjContents().get(0); //Extract desired groupname to add user to
+                            UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the user's token
+
+                            if (hideGroup(groupName, yourToken)){
+                                response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-HIDE");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                            }
+                        }
+                    }
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("HIDEALL")) { //Client wants to remove user from a group
+                    /* TODO:  Write this handler */
+                    if (message.getObjContents().size() != 1) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        System.out.println("\tFAIL-HIDEALL | as request has bad contents.");
+                    } else {
+                        if (message.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            System.out.println("\tFAIL-HIDEALL | as request has bad token.");
+                        } else {
+                            UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
+
+                            if (hideAll(yourToken)){
+                                response = new Envelope("OK");
+                                System.out.println("\tSuccess");
+                            } else {
+                                response = new Envelope("FAIL-HIDEALL");
+                                System.out.printf("\t%s | Execution error\n", response.getMessage());
+                            }
+                        }
+                    }
+                    output.writeObject(response);
                 } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop
@@ -296,6 +394,17 @@ public class GroupThread extends Thread {
         if (my_gs.userList.checkUser(username)) {
             //Issue a new token with server's name, user's name, and user's groups
             UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+            return yourToken;
+        } else {
+            return null;
+        }
+    }
+
+    private UserToken createToken(String username, List<String> inShown) {
+        //Check that user exists
+        if (my_gs.userList.checkUser(username)) {
+            //Issue a new token with server's name, user's name, and user's groups
+            UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), new ArrayList<String>(inShown));
             return yourToken;
         } else {
             return null;
@@ -435,15 +544,14 @@ public class GroupThread extends Thread {
         String requester = token.getSubject();
         UserToken toAddToken = createToken(toAdd);
 
+        if (!token.getShownGroups().contains(groupname)) {
+            return false;
+        }
+
         //Both toAdd and requester are in groups and group exists
-
-        System.out.println(String.valueOf(my_gs.userList.checkUser(requester))+" "+String.valueOf(my_gs.userList.checkUser(toAdd))+" "+String.valueOf(my_gs.groupList.checkGroup(groupname))+" "+String.valueOf(!requester.equals(toAdd))+" "+String.valueOf(toAddToken!=null));
-
         if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toAdd) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toAdd) && toAddToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toAdd);
             String owner = my_gs.groupList.getGroupOwner(groupname);
-
-            System.out.println(String.valueOf(!currentGroupsForNewUser.contains(groupname))+" "+String.valueOf(requester.equals(owner)));
 
             if (!currentGroupsForNewUser.contains(groupname) && requester.equals(owner)) {
                 my_gs.userList.addGroup(toAdd, groupname);
@@ -462,6 +570,10 @@ public class GroupThread extends Thread {
         String requester = token.getSubject();
         UserToken toRemoveToken = createToken(toRemove);
 
+        if (!token.getShownGroups().contains(groupname)) {
+            return false;
+        }
+
         //Both toRemove and requester are in groups and group exists
         if (my_gs.userList.checkUser(requester) && my_gs.userList.checkUser(toRemove) && my_gs.groupList.checkGroup(groupname) && !requester.equals(toRemove) && toRemoveToken!=null) { 
             ArrayList<String> currentGroupsForNewUser = my_gs.userList.getUserGroups(toRemove);
@@ -478,5 +590,69 @@ public class GroupThread extends Thread {
         } else {
             return false;
         }
+    }
+
+    private boolean showGroup(String groupname, UserToken token) {
+        String requester = token.getSubject();
+
+        if (my_gs.userList.checkUser(requester) && token.getGroups().contains(groupname) && !token.getShownGroups().contains(groupname)) {
+            token.addToShown(groupname);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean showAll(UserToken token) {
+        String requester = token.getSubject();
+
+        if (my_gs.userList.checkUser(requester)) {
+            List<String> groups = token.getGroups();
+            List<String> shownGroups = token.getShownGroups();
+            for(int index = 0; index < groups.size(); index++) {
+                if (!shownGroups.contains(groups.get(index))) {
+                    token.addToShown(groups.get(index));
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hideGroup(String groupname, UserToken token) {
+        String requester = token.getSubject();
+        System.out.println(groupname);
+
+        if (my_gs.userList.checkUser(requester) && token.getShownGroups().contains(groupname)) {
+            List<String> groups = token.getShownGroups();
+            for(int index = 0; index < groups.size(); index++) {
+                System.out.println(groups.get(index));
+            }
+            System.out.println(token.removeFromShown(groupname));
+            groups = token.getShownGroups();
+            for(int index = 0; index < groups.size(); index++) {
+                System.out.println(groups.get(index));
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean hideAll(UserToken token) {
+        String requester = token.getSubject();
+
+        if (my_gs.userList.checkUser(requester)) {
+            List<String> shownGroups = token.getShownGroups();
+            for(int index = 0; index < shownGroups.size(); index++) {
+                token.removeFromShown(shownGroups.get(index));
+            }
+            // List<String> groups = token.getShownGroups();
+            // for(int index = 0; index < groups.size(); index++) {
+            //     System.out.println(groups.get(index));
+            // }
+            return true;
+        }
+        return false;
     }
 }
