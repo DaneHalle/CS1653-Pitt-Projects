@@ -52,7 +52,7 @@ public class GroupThread extends Thread {
                             //Respond to the client. On error, the client will receive a null token
                             response = new Envelope("OK");
                             response.addObject(yourToken);
-                            System.out.println("\tSuccess");
+                            // System.out.println("\tSuccess");
                         }
                     }
                     output.writeObject(response);
@@ -67,7 +67,7 @@ public class GroupThread extends Thread {
                         // Response to the client. On eror, the clien will reveive a null token
                         response = new Envelope("OK");
                         response.addObject(newToken);
-                        System.out.println("\tSuccess");
+                        // System.out.println("\tSuccess");
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("CUSER")) { //Client wants to create a user
@@ -89,7 +89,7 @@ public class GroupThread extends Thread {
                             String action = createUser(username, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-CUSER");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -117,7 +117,7 @@ public class GroupThread extends Thread {
                             String action = deleteUser(username, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-DUSER");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -146,7 +146,7 @@ public class GroupThread extends Thread {
                             String action = createGroup(groupName, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-CGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -175,7 +175,7 @@ public class GroupThread extends Thread {
                             String action = deleteGroup(groupName, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-DGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -214,7 +214,7 @@ public class GroupThread extends Thread {
                                             for(int i=0; i<members.size(); i++){
                                                 response.addObject(members.get(i));
                                             }
-                                            System.out.println("\tSuccess");
+                                            // System.out.println("\tSuccess");
                                         } else {
                                             response = new Envelope("FAIL-LMEMBERS");
                                             String action = "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
@@ -267,7 +267,7 @@ public class GroupThread extends Thread {
                             String action = addUserToGroup(toAddUsername, groupName, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-AUSERTOGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -301,7 +301,7 @@ public class GroupThread extends Thread {
                             String action = removeUserFromGroup(toAddUsername, groupName, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-RUSERFROMGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -330,7 +330,7 @@ public class GroupThread extends Thread {
                             String action = showGroup(groupName,yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-SHOW");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -354,7 +354,7 @@ public class GroupThread extends Thread {
                             String action = showAll(yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-SHOWALL");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -383,7 +383,7 @@ public class GroupThread extends Thread {
                             String action = hideGroup(groupName, yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-HIDE");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -407,7 +407,7 @@ public class GroupThread extends Thread {
                             String action = hideAll(yourToken);
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                System.out.println("\tSuccess");
+                                // System.out.println("\tSuccess");
                             } else {
                                 response = new Envelope("FAIL-HIDEALL");
                                 response.addObject(action.substring(1,action.length()-1));
