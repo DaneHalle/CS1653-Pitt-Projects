@@ -202,6 +202,7 @@ public class ClientGui{
 				String gn = JOptionPane.showInputDialog("Enter Group Name");
 				if(dest != null && gn != null){
 					StringTokenizer cmd = new StringTokenizer("uploadf " + file.getPath() + " " + dest + " " + gn);
+					rcli.mapCommand(new StringTokenizer("show " + gn));
 					rcli.mapCommand(cmd);
 				}
 			}else{
