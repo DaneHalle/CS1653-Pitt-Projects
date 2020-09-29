@@ -57,7 +57,7 @@ public class GroupThread extends Thread {
                             //Respond to the client. On error, the client will receive a null token
                             response = new Envelope("OK");
                             response.addObject(yourToken);
-                            // System.out.println("\tSuccess");
+                            System.out.println("\tSuccess");
                         }
                     }
                     output.writeObject(response);
@@ -74,7 +74,7 @@ public class GroupThread extends Thread {
                         // Response to the client. On eror, the clien will reveive a null token
                         response = new Envelope("OK");
                         response.addObject(newToken);
-                        // System.out.println("\tSuccess");
+                        System.out.println("\tSuccess");
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("CUSER")) { //Client wants to create a user
@@ -102,7 +102,7 @@ public class GroupThread extends Thread {
                             action = createUser(username, yourToken); //Creates user with given username
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-CUSER");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -136,7 +136,7 @@ public class GroupThread extends Thread {
                             action = deleteUser(username, yourToken); //Deletes user with given username
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-DUSER");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -171,7 +171,7 @@ public class GroupThread extends Thread {
                             action = createGroup(groupName, yourToken); //Creates group with given name
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-CGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -206,7 +206,7 @@ public class GroupThread extends Thread {
                             action = deleteGroup(groupName, yourToken); //Deletes group with given name
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-DGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -251,7 +251,7 @@ public class GroupThread extends Thread {
                                             for(int i=0; i<members.size(); i++){ //Ran into issues when pushing a List<String> 
                                                 response.addObject(members.get(i));
                                             }
-                                            // System.out.println("\tSuccess");
+                                            System.out.println("\tSuccess");
                                         } else { //Prints reason why it fails
                                             response = new Envelope("FAIL-LMEMBERS");
                                             action = "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
@@ -312,7 +312,7 @@ public class GroupThread extends Thread {
                             action = addUserToGroup(toAddUsername, groupName, yourToken); //Adds given user to given group
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-AUSERTOGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -354,7 +354,7 @@ public class GroupThread extends Thread {
                             action = removeUserFromGroup(toAddUsername, groupName, yourToken); //Removes given user from given group
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-RUSERFROMGROUP");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -389,7 +389,7 @@ public class GroupThread extends Thread {
                             action = showGroup(groupName,yourToken); //Adds given group to user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-SHOW");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -417,7 +417,7 @@ public class GroupThread extends Thread {
                             action = showAll(yourToken); //Adds all groups possible to the user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-SHOWALL");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -452,7 +452,7 @@ public class GroupThread extends Thread {
                             action = hideGroup(groupName, yourToken); //Removes given group from user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-HIDE");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -480,7 +480,7 @@ public class GroupThread extends Thread {
                             action = hideAll(yourToken); //Removes all groups from the user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
-                                // System.out.println("\tSuccess");
+                                System.out.println("\tSuccess");
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-HIDEALL");
                                 response.addObject(action.substring(1,action.length()-1));
@@ -743,7 +743,7 @@ public class GroupThread extends Thread {
 
         //Check that user is not only within the groupname group but also has it within their scope
         if (!token.getShownGroups().contains(groupname) && token.getGroups().contains(groupname)) {
-            return"\t"+requester+" has not escalated permissions for group "+groupname+"\n";
+            return "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
         }
 
         String out="FAIL";
