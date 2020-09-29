@@ -291,7 +291,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    private UserToken createToken(String username) {
+    protected UserToken createToken(String username) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             //Issue a new token with server's name, user's name, and user's groups
