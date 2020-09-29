@@ -139,6 +139,12 @@ public class RunClient {
         return token.getShownGroups();
     }
 
+    public List<String> getFilesForGroup(String group) {
+        if (!f_cli.isConnected()) 
+            return null;
+        return f_cli.listFilesForGroup(group, token);
+    }
+
     private boolean checkCmd(
         StringTokenizer args,
         int args_num,
@@ -352,6 +358,29 @@ public class RunClient {
                     System.out.printf("Hiden all groups to list of Shown Groups\n");
                 else
                     return CommandResult.FAIL;
+                break;
+            case "LFILESFORGROUP":
+                if (!fileConnected) 
+                    return CommandResult.FNOT;
+                if (!checkCmd(args, 1, "Usage: LFILESFORGROUP", false))
+                    return CommandResult.ARGS;
+                group=args.nextToken();
+                List<String> gFiles = f_cli.listFilesForGroup(group, token);
+                if (gFiles != null) {
+                    if(gFiles.size()>0){
+                        System.out.printf("Here are the files available to %s:\n", token.getSubject());
+                        for(int index=0; index < gFiles.size(); index++) {
+                            System.out.printf("\t%s\n", gFiles.get(index));
+                        }
+                    } else {
+                        System.out.printf("There are no files available to %s\n", token.getSubject());
+                    }
+                } else {
+                    return CommandResult.FAIL;
+                }
+
+
+
                 break;
             default:
                 return CommandResult.NOTCMD;

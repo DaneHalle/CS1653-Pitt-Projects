@@ -133,6 +133,41 @@ public class FileClient extends Client implements FileClientInterface {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public List<String> listFilesForGroup(String group, UserToken token) {
+        try {
+            Envelope message = null, e = null;
+            //Tell the server to return the member list
+            message = new Envelope("LFORGROUP");
+            message.addObject(group);
+            message.addObject(token); //Add requester's token
+            output.writeObject(message);
+
+            e = (Envelope)input.readObject();
+
+            //If server indicates success, return the member list
+            if(e.getMessage().equals("OK")) {
+                List<String> toReturn = new ArrayList<String>();
+                for(int index = 0; index < e.getObjContents().size(); index++) {
+                    String toAdd = (String)e.getObjContents().get(index);
+                    if(!toReturn.contains(toAdd)) {
+                        toReturn.add(toAdd);
+                    }
+                }
+                return toReturn;
+                // return (List<String>)e.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
+            }
+            System.out.printf("%s\n", e.getObjContents().get(0));
+
+            return null;
+
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
     public boolean upload(String sourceFile, String destFile, String group,
                           UserToken token) {
 
@@ -223,6 +258,8 @@ public class FileClient extends Client implements FileClientInterface {
         }
         return true;
     }
+
+
 
 }
 

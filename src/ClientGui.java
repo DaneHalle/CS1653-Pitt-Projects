@@ -140,8 +140,13 @@ public class ClientGui{
 		String[] help_prompts = {};
 		help_button.addActionListener(new arbAction(rcli, "help", help_prompts));
 
+		// help
+		JButton for_button = new JButton("Files From Group");
+		String[] for_prompts = {"Group"};
+		for_button.addActionListener(new arbAction(rcli, "lfilesforgroup", for_prompts));
 
-		JPanel action_panel = new JPanel(new GridLayout(18,1));
+
+		JPanel action_panel = new JPanel(new GridLayout(19,1));
 		// action_panel.setLayout(new BoxLayout(action_panel, BoxLayout.Y_AXIS));
 		action_panel.add(get_button);
 		action_panel.add(show_button);
@@ -161,6 +166,7 @@ public class ClientGui{
 		action_panel.add(deletef_button);
 		action_panel.add(status_button);
 		action_panel.add(help_button);
+		action_panel.add(for_button);
 
 		//layout
 		frame.add(menu_bar, BorderLayout.NORTH);

@@ -33,12 +33,13 @@ public class FileThread extends Thread {
             do {
                 Envelope e = (Envelope)input.readObject();
                 output.reset();
+
                 System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + e.getMessage());
                 String action="";
                 // Handler to list files that this user is allowed to see
                 if(e.getMessage().equals("LFILES")) {
                     /* TODO: Write this handler */
-                    if(e.getObjContents().size() < 1){
+                    if(e.getObjContents().size() != 1){
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-LFILES | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -65,10 +66,57 @@ public class FileThread extends Thread {
                         }
                     }
                     output.writeObject(response);
-                }
-                if(e.getMessage().equals("UPLOADF")) {
+                } else if(e.getMessage().equals("LFORGROUP")) {
+                    // Added 
+                    if(e.getObjContents().size() != 2){
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-LFORGROUP | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else {
+                        if(e.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            action="\tFAIL-LFORGROUP | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } 
+                        if(e.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-LFORGROUP | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else {
+                            String group = (String)e.getObjContents().get(0);
+                            UserToken token = (UserToken)e.getObjContents().get(1);
+                            String requester = token.getSubject();
+                            if (token.getGroups().contains(group)) {
+                                if (token.getShownGroups().contains(group)) {
+                                    response = new Envelope("OK");
+                                    List<ShareFile> filesInServer = my_fs.fileList.getFiles();
+                                    for(int index = 0; index < filesInServer.size(); index++) {
+                                        if(filesInServer.get(index).getGroup().equals(group)) {
+                                            response.addObject(filesInServer.get(index).getPath());
+                                        }
+                                    }
+                                } else {
+                                    response = new Envelope("FAIL-PRIVILEGE");
+                                    action= "\tFAIL-LFORGROUP | "+requester+" has not escalated permissions for group "+group+"\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
+                                }
+                            } else {
+                                response = new Envelope("FAIL-UNAUTHORIZED");
+                                action= "\tFAIL-LFORGROUP | "+requester+" is not a user within group "+group+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            }
 
-                    if(e.getObjContents().size() < 3) {
+                        }
+                    }
+                    output.writeObject(response);
+                } else if(e.getMessage().equals("UPLOADF")) {
+
+                    if(e.getObjContents().size() != 3) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-UPLOADF | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
