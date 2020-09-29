@@ -40,11 +40,13 @@ public class ClientGui{
 		menu_bar.add(system_menu);
 
 		// console output
-		JTextArea textArea = new JTextArea(50, 10);
-		textArea.setEditable(false);
-		PrintStream printStream = new PrintStream(new GuiConsole(textArea));
+		JTextArea console = new JTextArea();
+		console.setEditable(false);
+		PrintStream printStream = new PrintStream(new GuiConsole(console));
 		System.setOut(printStream);
 		System.setErr(printStream);
+
+		JScrollPane consoleShell = new JScrollPane(console);
 
 		// USER ACTIONS
 		// get a user token
@@ -130,7 +132,7 @@ public class ClientGui{
 
 		//layout
 		frame.add(menu_bar, BorderLayout.NORTH);
-		frame.add(textArea, BorderLayout.CENTER);
+		frame.add(consoleShell, BorderLayout.CENTER);
 		frame.add(action_panel, BorderLayout.WEST);
 
 
@@ -159,11 +161,12 @@ public class ClientGui{
 			prompts = _prompts;
 		}
 		public void actionPerformed(ActionEvent ev) {
+			String actionOptions = "";
 			for(int i = 0; i < prompts.length; i++){
-				action = action + " " + JOptionPane.showInputDialog(prompts[i]);
+				actionOptions = actionOptions + " " + JOptionPane.showInputDialog(prompts[i]);
 			}
-
-			StringTokenizer cmd = new StringTokenizer(action);
+			System.out.println("Action: " + action + " " + actionOptions);
+			StringTokenizer cmd = new StringTokenizer(action + " " + actionOptions);
 
 			rcli.mapCommand(cmd);
 		}
