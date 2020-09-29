@@ -1,0 +1,30 @@
+ExtraCredit Least Privilege
+---------------------------
+We implemented a Least Privilege system of sorts.
+If a user want access to commands that would affect a group of some kind,
+they must explicitly specify it with a command. User's can only escalate
+their privlege on groups they are already apart of. The following functionallity
+allows for this to be done:
+
+SHOW <GROUPNAME> - Adds GROUPNAME to the current user's scope allowing for commands
+					affecting the File system and Group system to be used.
+SHOWALL - Adds all groups available to a current user to the scope allowing for
+			commands affecting the File and Group systems to be used.
+HIDE <GROUPNAME> - Removes GROUPNAME from the current user's scope disallowing for
+					commands affecting the File and Group systems from being used.
+HIDEALL - Removes all groups from the current user's scope disallowing commands
+			affecting the File and Group systems from being used.
+
+This was achieved by altering the User structures of Token.java and UserList.java.
+Should a user want to reset their scope entirely without one of the above commands,
+they can either relog or re-retieve their token with a GET.
+
+
+ExtraCredit Client GUI
+----------------------
+We implemented a basic client gui for a user ti interact with the system without
+the use of the command line. This was done using java swing and java awt. All
+the functionallity from the cli client is built into the GUI with either a drop
+down menu or buttons within the interface. A console in the middle of the
+application lets the user see the progress of their commands and if they
+succeeded or failed.

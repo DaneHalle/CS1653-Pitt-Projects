@@ -94,7 +94,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
             
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -120,7 +120,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -145,7 +145,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -169,7 +169,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -203,7 +203,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 // return (List<String>)response.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return null;
 
         } catch(Exception e) {
@@ -229,7 +229,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -254,7 +254,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 return true;
             }
 
-            System.out.printf("FAILED: %s\n", response.getMessage());
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return false;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -276,4 +276,104 @@ public class GroupClient extends Client implements GroupClientInterface {
             return "";
         }
     }
+
+    public boolean showGroup(String group, UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("SHOW");
+            message.addObject(group); //Add group name string
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
+    public boolean showAll(UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("SHOWALL");
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }    
+
+    public boolean hideGroup(String group, UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("HIDE");
+            message.addObject(group); //Add group name string
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+
+    }
+
+    public boolean hideAll(UserToken token) {
+        try {
+            Envelope message = null, response = null;
+            //Tell the server to create a user
+            message = new Envelope("HIDEALL");
+            message.addObject(token); //Add the requester's token
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            //If server indicates success, return true
+            if(response.getMessage().equals("OK")) {
+                return true;
+            }
+            
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+
+    }    
 }

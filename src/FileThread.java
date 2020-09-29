@@ -33,22 +33,29 @@ public class FileThread extends Thread {
             do {
                 Envelope e = (Envelope)input.readObject();
                 output.reset();
-                System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + e.getMessage());
 
+                System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + e.getMessage());
+                String action="";
                 // Handler to list files that this user is allowed to see
                 if(e.getMessage().equals("LFILES")) {
                     /* TODO: Write this handler */
-                    if(e.getObjContents().size() < 1){
+                    if(e.getObjContents().size() != 1){
                         response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-LFILES | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if(e.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-LFILES | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             UserToken token = (UserToken)e.getObjContents().get(0);
                             String requester = token.getSubject();
                             response = new Envelope("OK");
 
-                            List<String> requesterGroups = token.getGroups();
+                            List<String> requesterGroups = token.getShownGroups();
                             List<ShareFile> filesInServer = my_fs.fileList.getFiles();
                             for(int index = 0; index < filesInServer.size(); index++) {
                                 if(requesterGroups.contains(filesInServer.get(index).getGroup())) {
@@ -59,32 +66,100 @@ public class FileThread extends Thread {
                         }
                     }
                     output.writeObject(response);
-                }
-                if(e.getMessage().equals("UPLOADF")) {
-
-                    if(e.getObjContents().size() < 3) {
+                } else if(e.getMessage().equals("LFORGROUP")) {
+                    // Added 
+                    if(e.getObjContents().size() != 2){
                         response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-LFORGROUP | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else {
+                        if(e.getObjContents().get(0) == null) {
+                            response = new Envelope("FAIL-BADGROUP");
+                            action="\tFAIL-LFORGROUP | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } 
+                        if(e.getObjContents().get(1) == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-LFORGROUP | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else {
+                            String group = (String)e.getObjContents().get(0);
+                            UserToken token = (UserToken)e.getObjContents().get(1);
+                            String requester = token.getSubject();
+                            if (token.getGroups().contains(group)) {
+                                if (token.getShownGroups().contains(group)) {
+                                    response = new Envelope("OK");
+                                    List<ShareFile> filesInServer = my_fs.fileList.getFiles();
+                                    for(int index = 0; index < filesInServer.size(); index++) {
+                                        if(filesInServer.get(index).getGroup().equals(group)) {
+                                            response.addObject(filesInServer.get(index).getPath());
+                                        }
+                                    }
+                                } else {
+                                    response = new Envelope("FAIL-PRIVILEGE");
+                                    action= "\tFAIL-LFORGROUP | "+requester+" has not escalated permissions for group "+group+"\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
+                                }
+                            } else {
+                                response = new Envelope("FAIL-UNAUTHORIZED");
+                                action= "\tFAIL-LFORGROUP | "+requester+" is not a user within group "+group+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            }
+
+                        }
+                    }
+                    output.writeObject(response);
+                } else if(e.getMessage().equals("UPLOADF")) {
+
+                    if(e.getObjContents().size() != 3) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-UPLOADF | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if(e.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADPATH");
+                            action="\tFAIL-UPLOADF | as request has bad path.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if(e.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADGROUP");
+                            action="\tFAIL-UPLOADF | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if(e.getObjContents().get(2) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-UPLOADF | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String remotePath = (String)e.getObjContents().get(0);
                             String group = (String)e.getObjContents().get(1);
                             UserToken yourToken = (UserToken)e.getObjContents().get(2); //Extract token
 
                             if (FileServer.fileList.checkFile(remotePath)) {
-                                System.out.printf("Error: file already exists at %s\n", remotePath);
                                 response = new Envelope("FAIL-FILEEXISTS"); //Success
+                                action="\tError: file already exists at "+remotePath+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             } else if (!yourToken.getGroups().contains(group)) {
-                                System.out.printf("Error: user missing valid token for group %s\n", group);
                                 response = new Envelope("FAIL-UNAUTHORIZED"); //Success
-                            } else  {
+                                action="\tError: user missing valid token for group "+group+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            } else if(!yourToken.getShownGroups().contains(group)) {
+                                response = new Envelope("FAIL-PRIVILEGE"); //Success
+                                action="\t"+yourToken.getSubject()+" has not escalated permissions for group "+group+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            }else  {
                                 File file = new File("shared_files/"+remotePath.replace('/', '_'));
                                 file.createNewFile();
                                 FileOutputStream fos = new FileOutputStream(file);
@@ -106,8 +181,10 @@ public class FileThread extends Thread {
                                     FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath);
                                     response = new Envelope("OK"); //Success
                                 } else {
-                                    System.out.printf("Error reading file %s from client\n", remotePath);
                                     response = new Envelope("ERROR-TRANSFER"); //Success
+                                    action="\tError reading file "+remotePath+" from client\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
                                 }
                                 fos.close();
                             }
@@ -121,21 +198,33 @@ public class FileThread extends Thread {
                     Token t = (Token)e.getObjContents().get(1);
                     ShareFile sf = FileServer.fileList.getFile("/"+remotePath);
                     if (sf == null) {
-                        System.out.printf("Error: File %s doesn't exist\n", remotePath);
                         e = new Envelope("ERROR_FILEMISSING");
+                        action="\tError: File "+remotePath+" doesn't exist\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                         output.writeObject(e);
 
                     } else if (!t.getGroups().contains(sf.getGroup())) {
-                        System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
                         e = new Envelope("ERROR_PERMISSION");
+                        action="\tError user "+t.getSubject()+" doesn't have permission\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                        output.writeObject(e);
+                    } else if (!t.getShownGroups().contains(sf.getGroup())) {
+                        e = new Envelope("ERROR_PRIVILEGE");
+                        action="\t"+t.getSubject()+" has not escalated permissions for group "+sf.getGroup()+"\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                         output.writeObject(e);
                     } else {
 
                         try {
                             File f = new File("shared_files/_"+remotePath.replace('/', '_'));
                             if (!f.exists()) {
-                                System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
                                 e = new Envelope("ERROR_NOTONDISK");
+                                action="\tError file _"+remotePath.replace('/', '_')+" missing from disk\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                                 output.writeObject(e);
 
                             } else {
@@ -144,7 +233,9 @@ public class FileThread extends Thread {
                                 do {
                                     byte[] buf = new byte[4096];
                                     if (e.getMessage().compareTo("DOWNLOADF")!=0) {
-                                        System.out.printf("Server error: %s\n", e.getMessage());
+                                        action="\tServer error: "+e.getMessage()+"\n";
+                                        response.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
                                         break;
                                     }
                                     e = new Envelope("CHUNK");
@@ -152,7 +243,9 @@ public class FileThread extends Thread {
                                     if (n > 0) {
                                         System.out.printf(".");
                                     } else if (n < 0) {
-                                        System.out.println("Read error");
+                                        action="\tRead error\n";
+                                        response.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
 
                                     }
 
@@ -177,21 +270,19 @@ public class FileThread extends Thread {
                                     if(e.getMessage().compareTo("OK")==0) {
                                         System.out.printf("File data upload successful\n");
                                     } else {
-
-                                        System.out.printf("Upload failed: %s\n", e.getMessage());
-
+                                        action="\tUpload failed: "+e.getMessage()+"\n";
+                                        response.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
                                     }
-
                                 } else {
-
-                                    System.out.printf("Upload failed: %s\n", e.getMessage());
-
+                                    action="\tUpload failed: "+e.getMessage()+"\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
                                 }
                             }
                         } catch(Exception e1) {
                             System.err.println("Error: " + e.getMessage());
                             e1.printStackTrace(System.err);
-
                         }
                     }
                 } else if (e.getMessage().compareTo("DELETEF")==0) {
@@ -200,12 +291,21 @@ public class FileThread extends Thread {
                     Token t = (Token)e.getObjContents().get(1);
                     ShareFile sf = FileServer.fileList.getFile("/"+remotePath);
                     if (sf == null) {
-                        System.out.printf("Error: File %s doesn't exist\n", remotePath);
                         e = new Envelope("ERROR_DOESNTEXIST");
+                        action="\tError: File "+remotePath+" doesn't exist\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else if (!t.getGroups().contains(sf.getGroup())) {
-                        System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
                         e = new Envelope("ERROR_PERMISSION");
-                    } else {
+                        action="\tError user "+t.getSubject()+" doesn't have permission\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else if (!t.getShownGroups().contains(sf.getGroup())) {
+                        e = new Envelope("ERROR-PRIVILEGE"); //Success
+                        action="\t"+t.getSubject()+" has not escalated permissions for group "+sf.getGroup()+"\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    }else {
 
                         try {
 
@@ -213,15 +313,19 @@ public class FileThread extends Thread {
                             File f = new File("shared_files/"+"_"+remotePath.replace('/', '_'));
 
                             if (!f.exists()) {
-                                System.out.printf("Error file %s missing from disk\n", "_"+remotePath.replace('/', '_'));
                                 e = new Envelope("ERROR_FILEMISSING");
+                                action="\tError file _"+remotePath.replace('/', '_')+" missing from disk\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             } else if (f.delete()) {
                                 System.out.printf("File %s deleted from disk\n", "_"+remotePath.replace('/', '_'));
                                 FileServer.fileList.removeFile("/"+remotePath);
                                 e = new Envelope("OK");
                             } else {
-                                System.out.printf("Error deleting file %s from disk\n", "_"+remotePath.replace('/', '_'));
                                 e = new Envelope("ERROR_DELETE");
+                                action="\tError deleting file _"+remotePath.replace('/', '_')+" from disk\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
                             }
 
 
