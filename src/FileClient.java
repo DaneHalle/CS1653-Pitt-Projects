@@ -27,6 +27,7 @@ public class FileClient extends Client implements FileClientInterface {
                 System.out.printf("File %s deleted successfully\n", filename);
             } else {
                 System.out.printf("Error deleting file %s (%s)\n", filename, env.getMessage());
+                System.out.printf("%s\n", env.getObjContents().get(0));
                 return false;
             }
         } catch (IOException e1) {
@@ -75,6 +76,7 @@ public class FileClient extends Client implements FileClientInterface {
                 } else {
                     System.out.printf("Error reading file %s (%s)\n", sourceFile, env.getMessage());
                     file.delete();
+                    System.out.printf("%s\n", env.getObjContents().get(0));
                     return false;
                 }
             }
@@ -120,6 +122,7 @@ public class FileClient extends Client implements FileClientInterface {
                 return toReturn;
                 // return (List<String>)e.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
+            System.out.printf("%s\n", e.getObjContents().get(0));
 
             return null;
 
@@ -157,8 +160,8 @@ public class FileClient extends Client implements FileClientInterface {
                 System.out.printf("Meta data upload successful\n");
 
             } else {
-
                 System.out.printf("Upload failed: %s\n", env.getMessage());
+                System.out.printf("%s\n", env.getObjContents().get(0));
                 return false;
             }
 
@@ -175,6 +178,7 @@ public class FileClient extends Client implements FileClientInterface {
                     System.out.printf(".");
                 } else if (n < 0) {
                     System.out.println("Read error");
+                    System.out.printf("FAILED: %s\n", env.getObjContents().get(0));
                     return false;
                 }
 
@@ -201,12 +205,14 @@ public class FileClient extends Client implements FileClientInterface {
                 } else {
 
                     System.out.printf("\nUpload failed: %s\n", env.getMessage());
+                    System.out.printf("FAILED: %s\n", env.getObjContents().get(0));
                     return false;
                 }
 
             } else {
 
                 System.out.printf("Upload failed: %s\n", env.getMessage());
+                System.out.printf("FAILED: %s\n", env.getObjContents().get(0));
                 return false;
             }
 

@@ -123,6 +123,22 @@ public class RunClient {
         return true;
     }
 
+    public List<String> getUnShownGroups() {
+        List<String> out = new ArrayList<String>();
+        List<String> allGroups = token.getGroups();
+        List<String> shownGroups = token.getShownGroups();
+        for(int index = 0; index < allGroups.size(); index++) {
+            if (!shownGroups.contains(allGroups.get(index))) {
+                out.add(allGroups.get(index));
+            }
+        }
+        return out;
+    }
+
+    public List<String> getShownGroups() {
+        return token.getShownGroups();
+    }
+
     private boolean checkCmd(
         StringTokenizer args,
         int args_num,

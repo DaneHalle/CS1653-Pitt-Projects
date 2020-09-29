@@ -35,17 +35,22 @@ public class GroupThread extends Thread {
                 Envelope message = (Envelope)input.readObject();
                 output.reset();
                 System.out.println(socket.getInetAddress()+":"+socket.getPort()+" | Request received: " + message.getMessage());
+                String action="";
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
                     if (message.getObjContents().size() != 1) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-GET | as request has bad contents.");
+                        action="\tFAIL-GET | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         String username = (String)message.getObjContents().get(0); //Get the username
                         if (username == null) {
                             response = new Envelope("FAIL");
                             response.addObject(null);
-                            System.out.println("\tFAIL-GET | as given username was null");
+                            action="\tFAIL-GET | as given username was null\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             UserToken yourToken = createToken(username, false, true); //Create a token
     
@@ -59,7 +64,9 @@ public class GroupThread extends Thread {
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
                     if (message.getObjContents().size() != 1) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-GET | as request has bad contents.");
+                        action="\tFAIL-GET | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject(); //Get username associated with the token
@@ -73,20 +80,26 @@ public class GroupThread extends Thread {
                 } else if (message.getMessage().equals("CUSER")) { //Client wants to create a user
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-CUSER | as request has bad contents.");
+                        action="\tFAIL-CUSER | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADUSER");
-                            System.out.println("\tFAIL-GET | as request has bad user.");
+                            action="\tFAIL-GET | as request has bad user.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-GET | as request has bad token.");
+                            action="\tFAIL-GET | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String username = (String)message.getObjContents().get(0); //Extract the username
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            String action = createUser(username, yourToken); //Creates user with given username
+                            action = createUser(username, yourToken); //Creates user with given username
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 // System.out.println("\tSuccess");
@@ -101,20 +114,26 @@ public class GroupThread extends Thread {
                 } else if (message.getMessage().equals("DUSER")) { //Client wants to delete a user
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-DUSER | as request has bad contents.");
+                        action="\tFAIL-DUSER | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADUSER");
-                            System.out.println("\tFAIL-DUSER | as request has bad user.");
+                            action="\tFAIL-DUSER | as request has bad user.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-DUSER | as request has bad token.");
+                            action="\tFAIL-DUSER | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String username = (String)message.getObjContents().get(0); //Extract the username
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            String action = deleteUser(username, yourToken); //Deletes user with given username
+                            action = deleteUser(username, yourToken); //Deletes user with given username
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 // System.out.println("\tSuccess");
@@ -130,20 +149,26 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-CGROUPC | as request has bad contents.");
+                        action="\tFAIL-CGROUPC | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-CGROUPC | as request has bad group.");
+                            action="\tFAIL-CGROUPC | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-CGROUPC | as request has bad token.");
+                            action="\tFAIL-CGROUPC | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            String action = createGroup(groupName, yourToken); //Creates group with given name
+                            action = createGroup(groupName, yourToken); //Creates group with given name
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 // System.out.println("\tSuccess");
@@ -159,20 +184,26 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-DGROUP | as request has bad contents.");
+                        action="\tFAIL-DGROUP | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-DGROUP | as request has bad group.");
+                            action="\tFAIL-DGROUP | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-DGROUP | as request has bad token.");
+                            action="\tFAIL-DGROUP | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            String action = deleteGroup(groupName, yourToken); //Deletes group with given name
+                            action = deleteGroup(groupName, yourToken); //Deletes group with given name
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 // System.out.println("\tSuccess");
@@ -188,15 +219,21 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-LMEMBERS | as request has bad contents.");
+                        action="\tFAIL-LMEMBERS | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-LMEMBERS | as request has bad group.");
+                            action="\tFAIL-LMEMBERS | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-LMEMBERS | as request has bad token.");
+                            action="\tFAIL-LMEMBERS | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String groupname = (String)message.getObjContents().get(0); //Extract desired group name
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
@@ -217,25 +254,25 @@ public class GroupThread extends Thread {
                                             // System.out.println("\tSuccess");
                                         } else { //Prints reason why it fails
                                             response = new Envelope("FAIL-LMEMBERS");
-                                            String action = "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
+                                            action = "\t"+requester+" has not escalated permissions for group "+groupname+"\n";
                                             response.addObject(action.substring(1,action.length()-1));
                                             System.out.printf("%s", action);
                                         }
                                     } else { //Prints reason why it fails
                                         response = new Envelope("FAIL-LMEMBERS");
-                                        String action = "\t"+requester+" is not owner of group "+groupname+"\n";
+                                        action = "\t"+requester+" is not owner of group "+groupname+"\n";
                                         response.addObject(action.substring(1,action.length()-1));
                                         System.out.printf("%s", action);
                                     }
                                 } else { //Prints reason why it fails
                                     response = new Envelope("FAIL-LMEMBERS");
-                                    String action = "\t"+requester+" is not a member of group "+groupname+"\n";
+                                    action = "\t"+requester+" is not a member of group "+groupname+"\n";
                                     response.addObject(action.substring(1,action.length()-1));
                                     System.out.printf("%s", action);
                                 }
                             } else { //Prints reason why it fails
                                 response = new Envelope("FAIL-LMEMBERS");
-                                String action = "\t"+requester+" is not a user on the server \n";
+                                action = "\t"+requester+" is not a user on the server \n";
                                 response.addObject(action.substring(1,action.length()-1));
                                 System.out.printf("%s", action);
                             }
@@ -246,25 +283,33 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 3) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-AUSERTOGROUP | as request has bad contents.");
+                        action="\tFAIL-AUSERTOGROUP | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADUSER");
-                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad user.");
+                            action="\tFAIL-AUSERTOGROUP | as request has bad user.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad group.");
+                            action="\tFAIL-AUSERTOGROUP | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(2) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-AUSERTOGROUP | as request has bad token.");
+                            action="\tFAIL-AUSERTOGROUP | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            String action = addUserToGroup(toAddUsername, groupName, yourToken); //Adds given user to given group
+                            action = addUserToGroup(toAddUsername, groupName, yourToken); //Adds given user to given group
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
@@ -280,25 +325,33 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 3) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad contents.");
+                        action="\tFAIL-RUSERFROMGROUP | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADUSER");
-                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad user.");
+                            action="\tFAIL-RUSERFROMGROUP | as request has bad user.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad group.");
+                            action="\tFAIL-RUSERFROMGROUP | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(2) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-RUSERFROMGROUP | as request has bad token.");
+                            action="\tFAIL-RUSERFROMGROUP | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String toAddUsername = (String)message.getObjContents().get(0); //Extract desired user to add
                             String groupName = (String)message.getObjContents().get(1); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(2); //Extract the user's token
 
-                            String action = removeUserFromGroup(toAddUsername, groupName, yourToken); //Removes given user from given group
+                            action = removeUserFromGroup(toAddUsername, groupName, yourToken); //Removes given user from given group
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
@@ -314,20 +367,26 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-SHOW | as request has bad contents.");
+                        action="\tFAIL-SHOW | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-SHOW | as request has bad group.");
+                            action="\tFAIL-SHOW | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-TOKEN");
-                            System.out.println("\tFAIL-SHOW | as request has bad token.");
+                            action="\tFAIL-SHOW | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired groupname to add to scope
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the user's token
 
-                            String action = showGroup(groupName,yourToken); //Adds given group to user's scope
+                            action = showGroup(groupName,yourToken); //Adds given group to user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
@@ -343,15 +402,19 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 1) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-SHOWALL | as request has bad contents.");
+                        action="\tFAIL-SHOWALL | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-SHOWALL | as request has bad token.");
+                            action="\tFAIL-SHOWALL | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
 
-                            String action = showAll(yourToken); //Adds all groups possible to the user's scope
+                            action = showAll(yourToken); //Adds all groups possible to the user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
@@ -367,20 +430,26 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-HIDE | as request has bad contents.");
+                        action="\tFAIL-HIDE | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
-                            System.out.println("\tFAIL-HIDE | as request has bad group.");
+                            action="\tFAIL-HIDE | as request has bad group.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         }
                         if (message.getObjContents().get(1) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-HIDE | as request has bad token.");
+                            action="\tFAIL-HIDE | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String groupName = (String)message.getObjContents().get(0); //Extract desired groupname to add user to
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the user's token
 
-                            String action = hideGroup(groupName, yourToken); //Removes given group from user's scope
+                            action = hideGroup(groupName, yourToken); //Removes given group from user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
@@ -396,15 +465,19 @@ public class GroupThread extends Thread {
                     /* TODO:  Write this handler */
                     if (message.getObjContents().size() != 1) {
                         response = new Envelope("FAIL-BADCONTENTS");
-                        System.out.println("\tFAIL-HIDEALL | as request has bad contents.");
+                        action="\tFAIL-HIDEALL | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
                     } else {
                         if (message.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADTOKEN");
-                            System.out.println("\tFAIL-HIDEALL | as request has bad token.");
+                            action="\tFAIL-HIDEALL | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             UserToken yourToken = (UserToken)message.getObjContents().get(0); //Extract the user's token
 
-                            String action = hideAll(yourToken); //Removes all groups from the user's scope
+                            action = hideAll(yourToken); //Removes all groups from the user's scope
                             if (action.equals("OK")){
                                 response = new Envelope("OK");
                                 // System.out.println("\tSuccess");
