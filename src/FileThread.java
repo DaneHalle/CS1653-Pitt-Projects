@@ -48,7 +48,7 @@ public class FileThread extends Thread {
                             String requester = token.getSubject();
                             response = new Envelope("OK");
 
-                            List<String> requesterGroups = token.getGroups();
+                            List<String> requesterGroups = token.getShownGroups();
                             List<ShareFile> filesInServer = my_fs.fileList.getFiles();
                             for(int index = 0; index < filesInServer.size(); index++) {
                                 if(requesterGroups.contains(filesInServer.get(index).getGroup())) {
@@ -81,7 +81,7 @@ public class FileThread extends Thread {
                             if (FileServer.fileList.checkFile(remotePath)) {
                                 System.out.printf("Error: file already exists at %s\n", remotePath);
                                 response = new Envelope("FAIL-FILEEXISTS"); //Success
-                            } else if (!yourToken.getGroups().contains(group)) {
+                            } else if (!yourToken.getShownGroups().contains(group)) {
                                 System.out.printf("Error: user missing valid token for group %s\n", group);
                                 response = new Envelope("FAIL-UNAUTHORIZED"); //Success
                             } else  {
@@ -125,7 +125,7 @@ public class FileThread extends Thread {
                         e = new Envelope("ERROR_FILEMISSING");
                         output.writeObject(e);
 
-                    } else if (!t.getGroups().contains(sf.getGroup())) {
+                    } else if (!t.getShownGroups().contains(sf.getGroup())) {
                         System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
                         e = new Envelope("ERROR_PERMISSION");
                         output.writeObject(e);
@@ -202,7 +202,7 @@ public class FileThread extends Thread {
                     if (sf == null) {
                         System.out.printf("Error: File %s doesn't exist\n", remotePath);
                         e = new Envelope("ERROR_DOESNTEXIST");
-                    } else if (!t.getGroups().contains(sf.getGroup())) {
+                    } else if (!t.getShownGroups().contains(sf.getGroup())) {
                         System.out.printf("Error user %s doesn't have permission\n", t.getSubject());
                         e = new Envelope("ERROR_PERMISSION");
                     } else {

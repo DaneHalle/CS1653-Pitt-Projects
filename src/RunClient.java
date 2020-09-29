@@ -39,16 +39,16 @@ public class RunClient {
         port = Integer.parseInt(cmds.nextToken());
 
         switch(server_type) {
-        case "GROUP":
-            g_cli.connect(server, port);
-            g_cli.verify("GROUP");
-            break;            
-        case "FILE":
-            f_cli.connect(server, port);
-            f_cli.verify("FILE");
-            break;
-        default:
-            return false;
+            case "GROUP":
+                g_cli.connect(server, port);
+                g_cli.verify("GROUP");
+                break;            
+            case "FILE":
+                f_cli.connect(server, port);
+                f_cli.verify("FILE");
+                break;
+            default:
+                return false;
         }
 
         return true;
@@ -68,11 +68,39 @@ public class RunClient {
             System.out.println("Issuer: " + token.getIssuer());
             System.out.println("Subject: " + token.getSubject());
             List<String> groups = token.getGroups();
-            System.out.println("Groups: ");
+            List<String> shownGroups = token.getShownGroups();
+            System.out.println("All Groups: ");
             for(int i=0; i < groups.size(); i++) {
                 System.out.println(" - " + groups.get(i));
             }
+
+            System.out.println("Shown Groups: ");
+            for(int i=0; i < shownGroups.size(); i++) {
+                System.out.println(" - " + shownGroups.get(i));
+            }
         }
+    }
+
+    public void help() {
+        System.out.println("Here are the commands that are accessible to you.");
+        String g_connection = g_cli.isConnected() ? "" : "\tCONNECT group <IP> <PORT> - connects to the group server at the given IP and PORT\n";
+        String f_connection = f_cli.isConnected() ? "" : "\tCONNECT file <IP> <PORT> - connects to the file server at the given IP and PORT\n";
+        System.out.print(g_connection+""+f_connection);
+        if(token==null){
+            System.out.println("\tNo token exists for the current client.\n\t\tGET <USER> - gets the token for the given USER");
+        }else{
+            String admin=token.getShownGroups().contains("ADMIN") ? "\tCUSER <USER> - creates a user with the given USERname\n\tDUSER <USER> - deletes a user with the given USERname\n" : "";
+            System.out.print(admin);
+            String groups="\tCGROUP <GROUPNAME> - creates a group with the given GROUPNAME\n\tDGROUP <GROUPNAME> - deletes a group with the given GROUPNAME should you be owner\n";
+            System.out.print(groups);
+            String management=token.getShownGroups().size()>0 ? "\tAUSERTOGROUP <USER> <GROUPNAME> - adds USER to group GROUPNAME if you are owner of GROUPNAME\n\tRUSERFROMGROUP <USER> <GROUPNAME> - removes USER from group GROUPNAME if you are the owner of GROUPNAME\n" : "";
+            System.out.print(management);
+            String file=token.getShownGroups().size()>0 ? "\tLFILES - lists all files accessible to you\n\tUPLOADF <src_file> <dest_file> <GROUPNAME> - uplaods local src_file to GROUPNAME under name of dest_file\n\tDOWNLOADF <src_file> <dest_file> - downloads src_file from server to local file name dest_file\n\tDELETEF <file> - deletes file from the server\n" : "";
+            System.out.print(file);
+            String least=token.getGroups().size()>0 ? "\tSHOW <GROUPNAME> - Adds GROUPNAME to scope to allow commands and management\n\tSHOWALL - Adds all available groups to scope to allow commands and management\n\tHIDE <GROUPNAME> - Removes GROUPNAME from scope to disallow commands and management\n\tHIDEALL - Removes all available groups from scope to disallow commands and management" : "";
+            System.out.print(least);
+        }
+        System.out.println("\tHELP - shows available commands to you dynamically\n\tEXIT - disconnects the client from any server they are connected to and ends the program");
     }
 
     private boolean getToken(StringTokenizer args) {
@@ -261,7 +289,6 @@ public class RunClient {
             case "DELETEF":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
-                System.out.println("TEST");
                 if (!checkCmd(args, 1, "Usage: DELETEF <FILENAME>", false))
                     return CommandResult.ARGS;
                 src_file = args.nextToken();
@@ -270,11 +297,55 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "SHOW":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: SHOW <GROUP-NAME>", true))
+                    return CommandResult.ARGS;
+                group = args.nextToken();
+                if(g_cli.showGroup(group, token))
+                    System.out.printf("Added %s to list of Shown Groups\n", group);
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "SHOWALL":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 0, "Usage: SHOWALL", true))
+                    return CommandResult.ARGS;
+                if(g_cli.showAll(token))
+                    System.out.printf("Added all groups to list of Shown Groups\n");
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "HIDE":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: HIDE <GROUP-NAME>", true))
+                    return CommandResult.ARGS;
+                group = args.nextToken();
+                if(g_cli.hideGroup(group, token))
+                    System.out.printf("Hidden %s to list of Shown Groups\n", group);
+                else
+                    return CommandResult.FAIL;
+                break;
+            case "HIDEALL":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 0, "Usage: HIDEALL", true))
+                    return CommandResult.ARGS;
+                if(g_cli.hideAll(token))
+                    System.out.printf("Hiden all groups to list of Shown Groups\n");
+                else
+                    return CommandResult.FAIL;
+                break;
             default:
                 return CommandResult.NOTCMD;
         }
-
         // Successful Command, then refresh token with current token
+        if (token!=null) {
+            token = g_cli.refreshToken(token);
+        }
         return CommandResult.SUCCESS;
     }
 
@@ -290,37 +361,40 @@ public class RunClient {
         }
 
         switch(cmd) {
-        case "CONNECT":
-            connect(cmds);
-            break;
-        case "STATUS":
-            connectionStatus();
-            printToken();
-            break;
-        case "EXIT":
-            if (g_cli.isConnected())
-                g_cli.disconnect();
-            if (f_cli.isConnected())
-                f_cli.disconnect();
-            return false;
-
-        case "GET":
-            getToken(cmds);
-            break;
-        default:
-            // Handle as Group Command or File Command
-            CommandResult res = mapServerCommand(cmd, cmds);
-            if(res == CommandResult.NOTCMD) {
-                System.out.printf("Command %s does not exist\n", preformat);
+            case "CONNECT":
+                connect(cmds);
                 break;
-            } else if (res == CommandResult.FNOT) {
-                System.out.println("The File Server is not connected.");
-            } else if (res == CommandResult.GNOT) {
-                System.out.println("The Group Server is not connected.");
-            } else if (res == CommandResult.FAIL) {
-                System.out.printf("Unable to use command %s\n", cmd);
-            }
-            break;
+            case "STATUS":
+                connectionStatus();
+                printToken();
+                break;
+            case "EXIT":
+                if (g_cli.isConnected())
+                    g_cli.disconnect();
+                if (f_cli.isConnected())
+                    f_cli.disconnect();
+                return false;
+
+            case "GET":
+                getToken(cmds);
+                break;
+            case "HELP":
+                help();
+                break;
+            default:
+                // Handle as Group Command or File Command
+                CommandResult res = mapServerCommand(cmd, cmds);
+                if(res == CommandResult.NOTCMD) {
+                    System.out.printf("Command %s does not exist\n", preformat);
+                    break;
+                } else if (res == CommandResult.FNOT) {
+                    System.out.println("The File Server is not connected.");
+                } else if (res == CommandResult.GNOT) {
+                    System.out.println("The Group Server is not connected.");
+                } else if (res == CommandResult.FAIL) {
+                    // System.out.printf("Unable to use command %s\n", cmd);
+                }
+                break;
         }
 
         return true;
