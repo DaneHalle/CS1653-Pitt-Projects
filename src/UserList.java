@@ -127,6 +127,9 @@ public class UserList implements java.io.Serializable {
                 if(groups.contains(group)) {
                     groups.remove(groups.indexOf(group));
                 }
+                if(shown.contains(group)) {
+                    shown.remove(shown.indexOf(group));
+                }
             }
         }
 
