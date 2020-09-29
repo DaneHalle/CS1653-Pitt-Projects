@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.PrintStream;
 import java.util.StringTokenizer;
+import java.io.File;
 
 public class ClientGui{
 	public static void main(String args[]){
@@ -54,26 +55,6 @@ public class ClientGui{
 		String[] get_prompts = {"Enter username"};
 		get_button.addActionListener(new arbAction(rcli, "get", get_prompts));
 
-		// show a group within a user's scope
-		JButton show_button = new JButton("Escalate Permissions");
-		String[] show_prompts = {"Enter groupname"};
-		show_button.addActionListener(new arbAction(rcli, "show", show_prompts));
-
-		// show all groups within a user's scope
-		JButton showall_button = new JButton("Escalate All");
-		String[] showall_prompts = {};
-		showall_button.addActionListener(new arbAction(rcli, "showall", showall_prompts));
-
-		// hide a group from a user's scope
-		JButton hide_button = new JButton("De-escalate Permissions");
-		String[] hide_prompts = {"Enter groupname"};
-		hide_button.addActionListener(new arbAction(rcli, "hide", hide_prompts));
-
-		// hide all groups from a user's scope
-		JButton hideall_button = new JButton("De-escalate All");
-		String[] hideall_prompts = {};
-		hideall_button.addActionListener(new arbAction(rcli, "hideall", hideall_prompts));
-
 		// create user
 		JButton cuser_button = new JButton("Create User");
 		String[] cuser_prompts = {"Enter new username"};
@@ -112,7 +93,10 @@ public class ClientGui{
 		// upload a file
 		JButton uploadf_button = new JButton("Upload File");
 		String[] uploadf_prompts = {"Enter src filename", "Enter dest filename", "Enter group name"};
-		uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		// uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		uploadf_button.addActionListener(new fileUpload(rcli, frame));
+
+
 
 		// list files
 		JButton lfiles_button = new JButton("List Files");
@@ -134,19 +118,9 @@ public class ClientGui{
 		String[] status_prompts = {};
 		status_button.addActionListener(new arbAction(rcli, "status", status_prompts));
 
-		// help
-		JButton help_button = new JButton("HELP");
-		String[] help_prompts = {};
-		help_button.addActionListener(new arbAction(rcli, "help", help_prompts));
-
-
-		JPanel action_panel = new JPanel(new GridLayout(18,1));
+		JPanel action_panel = new JPanel(new GridLayout(13,1));
 		// action_panel.setLayout(new BoxLayout(action_panel, BoxLayout.Y_AXIS));
 		action_panel.add(get_button);
-		action_panel.add(show_button);
-		action_panel.add(showall_button);
-		action_panel.add(hide_button);
-		action_panel.add(hideall_button);
 		action_panel.add(cuser_button);
 		action_panel.add(duser_button);
 		action_panel.add(cgroup_button);
@@ -159,7 +133,6 @@ public class ClientGui{
 		action_panel.add(downloadf_button);
 		action_panel.add(deletef_button);
 		action_panel.add(status_button);
-		action_panel.add(help_button);
 
 		//layout
 		frame.add(menu_bar, BorderLayout.NORTH);
@@ -199,12 +172,43 @@ public class ClientGui{
 				if(temp != null) actionOptions = actionOptions + " " + temp;
 				else flag = false;
 			}
-			System.out.println("Action: " + action.toUpperCase() + " " + actionOptions);
+			System.out.println("Action: " + action + " " + actionOptions);
 			StringTokenizer cmd = new StringTokenizer(action + " " + actionOptions);
 
 			if(flag) rcli.mapCommand(cmd);
 			else System.out.println("\tAborted action");
 			System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
+		}
+	}
+
+
+	static class fileUpload implements ActionListener{
+		RunClient rcli;
+		JFrame parentFrame;
+		File file;
+		public fileUpload(RunClient _rcli, JFrame _parentFrame){
+			rcli = _rcli;
+			parentFrame = _parentFrame;
+		}
+		public void actionPerformed(ActionEvent ev) {
+			final JFileChooser fc = new JFileChooser();
+			int val = fc.showDialog(parentFrame, "Choose file to upload");
+			if(val == JFileChooser.CANCEL_OPTION){
+				System.out.println("Upload cancelled by client");
+			}else if(val == JFileChooser.APPROVE_OPTION){
+				file = fc.getSelectedFile();
+				System.out.println("Chose file (" + file.getName() + ") to upload");
+				System.out.println("Path: " + file.getPath());
+
+				String dest = JOptionPane.showInputDialog("Enter Destination Name");
+				String gn = JOptionPane.showInputDialog("Enter Group Name");
+				if(dest != null && gn != null){
+					StringTokenizer cmd = new StringTokenizer("uploadf " + file.getPath() + " " + dest + " " + gn);
+					rcli.mapCommand(cmd);
+				}
+			}else{
+				System.out.println("Error choosing file");
+			}
 		}
 	}
 }
