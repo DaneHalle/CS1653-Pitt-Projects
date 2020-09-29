@@ -20,7 +20,5 @@ public class GuiConsole extends OutputStream {
         textArea.setCaretPosition(textArea.getDocument().getLength());
         // keeps the textArea up to date
         textArea.update(textArea.getGraphics());
-
-        
     }
 }

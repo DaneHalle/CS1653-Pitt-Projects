@@ -162,13 +162,16 @@ public class ClientGui{
 		}
 		public void actionPerformed(ActionEvent ev) {
 			String actionOptions = "";
+			boolean flag = true;
 			for(int i = 0; i < prompts.length; i++){
-				actionOptions = actionOptions + " " + JOptionPane.showInputDialog(prompts[i]);
+				String temp = JOptionPane.showInputDialog(prompts[i]);
+				if(temp != null) actionOptions = actionOptions + " " + temp;
+				else flag = false;
 			}
 			System.out.println("Action: " + action + " " + actionOptions);
 			StringTokenizer cmd = new StringTokenizer(action + " " + actionOptions);
 
-			rcli.mapCommand(cmd);
+			if(flag) rcli.mapCommand(cmd);
 		}
 	}
 }
