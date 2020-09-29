@@ -28,15 +28,6 @@ public class TestGroupServer {
       ArrayList<String> members = test_gs.groupList.getGroupUsers("ADMIN");
       String owner = test_gs.groupList.getGroupOwner("ADMIN");
 
-      // assertEquals(members.size(), 0);
-
-      String initUser = "tests";
-      test_gs.userList = new UserList();
-      test_gs.userList.addUser(initUser);
-      test_gs.userList.addGroup(initUser, "ADMIN");
-      test_gs.userList.addOwnership(initUser, "ADMIN");
-
-      members = test_gs.groupList.getGroupUsers("ADMIN");
       assertEquals(members.size(), 1);
    }
 
