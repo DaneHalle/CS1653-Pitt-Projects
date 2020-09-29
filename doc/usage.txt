@@ -13,7 +13,7 @@ USAGE:
  does not exist. The file server is now online.  The file server's port will be 
  randomized unless a port number is specified as the first command line argument. 
 
-To start a Client Instance: java RunClient
+To start a Client Instance within the command line: java RunClient
 The client must specify a connection to a given server. To do this, do the following:
 connect group [ip] [port]
 connect file [ip] [port]
