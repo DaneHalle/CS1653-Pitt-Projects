@@ -83,24 +83,24 @@ public class RunClient {
 
     public void help() {
         System.out.println("Here are the commands that are accessible to you.");
-        String g_connection = g_cli.isConnected() ? "" : "\tCONNECT group <IP> <PORT> - connects to the group server at the given IP and PORT\n";
-        String f_connection = f_cli.isConnected() ? "" : "\tCONNECT file <IP> <PORT> - connects to the file server at the given IP and PORT\n";
+        String g_connection = g_cli.isConnected() ? "" : "\tCONNECT group <IP> <PORT> - connects to the group server at the given \n\t\tIP and PORT\n";
+        String f_connection = f_cli.isConnected() ? "" : "\tCONNECT file <IP> <PORT> - connects to the file server at the given \n\t\tIP and PORT\n";
         System.out.print(g_connection+""+f_connection);
         if(token==null){
             System.out.println("\tNo token exists for the current client.\n\t\tGET <USER> - gets the token for the given USER");
         }else{
             String admin=token.getShownGroups().contains("ADMIN") ? "\tCUSER <USER> - creates a user with the given USERname\n\tDUSER <USER> - deletes a user with the given USERname\n" : "";
             System.out.print(admin);
-            String groups="\tCGROUP <GROUPNAME> - creates a group with the given GROUPNAME\n\tDGROUP <GROUPNAME> - deletes a group with the given GROUPNAME should you be owner\n";
+            String groups="\tCGROUP <GROUPNAME> - creates a group with the given \n\t\tGROUPNAME\n\tDGROUP <GROUPNAME> - deletes a group with the given \n\t\tGROUPNAME should you be owner\n";
             System.out.print(groups);
-            String management=token.getShownGroups().size()>0 ? "\tAUSERTOGROUP <USER> <GROUPNAME> - adds USER to group GROUPNAME if you are owner of GROUPNAME\n\tRUSERFROMGROUP <USER> <GROUPNAME> - removes USER from group GROUPNAME if you are the owner of GROUPNAME\n" : "";
+            String management=token.getShownGroups().size()>0 ? "\tAUSERTOGROUP <USER> <GROUPNAME> - adds USER to group \n\t\tGROUPNAME if you are owner of GROUPNAME\n\tRUSERFROMGROUP <USER> <GROUPNAME> - removes USER from \n\t\tgroup GROUPNAME if you are the owner of GROUPNAME\n" : "";
             System.out.print(management);
-            String file=token.getShownGroups().size()>0 ? "\tLFILES - lists all files accessible to you\n\tUPLOADF <src_file> <dest_file> <GROUPNAME> - uplaods local src_file to GROUPNAME under name of dest_file\n\tDOWNLOADF <src_file> <dest_file> - downloads src_file from server to local file name dest_file\n\tDELETEF <file> - deletes file from the server\n" : "";
+            String file=token.getShownGroups().size()>0 ? "\tLFILES - lists all files accessible to you\n\tUPLOADF <src_file> <dest_file> <GROUPNAME> - uplaods local src_file \n\t\tto GROUPNAME under name of dest_file\n\tDOWNLOADF <src_file> <dest_file> - downloads src_file \n\t\tfrom server to local file name dest_file\n\tDELETEF <file> - deletes file from the server\n" : "";
             System.out.print(file);
-            String least=token.getGroups().size()>0 ? "\tSHOW <GROUPNAME> - Adds GROUPNAME to scope to allow commands and management\n\tSHOWALL - Adds all available groups to scope to allow commands and management\n\tHIDE <GROUPNAME> - Removes GROUPNAME from scope to disallow commands and management\n\tHIDEALL - Removes all available groups from scope to disallow commands and management" : "";
+            String least=token.getGroups().size()>0 ? "\tSHOW <GROUPNAME> - Adds GROUPNAME to scope to allow \n\t\tcommands and management\n\tSHOWALL - Adds all available groups to scope to allow \n\t\tcommands and management\n\tHIDE <GROUPNAME> - Removes GROUPNAME from scope to disallow \n\t\tcommands and management\n\tHIDEALL - Removes all available groups from scope to disallow \n\t\tcommands and management\n" : "";
             System.out.print(least);
         }
-        System.out.println("\tHELP - shows available commands to you dynamically\n\tEXIT - disconnects the client from any server they are connected to and ends the program");
+        System.out.println("\tHELP - shows available commands to you dynamically\n\tEXIT - disconnects the client from any server they are connected to and \n\t\tends the program");
     }
 
     private boolean getToken(StringTokenizer args) {
@@ -207,7 +207,6 @@ public class RunClient {
                     return CommandResult.ARGS;
                 group = args.nextToken();
                 List<String> members = g_cli.listMembers(group, token);
-
                 if (members != null) {
                     System.out.printf("Here are the members within group %s:\n", group);
                     for(int index=0; index < members.size(); index++) {
@@ -260,7 +259,6 @@ public class RunClient {
                 if (!checkCmd(args, 0, "Usage: LFILES", false))
                     return CommandResult.ARGS;
                 List<String> files = f_cli.listFiles(token);
-
                 if (files != null) {
                     if(files.size()>0){
                         System.out.printf("Here are the files available to %s:\n", token.getSubject());
@@ -343,9 +341,6 @@ public class RunClient {
                 return CommandResult.NOTCMD;
         }
         // Successful Command, then refresh token with current token
-        if (token!=null) {
-            token = g_cli.refreshToken(token);
-        }
         return CommandResult.SUCCESS;
     }
 

@@ -12,7 +12,7 @@ public class ClientGui{
 
 		JFrame frame = new JFrame("Client");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(700,500);
+		frame.setSize(800,500);
 
 		//connection menu bar
 		JMenuBar menu_bar = new JMenuBar();
@@ -176,6 +176,8 @@ public class ClientGui{
 			StringTokenizer cmd = new StringTokenizer(action + " " + actionOptions);
 
 			if(flag) rcli.mapCommand(cmd);
+			else System.out.println("\tAborted action");
+			System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
 		}
 	}
 
