@@ -64,10 +64,6 @@ public class GroupClient extends Client implements GroupClientInterface {
 
                 if(temp.size() == 1) {
                     newToken = (UserToken)temp.get(0);
-                    // List<String> groups = newToken.getShownGroups();
-                    // for(int index = 0; index < groups.size(); index++) {
-                    //     System.out.println(groups.get(index));
-                    // }
 
                     return newToken;
                 }
