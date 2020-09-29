@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.PrintStream;
 import java.util.StringTokenizer;
+import java.io.File;
 
 public class ClientGui{
 	public static void main(String args[]){
@@ -92,7 +93,10 @@ public class ClientGui{
 		// upload a file
 		JButton uploadf_button = new JButton("Upload File");
 		String[] uploadf_prompts = {"Enter src filename", "Enter dest filename", "Enter group name"};
-		uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		// uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		uploadf_button.addActionListener(new fileUpload(rcli, frame));
+
+
 
 		// list files
 		JButton lfiles_button = new JButton("List Files");
@@ -172,6 +176,30 @@ public class ClientGui{
 			StringTokenizer cmd = new StringTokenizer(action + " " + actionOptions);
 
 			if(flag) rcli.mapCommand(cmd);
+		}
+	}
+
+
+	static class fileUpload implements ActionListener{
+		RunClient rcli;
+		JFrame parentFrame;
+		File file;
+		public fileUpload(RunClient _rcli, JFrame _parentFrame){
+			rcli = _rcli;
+			parentFrame = _parentFrame;
+		}
+		public void actionPerformed(ActionEvent ev) {
+			final JFileChooser fc = new JFileChooser();
+			int val = fc.showDialog(parentFrame, "Choose file to upload");
+			if(val == JFileChooser.CANCEL_OPTION){
+				System.out.println("Upload cancelled by client");
+			}else if(val == JFileChooser.APPROVE_OPTION){
+				file = fc.getSelectedFile();
+				System.out.println("Chose file (" + file.getName() + ") to upload");
+				System.out.println("Path: " + file.getPath());
+			}else{
+				System.out.println("Error choosing file");
+			}
 		}
 	}
 }
