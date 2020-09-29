@@ -383,6 +383,10 @@ public class RunClient {
                 break;
             default:
                 // Handle as Group Command or File Command
+                if(token==null){
+                    System.out.println("You need to GET a token first");
+                    break;
+                }
                 CommandResult res = mapServerCommand(cmd, cmds);
                 if(res == CommandResult.NOTCMD) {
                     System.out.printf("Command %s does not exist\n", preformat);
