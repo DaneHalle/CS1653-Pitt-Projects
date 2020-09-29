@@ -304,7 +304,7 @@ public class GroupThread extends Thread {
 
 
     //Method to create a user
-    private boolean createUser(String username, UserToken yourToken) {
+    protected boolean createUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
         //Check if requester exists
@@ -329,7 +329,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to delete a user
-    private boolean deleteUser(String username, UserToken yourToken) {
+    protected boolean deleteUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
         //Does requester exist?
@@ -413,7 +413,7 @@ public class GroupThread extends Thread {
         }
     }
 
-    private boolean createGroup(String groupname, UserToken token) {
+    protected boolean createGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
         if (my_gs.userList.checkUser(requester)) {
