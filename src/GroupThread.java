@@ -504,7 +504,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    private UserToken createToken(String username, boolean flag, boolean reset) {
+    UserToken createToken(String username, boolean flag, boolean reset) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
@@ -525,7 +525,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create a user
-    private String createUser(String username, UserToken yourToken) {
+    String createUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
         //Check that user is not only within the ADMIN group but also has it within their scope
@@ -560,7 +560,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to delete a user
-    private String deleteUser(String username, UserToken yourToken) {
+    String deleteUser(String username, UserToken yourToken) {
         String requester = yourToken.getSubject();
 
         //Check that user is not only within the ADMIN group but also has it within their scope
@@ -625,7 +625,7 @@ public class GroupThread extends Thread {
         }
     }
 
-    private String deleteGroup(String groupname, UserToken token) {
+    String deleteGroup(String groupname, UserToken token) {
         // TODO: Delete the group
         String requester = token.getSubject();        
 
@@ -664,7 +664,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String createGroup(String groupname, UserToken token) {
+    String createGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -686,7 +686,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String addUserToGroup(String toAdd, String groupname, UserToken token) {
+    String addUserToGroup(String toAdd, String groupname, UserToken token) {
         String requester = token.getSubject();
         UserToken toAddToken = createToken(toAdd, false, false);
 
@@ -737,7 +737,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String removeUserFromGroup(String toRemove, String groupname, UserToken token) {
+    String removeUserFromGroup(String toRemove, String groupname, UserToken token) {
         String requester = token.getSubject();
         UserToken toRemoveToken = createToken(toRemove, false, false);
 
@@ -788,7 +788,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String showGroup(String groupname, UserToken token) {
+    String showGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -812,7 +812,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String showAll(UserToken token) {
+    String showAll(UserToken token) {
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -834,7 +834,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String hideGroup(String groupname, UserToken token) {
+    String hideGroup(String groupname, UserToken token) {
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -854,7 +854,7 @@ public class GroupThread extends Thread {
         return out;
     }
 
-    private String hideAll(UserToken token) {
+    String hideAll(UserToken token) {
         String requester = token.getSubject();
 
         String out="FAIL";

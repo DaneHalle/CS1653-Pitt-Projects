@@ -1,4 +1,4 @@
-*/*.class
 */*.bin
 */shared_files
+*.class
 .DS_Store
