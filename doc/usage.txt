@@ -13,12 +13,22 @@ USAGE:
  does not exist. The file server is now online.  The file server's port will be 
  randomized unless a port number is specified as the first command line argument. 
 
-To start a Client Instance within the command line: java RunClient
-The client must specify a connection to a given server. To do this, do the following:
-connect group [ip] [port]
-connect file [ip] [port]
-From there, you should be connected to both the Group and File servers and can 
-use the server. 
+ To start a Client Instance within the command line: java RunClient
+ The client must specify a connection to a given server. To do this, do the following:
+ connect group [ip] [port]
+ connect file [ip] [port]
+ From there, you should be connected to both the Group and File servers and can 
+ use the server. 
+ 
+ To start a Client Instance with the GUI: java ClientGui (within command line)
+ Client must connect to the group and file servers. In the top bar, click on 
+ the server dropdown, then "Connect", and then follow the prompts. 
+ Any command to use the system are accounted for with the buttons and you can see the 
+ output of them. 
+ If you are running the code on an external server, you can utilize X forwarding 
+ to use the GUI Client Interface. Here is a link that shows how to setup X forwarding
+ on your personal machine to do this: 
+ https://uisapp2.iu.edu/confluence-prd/pages/viewpage.action?pageId=280461906  
 
  To reset the File server completely, delete FileList.bin and the shared_files 
  directory.
