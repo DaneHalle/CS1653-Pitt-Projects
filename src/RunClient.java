@@ -430,7 +430,6 @@ public class RunClient {
                 if (f_cli.isConnected())
                     f_cli.disconnect();
                 return false;
-
             case "GET":
                 getToken(cmds);
                 break;

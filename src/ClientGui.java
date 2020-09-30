@@ -6,7 +6,14 @@ import java.util.StringTokenizer;
 import java.io.File;
 
 public class ClientGui{
-	public static void main(String args[]){
+	public static void main(String[] args){
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run(){
+				createAndRunGUI();
+			}
+		});
+	}
+	public static void createAndRunGUI(){
 
 		RunClient rcli = new RunClient();
 
@@ -113,7 +120,7 @@ public class ClientGui{
 		// upload a file
 		JButton uploadf_button = new JButton("Upload File");
 		String[] uploadf_prompts = {"Enter src filename", "Enter dest filename", "Enter group name"};
-		uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		uploadf_button.addActionListener(new fileUpload(rcli, frame));
 
 		// list files
 		JButton lfiles_button = new JButton("List Files");
@@ -141,7 +148,7 @@ public class ClientGui{
 		help_button.addActionListener(new arbAction(rcli, "help", help_prompts));
 
 		// help
-		JButton for_button = new JButton("Files From Group");
+		JButton for_button = new JButton("List Files From Group");
 		String[] for_prompts = {"Group"};
 		for_button.addActionListener(new arbAction(rcli, "lfilesforgroup", for_prompts));
 
@@ -162,11 +169,11 @@ public class ClientGui{
 		action_panel.add(ruserfromgroup_button);
 		action_panel.add(uploadf_button);
 		action_panel.add(lfiles_button);
+		action_panel.add(for_button);
 		action_panel.add(downloadf_button);
 		action_panel.add(deletef_button);
 		action_panel.add(status_button);
 		action_panel.add(help_button);
-		action_panel.add(for_button);
 
 		//layout
 		frame.add(menu_bar, BorderLayout.NORTH);
@@ -238,11 +245,14 @@ public class ClientGui{
 				String gn = JOptionPane.showInputDialog("Enter Group Name");
 				if(dest != null && gn != null){
 					StringTokenizer cmd = new StringTokenizer("uploadf " + file.getPath() + " " + dest + " " + gn);
+
 					rcli.mapCommand(cmd);
 				}
 			}else{
 				System.out.println("Error choosing file");
 			}
+			System.out.println("------------------------------------------------------------------------------------------------------------------------------------------------------");
+
 		}
 	}
 }
