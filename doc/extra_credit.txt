@@ -3,7 +3,7 @@ ExtraCredit Least Privilege
 We implemented a Least Privilege system of sorts.
 If a user want access to commands that would affect a group of some kind,
 they must explicitly specify it with a command. User's can only escalate
-their privlege on groups they are already apart of. The following functionallity
+their privilege on groups they are already apart of. The following functionality
 allows for this to be done:
 
 SHOW <GROUPNAME> - Adds GROUPNAME to the current user's scope allowing for commands
@@ -17,20 +17,28 @@ HIDEALL - Removes all groups from the current user's scope disallowing commands
 
 This was achieved by altering the User structures of Token.java and UserList.java.
 Should a user want to reset their scope entirely without one of the above commands,
-they can either relog or re-retieve their token with a GET.
+they can either relog or re-retrieve their token with a GET.
 
 
 ExtraCredit Client GUI
 ----------------------
-We implemented a basic client gui for a user ti interact with the system without
+We implemented a basic client GUI for a user to interact with the system without
 the use of the command line. This was done using java swing and java awt. All
-the functionallity from the cli client is built into the GUI with either a drop
+the functionality from the cli client is built into the GUI with either a drop
 down menu or buttons within the interface. A console in the middle of the
 application lets the user see the progress of their commands and if they
 succeeded or failed.
+
+To use the client: java ClientGui
+Within the top bar, you can connect to the Group and File servers or exit the system. 
+To use the functionality of the server, click the buttons on the side which will prompt
+if needed. 
 
 ExtraCredit Unit Tests
 ----------------------
 Here we implemented a simple beginning testing frame work for the GroupThread.java
 functions. There should be a total of 12 different tests, and they test expected
-input for each of the functions.
+input for each of the functions. This was done by utilizing JUnit.
+
+To perform the tests, navigate the the /tests/ folder and execute the test.sh file. 
+To see the tests being performed, see TestGroupServer.java. 
