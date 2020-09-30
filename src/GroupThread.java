@@ -504,7 +504,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    private UserToken createToken(String username, boolean flag, boolean reset) {
+    UserToken createToken(String username, boolean flag, boolean reset) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             if (flag) {

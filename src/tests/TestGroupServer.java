@@ -1,22 +1,13 @@
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.ArrayList;
 import java.net.Socket;
 import org.junit.Test;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class TestGroupServer {
    public GroupServer test_gs = null;
    public GroupThread thread;
-   public Socket socket;
-   public ObjectInputStream input;
-   public ObjectOutputStream output;
 
    @Before
    public void setup() {
@@ -30,11 +21,7 @@ public class TestGroupServer {
       // Create group list
       test_gs.groupList = new GroupList(test_gs.userList);
 
-      socket = new Socket();
-      input = mock(ObjectInputStream.class);
-      output = mock(ObjectOutputStream.class);
-
-      thread = new GroupThread(socket, test_gs);
+      thread = new GroupThread(null, test_gs);
    }
 
    @Test
@@ -51,24 +38,18 @@ public class TestGroupServer {
 
    @Test
    public void testCreateToken() {
+      UserToken token = thread.createToken("tests", false, false);
+      
+      assertEquals(token.getIssuer(), test_gs.name);
+      assertEquals(token.getSubject(), "tests");
 
-      try {
-         when(socket.getInputStream()).thenReturn(input);
-         when(socket.getOutputStream()).thenReturn(output);
+      List<String> groups = token.getGroups();
+      List<String> shownGroups = token.getShownGroups();
 
-         when(input.readObject()).thenReturn(new Envelope("GET"));
+      assertEquals(groups.size(), 1);
+      assertEquals(groups.get(0), "ADMIN");
 
-         thread.run();
-         // verify(output).write(valueCapture.capture());
-      } catch(Exception e) {
-
-      }
-
-      // Mockito.when(socket.getOutputStream()).thenReturn(myOutputStream);
-
-      // Mockito.verify(myOutputStream).write(valueCapture.capture());
-      // byte[] writtenData = valueCapture.getValue();
-
+      assertEquals(shownGroups.size(), 0);
    }
 
 
