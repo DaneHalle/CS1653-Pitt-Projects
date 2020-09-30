@@ -52,5 +52,224 @@ public class TestGroupServer {
       assertEquals(shownGroups.size(), 0);
    }
 
+   @Test
+   public void testShowGroup() {
+      UserToken token = thread.createToken("tests", false, false);
 
+      String result1 = thread.showGroup("ADMIN", token);
+      assertEquals(result1, "OK");
+      
+      ArrayList<String> shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 1);
+      assertEquals(shownGroups.get(0), "ADMIN");
+   }
+
+   @Test
+   public void testShowAll() {
+      UserToken token = thread.createToken("tests", false, false);
+
+      String result1 = thread.showAll(token);
+      assertEquals(result1, "OK");
+      
+      ArrayList<String> shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 1);
+      assertEquals(shownGroups.get(0), "ADMIN");
+   }
+
+   @Test
+   public void testCreateUser() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+
+      String result1 = thread.showAll(token);
+      assertEquals(result1, "OK");
+
+      result1 = thread.createUser(user1, token);
+      assertEquals(result1, "OK");
+
+      boolean result2 = test_gs.userList.checkUser(user1);
+      assertTrue(result2);
+   }
+
+   @Test
+   public void testCreateGroup() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+      String group1 = "group1";
+
+      String result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.createGroup(group1, token);
+      assertEquals(result, "OK");
+      
+      String owner = test_gs.groupList.getGroupOwner(group1);
+      ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+      assertEquals(owner, "tests");
+      assertEquals(users.size(), 0);
+   }
+
+   @Test
+   public void testAddUserToGroup() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+      String group1 = "group1";
+
+      String result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.createUser(user1, token);
+      assertEquals(result, "OK");
+
+      result = thread.createGroup(group1, token);
+      assertEquals(result, "OK");
+
+      result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.addUserToGroup(user1, group1, token);
+      assertEquals(result, "OK");
+
+      String owner = test_gs.groupList.getGroupOwner(group1);
+      ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+      assertEquals(owner, "tests");
+      assertEquals(users.size(), 1);
+      assertEquals(users.get(0), user1);
+
+      ArrayList<String> groups = test_gs.userList.getUserGroups(user1);
+      assertEquals(groups.size(), 1);
+      assertEquals(groups.get(0), group1);
+   }
+
+   @Test
+   public void testDeleteUser() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+
+      String result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.createUser(user1, token);
+      assertEquals(result, "OK");
+
+      boolean result2 = test_gs.userList.checkUser(user1);
+      assertTrue(result2);
+
+      result = thread.deleteUser(user1, token);
+      assertEquals(result, "OK");
+
+      result2 = test_gs.userList.checkUser(user1);
+      assertFalse(result2);
+   }
+
+   @Test
+   public void testDeleteGroup() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+      String group1 = "group1";
+
+      String result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.createGroup(group1, token);
+      assertEquals(result, "OK");
+      
+      String owner = test_gs.groupList.getGroupOwner(group1);
+      ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+      assertEquals(owner, "tests");
+      assertEquals(users.size(), 0);
+
+      result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.deleteGroup(group1, token);
+      assertEquals(result, "OK");
+      
+      boolean result2 = test_gs.groupList.checkGroup(group1);
+      assertFalse(result2);
+   }
+
+   @Test
+   public void testRemoveUser() {
+      UserToken token = thread.createToken("tests", false, false);
+      String user1 = "user1";
+      String group1 = "group1";
+
+      String result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.createUser(user1, token);
+      assertEquals(result, "OK");
+
+      result = thread.createGroup(group1, token);
+      assertEquals(result, "OK");
+
+      result = thread.showAll(token);
+      assertEquals(result, "OK");
+
+      result = thread.addUserToGroup(user1, group1, token);
+      assertEquals(result, "OK");
+
+      String owner = test_gs.groupList.getGroupOwner(group1);
+      ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+      assertEquals(owner, "tests");
+      assertEquals(users.size(), 1);
+      assertEquals(users.get(0), user1);
+
+      ArrayList<String> groups = test_gs.userList.getUserGroups(user1);
+      assertEquals(groups.size(), 1);
+      assertEquals(groups.get(0), group1);
+
+      result = thread.removeUserFromGroup(user1, group1, token);
+      assertEquals(result, "OK");
+
+      users = test_gs.groupList.getGroupUsers(group1);
+      assertEquals(owner, "tests");
+      assertEquals(users.size(), 0);
+
+      groups = test_gs.userList.getUserGroups(user1);
+      assertEquals(groups.size(), 0);
+   }
+
+   @Test
+   public void testHideGroup() {
+      UserToken token = thread.createToken("tests", false, false);
+
+      String result1 = thread.showGroup("ADMIN", token);
+      assertEquals(result1, "OK");
+      
+      ArrayList<String> shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 1);
+      assertEquals(shownGroups.get(0), "ADMIN");
+
+      result1 = thread.hideGroup("ADMIN", token);
+      assertEquals(result1, "OK");
+
+      shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 0);
+   }
+
+   @Test
+   public void testHideAll() {
+      UserToken token = thread.createToken("tests", false, false);
+
+      String result1 = thread.showGroup("ADMIN", token);
+      assertEquals(result1, "OK");
+      
+      ArrayList<String> shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 1);
+      assertEquals(shownGroups.get(0), "ADMIN");
+
+      result1 = thread.hideAll(token);
+      assertEquals(result1, "OK");
+
+      shownGroups = test_gs.userList.getShown("tests");
+
+      assertEquals(shownGroups.size(), 0);
+   }
 }
