@@ -110,6 +110,20 @@ public class TestGroupServer {
         
         boolean result2 = test_gs.userList.checkUser(user1);
         assertTrue(result2);
+
+        // Should not create user twice
+        result1 = thread.createUser(user1, token);
+        assertEquals(result1, "\t"+user1+" is already a user within the system\n");
+
+        // non-Admin shouldn't create user
+        String user2 = "user2";
+
+        token = thread.createToken(user1, false, false);
+        result1 = thread.showAll(token);
+        assertEquals(result1, "OK");
+
+        result1 = thread.createUser(user2, token);
+        assertEquals(result1, "\t"+user1+" is not an ADMIN within the system\n");
     }
     
     /*
@@ -131,6 +145,10 @@ public class TestGroupServer {
         ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
         assertEquals(owner, "tests");
         assertEquals(users.size(), 0);
+
+        // Should not create group twice
+        result = thread.createGroup(group1, token);
+        assertEquals(result, "\t"+group1+" is already a group within the system\n");
     }
     
     /*
@@ -167,6 +185,29 @@ public class TestGroupServer {
         ArrayList<String> groups = test_gs.userList.getUserGroups(user1);
         assertEquals(groups.size(), 1);
         assertEquals(groups.get(0), group1);
+
+        // Add none existing user
+        String not_user = "not_user";
+        result = thread.addUserToGroup(not_user, group1, token);
+        assertEquals(result, "\t"+not_user+" is not a user within the system\n");
+
+        // Can't add yourself
+        result = thread.addUserToGroup("tests", group1, token);
+        assertEquals(result, "\ttests and tests are the same. This would create a permenant group\n");
+
+        // Can't add existing user
+        result = thread.addUserToGroup(user1, group1, token);
+        assertEquals(result, "\t"+user1+" is already apart of group "+group1+"\n");
+
+        // Need to be owner
+        String user2 = "user2";
+        
+        thread.createUser(user2, token);
+        token = thread.createToken(user1, false, false);
+        thread.showAll(token);
+
+        result = thread.addUserToGroup(user2, group1, token);
+        assertEquals(result, "\t"+user1+" is not owner of group "+group1+"\n");
     }
     
     /*
@@ -191,6 +232,10 @@ public class TestGroupServer {
         
         result2 = test_gs.userList.checkUser(user1);
         assertFalse(result2);
+
+        // Try deleting non existing user
+        result = thread.deleteUser(user1, token);
+        assertEquals(result, "\t"+user1+" is not a user within the system\n");
     }
     
     /*
@@ -221,6 +266,71 @@ public class TestGroupServer {
         
         boolean result2 = test_gs.groupList.checkGroup(group1);
         assertFalse(result2);
+    }
+
+    @Test
+    public void testCombinations() {
+        UserToken token = thread.createToken("tests", false, false);
+        String user1 = "user1";
+        String user2 = "user2";
+        String group1 = "group1";
+        String group2 = "group2";
+        
+        String result = thread.showAll(token);
+        assertEquals(result, "OK");
+        
+        result = thread.createUser(user1, token);
+        assertEquals(result, "OK");
+        result = thread.createUser(user2, token);
+        assertEquals(result, "OK");
+        
+        result = thread.createGroup(group1, token);
+        assertEquals(result, "OK");
+        
+        result = thread.showAll(token);
+        assertEquals(result, "OK");
+        
+        result = thread.addUserToGroup(user1, group1, token);
+        assertEquals(result, "OK");
+        
+        String owner = test_gs.groupList.getGroupOwner(group1);
+        ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+        assertEquals(owner, "tests");
+        assertEquals(users.size(), 1);
+        assertEquals(users.get(0), user1);
+        
+        ArrayList<String> groups = test_gs.userList.getUserGroups(user1);
+        assertEquals(groups.size(), 1);
+        assertEquals(groups.get(0), group1);
+
+        token = thread.createToken(user1, false, false);
+
+        result = thread.showAll(token);
+        assertEquals(result, "OK");
+
+        result = thread.createGroup(group2, token);
+        assertEquals(result, "OK");
+
+        result = thread.showAll(token);
+        assertEquals(result, "OK");
+
+        result = thread.addUserToGroup(user2, group2, token);
+        assertEquals(result, "OK");
+
+        owner = test_gs.groupList.getGroupOwner(group2);
+        users = test_gs.groupList.getGroupUsers(group2);
+        assertEquals(owner, user1);
+        assertEquals(users.size(), 1);
+        assertEquals(users.get(0), user2);
+        
+        groups = test_gs.userList.getUserGroups(user2);
+        assertEquals(groups.size(), 1);
+        assertEquals(groups.get(0), group2);
+
+        groups = test_gs.userList.getUserGroups(user1);
+        assertEquals(groups.size(), 2);
+        assertEquals(groups.get(0), group1);
+        assertEquals(groups.get(1), group2);
     }
     
     /*
@@ -312,6 +422,23 @@ public class TestGroupServer {
         
         shownGroups = test_gs.userList.getShown("tests");
         
+        assertEquals(shownGroups.size(), 0);
+    }
+
+    @Test
+    public void testShownReset() {
+        UserToken token = thread.createToken("tests", false, false);
+
+        String result1 = thread.showAll(token);
+        assertEquals(result1, "OK");
+        
+        ArrayList<String> shownGroups = test_gs.userList.getShown("tests");
+        
+        assertEquals(shownGroups.size(), 1);
+        assertEquals(shownGroups.get(0), "ADMIN");
+
+        token = thread.createToken("tests", false, true);
+        shownGroups = test_gs.userList.getShown("tests");
         assertEquals(shownGroups.size(), 0);
     }
 }
