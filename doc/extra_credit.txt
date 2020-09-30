@@ -40,5 +40,5 @@ Here we implemented a simple beginning testing frame work for the GroupThread.ja
 functions. There should be a total of 12 different tests, and they test expected
 input for each of the functions. This was done by utilizing JUnit.
 
-To perform the tests, navigate the the /tests/ folder and execute the test.sh file. 
-To see the tests being performed, see TestGroupServer.java. 
+To perform the tests, navigate the /tests/ folder and execute the test.sh file. 
+To see the tests being performed, see TestGroupServer.java.
