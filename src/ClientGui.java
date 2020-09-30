@@ -6,7 +6,14 @@ import java.util.StringTokenizer;
 import java.io.File;
 
 public class ClientGui{
-	public static void main(String args[]){
+	public static void main(String[] args){
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run(){
+				createAndRunGUI();
+			}
+		});
+	}
+	public static void createAndRunGUI(){
 
 		RunClient rcli = new RunClient();
 
@@ -113,7 +120,7 @@ public class ClientGui{
 		// upload a file
 		JButton uploadf_button = new JButton("Upload File");
 		String[] uploadf_prompts = {"Enter src filename", "Enter dest filename", "Enter group name"};
-		uploadf_button.addActionListener(new arbAction(rcli, "uploadf", uploadf_prompts));
+		uploadf_button.addActionListener(new fileUpload(rcli, frame));
 
 		// list files
 		JButton lfiles_button = new JButton("List Files");
@@ -238,6 +245,7 @@ public class ClientGui{
 				String gn = JOptionPane.showInputDialog("Enter Group Name");
 				if(dest != null && gn != null){
 					StringTokenizer cmd = new StringTokenizer("uploadf " + file.getPath() + " " + dest + " " + gn);
+
 					rcli.mapCommand(cmd);
 				}
 			}else{
