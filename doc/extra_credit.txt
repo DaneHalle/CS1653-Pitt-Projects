@@ -28,3 +28,9 @@ the functionallity from the cli client is built into the GUI with either a drop
 down menu or buttons within the interface. A console in the middle of the
 application lets the user see the progress of their commands and if they
 succeeded or failed.
+
+ExtraCredit Unit Tests
+----------------------
+Here we implemented a simple beginning testing frame work for the GroupThread.java
+functions. There should be a total of 12 different tests, and they test expected
+input for each of the functions.
