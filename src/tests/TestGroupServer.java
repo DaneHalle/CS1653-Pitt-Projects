@@ -239,35 +239,9 @@ public class TestGroupServer {
     }
     
     /*
-     * Create a group and then delete that group
+     * Test Creating a more complex user and see how
+     * it exists in the UserList and GroupList
      */
-    @Test
-    public void testDeleteGroup() {
-        UserToken token = thread.createToken("tests", false, false);
-        String user1 = "user1";
-        String group1 = "group1";
-        
-        String result = thread.showAll(token);
-        assertEquals(result, "OK");
-        
-        result = thread.createGroup(group1, token);
-        assertEquals(result, "OK");
-        
-        String owner = test_gs.groupList.getGroupOwner(group1);
-        ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
-        assertEquals(owner, "tests");
-        assertEquals(users.size(), 0);
-        
-        result = thread.showAll(token);
-        assertEquals(result, "OK");
-        
-        result = thread.deleteGroup(group1, token);
-        assertEquals(result, "OK");
-        
-        boolean result2 = test_gs.groupList.checkGroup(group1);
-        assertFalse(result2);
-    }
-
     @Test
     public void testCombinations() {
         UserToken token = thread.createToken("tests", false, false);
@@ -331,6 +305,36 @@ public class TestGroupServer {
         assertEquals(groups.size(), 2);
         assertEquals(groups.get(0), group1);
         assertEquals(groups.get(1), group2);
+    }
+
+    /*
+     * Create a group and then delete that group
+     */
+    @Test
+    public void testDeleteGroup() {
+        UserToken token = thread.createToken("tests", false, false);
+        String user1 = "user1";
+        String group1 = "group1";
+        
+        String result = thread.showAll(token);
+        assertEquals(result, "OK");
+        
+        result = thread.createGroup(group1, token);
+        assertEquals(result, "OK");
+        
+        String owner = test_gs.groupList.getGroupOwner(group1);
+        ArrayList<String> users = test_gs.groupList.getGroupUsers(group1);
+        assertEquals(owner, "tests");
+        assertEquals(users.size(), 0);
+        
+        result = thread.showAll(token);
+        assertEquals(result, "OK");
+        
+        result = thread.deleteGroup(group1, token);
+        assertEquals(result, "OK");
+        
+        boolean result2 = test_gs.groupList.checkGroup(group1);
+        assertFalse(result2);
     }
     
     /*
@@ -425,8 +429,11 @@ public class TestGroupServer {
         assertEquals(shownGroups.size(), 0);
     }
 
+    /*
+     * Test token reset flag
+     */
     @Test
-    public void testShownReset() {
+    public void testTokenReset() {
         UserToken token = thread.createToken("tests", false, false);
 
         String result1 = thread.showAll(token);
