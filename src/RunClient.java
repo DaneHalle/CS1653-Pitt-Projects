@@ -178,6 +178,7 @@ public class RunClient {
         boolean fileConnected=f_cli.isConnected();
         
         switch(cmd) {
+            case "CU":
             case "CUSER":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -189,6 +190,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "DU":
             case "DUSER":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -200,6 +202,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "CG":
             case "CGROUP":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -211,6 +214,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "DG":
             case "DGROUP":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -222,6 +226,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "LM":
             case "LMEMBERS":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -238,6 +243,8 @@ public class RunClient {
                     return CommandResult.FAIL;
                 }
                 break;
+            case "A":
+            case "AUTG":
             case "AUSERTOGROUP":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -250,6 +257,8 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "R":
+            case "RUFG":
             case "RUSERFROMGROUP":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
@@ -262,6 +271,8 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "U":
+            case "UF":
             case "UPLOADF":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
@@ -275,6 +286,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "LF":
             case "LFILES":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
@@ -294,6 +306,7 @@ public class RunClient {
                     return CommandResult.FAIL;
                 }
                 break;
+            case "DOWN":
             case "DOWNLOADF":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
@@ -306,6 +319,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "DELETE":
             case "DELETEF":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
@@ -317,6 +331,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "S":
             case "SHOW":
                 if (!groupConnected)
                     return CommandResult.GNOT;
@@ -328,6 +343,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "SA":
             case "SHOWALL":
                 if (!groupConnected)
                     return CommandResult.GNOT;
@@ -338,6 +354,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "H":
             case "HIDE":
                 if (!groupConnected)
                     return CommandResult.GNOT;
@@ -349,6 +366,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "HA":
             case "HIDEALL":
                 if (!groupConnected)
                     return CommandResult.GNOT;
@@ -359,6 +377,7 @@ public class RunClient {
                 else
                     return CommandResult.FAIL;
                 break;
+            case "LFFG":
             case "LFILESFORGROUP":
                 if (!fileConnected) 
                     return CommandResult.FNOT;
@@ -378,9 +397,6 @@ public class RunClient {
                 } else {
                     return CommandResult.FAIL;
                 }
-
-
-
                 break;
             default:
                 return CommandResult.NOTCMD;
@@ -414,7 +430,6 @@ public class RunClient {
                 if (f_cli.isConnected())
                     f_cli.disconnect();
                 return false;
-
             case "GET":
                 getToken(cmds);
                 break;
