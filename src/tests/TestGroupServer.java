@@ -24,6 +24,10 @@ public class TestGroupServer {
         thread = new GroupThread(null, test_gs);
     }
     
+    /*
+     * Tests the Initialization Process for the Group Server
+     * Makes sure the User and Group Lists where made correctly
+     */
     @Test
     public void testInit() {
         ArrayList<String> groups = test_gs.userList.getUserGroups("tests");
@@ -36,6 +40,12 @@ public class TestGroupServer {
         assertEquals(owner, "tests");
     }
     
+    /*
+     * Retrieves a token and checks:
+     * - the issuer is the test GroupServer
+     * - the subject is the requester of the token
+     * - there is one group called admin in groups and none in shown groups
+     */
     @Test
     public void testCreateToken() {
         UserToken token = thread.createToken("tests", false, false);
@@ -52,6 +62,9 @@ public class TestGroupServer {
         assertEquals(shownGroups.size(), 0);
     }
     
+    /*
+     * Test to see if group is revealed on request
+     */
     @Test
     public void testShowGroup() {
         UserToken token = thread.createToken("tests", false, false);
@@ -65,6 +78,9 @@ public class TestGroupServer {
         assertEquals(shownGroups.get(0), "ADMIN");
     }
     
+    /*
+     * Test to see if all groups are shown on request
+     */
     @Test
     public void testShowAll() {
         UserToken token = thread.createToken("tests", false, false);
@@ -78,6 +94,9 @@ public class TestGroupServer {
         assertEquals(shownGroups.get(0), "ADMIN");
     }
     
+    /*
+     * Create a single user and make sure it shows in the UserList
+     */
     @Test
     public void testCreateUser() {
         UserToken token = thread.createToken("tests", false, false);
@@ -93,6 +112,9 @@ public class TestGroupServer {
         assertTrue(result2);
     }
     
+    /*
+     * Create a single group and make sure it shows in the GroupList
+     */
     @Test
     public void testCreateGroup() {
         UserToken token = thread.createToken("tests", false, false);
@@ -111,6 +133,10 @@ public class TestGroupServer {
         assertEquals(users.size(), 0);
     }
     
+    /*
+     * Create a user and a group and add that user to the group.
+     * It should update the UserList and GroupList accordingly
+     */
     @Test
     public void testAddUserToGroup() {
         UserToken token = thread.createToken("tests", false, false);
@@ -143,6 +169,9 @@ public class TestGroupServer {
         assertEquals(groups.get(0), group1);
     }
     
+    /*
+     * Create a user and then delete it
+     */
     @Test
     public void testDeleteUser() {
         UserToken token = thread.createToken("tests", false, false);
@@ -164,6 +193,9 @@ public class TestGroupServer {
         assertFalse(result2);
     }
     
+    /*
+     * Create a group and then delete that group
+     */
     @Test
     public void testDeleteGroup() {
         UserToken token = thread.createToken("tests", false, false);
@@ -191,6 +223,10 @@ public class TestGroupServer {
         assertFalse(result2);
     }
     
+    /*
+     * Test adding a user to a group then removing that user from
+     * the group it was just added to
+     */
     @Test
     public void testRemoveUser() {
         UserToken token = thread.createToken("tests", false, false);
@@ -233,6 +269,9 @@ public class TestGroupServer {
         assertEquals(groups.size(), 0);
     }
     
+    /*
+     * After a group is shown, this tests if it can hide the group
+     */
     @Test
     public void testHideGroup() {
         UserToken token = thread.createToken("tests", false, false);
@@ -253,6 +292,9 @@ public class TestGroupServer {
         assertEquals(shownGroups.size(), 0);
     }
     
+    /*
+     * This tests hiding all groups associated with the user
+     */
     @Test
     public void testHideAll() {
         UserToken token = thread.createToken("tests", false, false);
