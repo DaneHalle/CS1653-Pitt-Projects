@@ -141,7 +141,7 @@ public class ClientGui{
 		help_button.addActionListener(new arbAction(rcli, "help", help_prompts));
 
 		// help
-		JButton for_button = new JButton("Files From Group");
+		JButton for_button = new JButton("List Files From Group");
 		String[] for_prompts = {"Group"};
 		for_button.addActionListener(new arbAction(rcli, "lfilesforgroup", for_prompts));
 
@@ -162,11 +162,11 @@ public class ClientGui{
 		action_panel.add(ruserfromgroup_button);
 		action_panel.add(uploadf_button);
 		action_panel.add(lfiles_button);
+		action_panel.add(for_button);
 		action_panel.add(downloadf_button);
 		action_panel.add(deletef_button);
 		action_panel.add(status_button);
 		action_panel.add(help_button);
-		action_panel.add(for_button);
 
 		//layout
 		frame.add(menu_bar, BorderLayout.NORTH);
