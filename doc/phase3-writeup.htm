@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
+<html><head>
   <meta charset="utf-8">
   <title>CS 1653 Project P3 Writeup</title>
   <style>
@@ -12,15 +10,25 @@ header {
   text-align: center;
 }
 
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figcaption {
+  text-align: center;
+}
+
 /* END CHANGES HERE */
   </style>
-  <body>
+  </head><body>
     <header>
       <h1>CS 1653 Project P3 Writeup</h1>
       <h2>
 <!-- BEGIN CHANGES HERE -->
 
-Add your names and Pitt email addresses here
+Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pitt.edu
 
 <!-- END CHANGES HERE -->
       </h2>
@@ -38,29 +46,26 @@ your group has decided to use to address threats T1–T4.</p>
       <h2>Threat T1: Unauthorized Token Issuance</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Begin this section by describing threat T1. This may include describing
-examples of the threat being exploited by an adversary, a short discussion of
-why this threat is problematic and needs to be addressed, and/or diagrams
-showing how the threat might manifest in your group’s insecure
-implementation.</p>
+<p>
+  The fear for this threat is that unauthorized and illegitimate clients request tokens from the Group Server. An example of this threat is a user attempting to gain access to an ADMIN token/account for malicious purposes. We need some way to authenticate and determine legitimacy of clients before giving them further access to the system by issuing them an existing token. 
+</p>
 
-<p>Next, provide a short description of the mechanism that you chose to
-implement to protect against this threat. For interactive protocols, include
-diagrams explaining the messages exchanged between participating principals (use
-html &lt;img&gt; tag to import such images). Be sure to explain any
-cryptographic choices that your group makes: What types of algorithms, modes of
-operation, and/or key lengths did you choose? <b>Why?</b> If shared keys are
-needed, how are they exchanged? Recall that security is not absolute nor are any
-tools appropriate for all situations; every component of your design should be
-intentional and justified relative to the given threat model.</p>
+<p>
+  We determined that a Diffie-Hellman password sharing approach would be effective. The password sharing approach we decided to go with is Encrypted Key Exchange or EKE for short. T1.1, which is taken from our lecture notes, details how EKE works:
+</p>
 
-<p>Finally, provide a short argument addressing why your proposed mechanism
-sufficiently addresses this particular threat. This argument should address the
-correctness of your approach, as well as its overall security. For example, if
-your mechanism involves a key agreement or key exchange protocol, you should
-argue that both parties agree on the same key (correctness) and that no other
-party can figure out the key (security). You do not need a formal proof, but you
-should convince me that an attacker can no longer exploit each threat.</p>
+<figure>
+  <img src="./images/T1.1.png" alt="T1.1" class="center">
+  <figcaption>Diagram T1.1</figcaption>
+</figure>
+
+<p>
+  This would work through the initialization of a user account on the server by a weak secret being made/generated that is known between the User and the Server. Then the user will make some random b and send their username and the message of “g<sup>b</sup> mod p” encrypted with the weak secret. The server will then make a random s, choose a challenge C1, and compute “K = g<sup>bs</sup> mod p”. The server will return “g<sup>s</sup> mod p, C<sub>1</sub>” encrypted with the weak secret back to the user. The user would then choose a challenge C<sub>2</sub> and compute the same K as the server. They would then send back both C<sub>1</sub> and C<sub>2</sub> encrypted with K to the server who would decrypt and send back the encryption of C<sub>2</sub> with K to the user.
+</p>
+
+<p>
+  This key exchange works because it not only authenticates the server to the user but it authenticates the user to the server. If another user attempts to impersonate a user, there is no practical way to ensure they can bypass the system. The imposter also does not know when they have correct information as everything looks randomized if the random b is unknown. 
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -68,7 +73,45 @@ should convince me that an attacker can no longer exploit each threat.</p>
       <h2>Threat T2: Token Modification/Forgery</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Repeat the steps as for Threat T1.</p>
+<p>
+  The group server and the file server are only able to communicate via UserTokens. It is assumed that users may attempt to modify or forge these UserTokens. This will provide the illegitimate users, who forged or modified UserTokens, unauthenticated access to upload, download, modify, or delete files on the file server. The attacker can do this by changing the group values in the UserTokens to be whatever group they desire. Users should not be able to modify these UserTokens, therefore it must be symmetrically encrypted. 
+</p>
+
+<p>
+  The mechanism used to prevent users modifying or forging UserTokens is to have a shared symmetric key exist between the group server and file server. Whenever a user requests a Usertoken. The group server will encrypt the token with the shared key and send the token to the user. When the user sends a command to the file server the encrypted UserToken will be sent along. The file server will decrypt the UserToken with the shared symmetric key, and then authenticate the users command to make sure the user has the correct amount of permissions.
+</p>
+
+<figure>
+  <img src="./images/T2.1.png" alt="T2.1" class="center">
+  <figcaption>Diagram T2.1</figcaption>
+</figure>
+
+<p>
+  In Diagram T2.1 it can be seen that the UserToken is encrypted with K<sub>GF</sub> which is the shared symmetric key between the group server and file server. The keys K<sub>GC</sub> and K<sub>FC</sub> are the shared keys the client uses between the group server and file server respectively. The UserToken will be encrypted using AES in the CBC mode, and the HMAC of the UserToken will be appended to the message to ensure UserToken integrity.
+
+</p>
+
+<p>
+  To establish the key K<sub>GF</sub> between the group server and the file server the assumption is made that the initial user or ADMIN is to be trusted and will not perform a man in the middle attack. The exchange protocol can be seen in Diagram T2.2. 
+</p>
+
+<figure>
+  <img src="./images/T2.2.png" alt="T2.2" class="center">
+  <figcaption>Diagram T2.2</figcaption>
+</figure>
+
+<p>
+  The ADMIN sends an INIT command to the group server. This prompts the group server to respond with an INIT command back to the client, along with the proper materials to perform a Diffie-Hellman key exchange. Once the key is established, a SUCCESS message is sent from the group server to the client and then to the file server. It is assumed the ADMIN will not exchange the RSA public keys being transferred with their own RSA public keys thus controlling the communication between the group and file server. Also once the initial key is established, the updating the key protocol can be seen in Diagram T2.3. Here K<sup>*</sup><sub>GF</sub> refers to the updated AES CBC symmetric key
+</p>
+
+<figure>
+  <img src="./images/T2.3.png" alt="T2.3" class="center">
+  <figcaption>Diagram T2.3</figcaption>
+</figure>
+
+<p>
+  The group and file servers will store the key generated in Diagram T2.2 to encrypt UserTokens being sent to normal users. This will help ensure the integrity of the UserToken and prevent all users from modifying the UserToken unless the user has access to K<sub>GC</sub>. The key exchange will prevent passive attackers from accessing the key.
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -76,7 +119,36 @@ should convince me that an attacker can no longer exploit each threat.</p>
       <h2>Threat T3: Unauthorized File Servers</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Repeat the steps as for Threat T1.</p>
+<p>
+  This threat is that an adversary could attempt to impersonate file server s with another file server s<sup>’</sup>. Therefore, the user must be able to authenticate the file server it is communicating with before it shares any information with it. It is assumed that once a file server is authenticated it is to be trusted. If the user can’t authenticate a file server, then there's a possibility of them connecting to an imposter file server. The ramifications of this are that the imposter file server could then leak any files the user uploads, corrupt the files, or steal the user’s token.
+
+</p>
+
+<p>
+  We can protect against this threat using a signed Diffie-Hellman encrypted key exchange. During the initial User/File Server Connection we will set up a secure channel (as described in T4). The user will generate an RSA keypair. They will share their public key U<sub>P</sub> with the file server using EKE as described earlier. The file server will then generate a secure random number R (the secret key) and encrypt it with U<sub>P</sub>, making S<sub>K</sub>. The server will send S<sub>K</sub> to the user, and the user will decrypt it to get R.
+</p>
+
+<p>
+  Then in following connections with the file server the user will again send U<sub>P</sub> to the file server, and the file server's job will be to send the same R encrypted with UP back to the user. If the server does not send back the same R, it is an imposter server and the user will disconnect from it.
+</p>
+
+<figure>
+  <img src="./images/T3.1.png" alt="T3.1" class="center">
+  <figcaption>Diagram T3.1</figcaption>
+</figure>
+
+<p>
+  In figure T3.1 we see the initial communication between the client and the file server. The client sends the file server the predefined g raised to the random number they generate b, modded to the predefined q.This is then encrypted with the client’s private key. Also in that message (appended at the end) is the client’s public key. When the file server receives this they then send the client the predefined g raised to the random number they generate s, modded to the predefined q.This is then encrypted with the file server’s private key. Also in that message (appended at the end) is the file server’s public key. The client will then store this as the file server’s fingerprint for use in future connections. The client will also be notified that they are connecting to a previously unknown/untrusted file server and asked if they would actually like to connect with it. If they choose yes this fingerprint is stored in their list of trusted servers. If they choose no the fingerprint is discarded and the connection is terminated.
+</p>
+
+<figure>
+  <img src="./images/T3.2.png" alt="T3.2" class="center">
+  <figcaption>Diagram T3.2</figcaption>
+</figure>
+
+<p>
+  Sources: <a href="https://security.stackexchange.com/questions/101413/how-is-the-server-authenticated-in-ssh" target="_blank">https://security.stackexchange.com/questions/101413/how-is-the-server-authenticated-in-ssh</a>
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -104,6 +176,7 @@ well.</p>
 
 <!-- END CHANGES HERE -->
     </section>
-  </body>
-</html>
+  
 
+
+</body></html>
