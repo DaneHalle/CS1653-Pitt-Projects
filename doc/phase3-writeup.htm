@@ -49,8 +49,9 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
       <h2>Overview</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>In this section, broadly overview the types of cryptographic techniques that
-your group has decided to use to address threats T1–T4.</p>
+<p>
+  We mostly used variants of the security protocols we learned in class to overcome the threat models given to us in this project. Those include asymmetric cryptography using a variant of Diffie-Hellman key exchange using RSA, symmetric cryptography using AES in CBC mode, public key fingerprinting.
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -175,20 +176,16 @@ your group has decided to use to address threats T1–T4.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  A passive attacker has the ability to read all communications between the client and the servers. This attacker can either be an external threat or just a nosy administrator or client. Sensitive data such as UserTokens, passwords, and commands are being sent between the clients and the servers. Access to this confidential data could lead to a malicious actor performing an impersonation attack against the system. Encryption is needed in order to deter an passive attacker from being able to interpret the contents of what is being communicated between the client and the servers.
+  A passive attacker has the ability to read all communications between the client and the servers. This attacker can either be an external threat or just a nosy administrator or client. Sensitive data such as UserTokens, passwords, and commands are being sent between the clients and the servers. Access to this confidential data could lead to a malicious actor performing an impersonation attack against the system. Encryption is needed in order to deter a passive attacker from being able to interpret the contents of what is being communicated between the client and the servers.
 </p>
 
 <p>
-  Several encryption schemes will be used to ensure communication confidentiality. Along with the what is mentioned above in T1, T2, and T3, normal communication between the client and the servers AES CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors, however the increment state of the initialization vector needs to be passed between client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
-</p>
-
-<!-- <p>
-  The way we decided to combat this threat is with asymmetric key cryptography through RSA. The user will share a private key with the server utilizing EKE (described earlier). We will then utilize RSA encryption and decryption on both client and server side in order to secure communications between the two. This will make it very difficult for a listener to obtain usable information from communications. 
+  Several encryption schemes will be used to ensure communication confidentiality. Along with what is mentioned above in T1, T2, and T3, normal communication between the client and the servers AES CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors; however, the increment state of the initialization vector needs to be passed between the client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also, the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
 </p>
 
 <p>
-  This approach is correct because it allows for a secure communication channel between the server and user only if the user’s public key is a pair of the private key. Utilizing EKE is a correct way to transport the private key as any listeners would only see randomness and not know if they actually have the key or not. 
-</p> -->
+  This approach will provide a way to efficiently and securely transmit data. Having all of the communications be encrypted with AES will help provide a mechanism to ensure only parties with the key access to the messages. If a message is intercepted, the passive attacker will only be able to view unreadable text because of the CBC cipher.
+</p>
 
 <p>
   Sources: <br> 
@@ -204,7 +201,7 @@ your group has decided to use to address threats T1–T4.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  There would be quite a bit of overlap within all of the systems we are proposing. We are utilizing some form of Diffie-Hellman key exchange for all of the threats. We started the processes of designing these mechanisms by going through each threat and spit-balling/whiteboarding ideas that could potentially work to address or solve them. After an initial look, we went back and tried to flesh out each idea. During this process, we could determine if it fell under one of the following buckets: “Good idea with potential”, “Could potentially work but has some flaws”, “Insecure or Has too many flaws to work”. We then worked further with the ideas in the first two buckets and didn’t put effort into ones that fell into the last bucket. 
+  There would be quite a bit of overlap within all of the systems we are proposing. We are utilizing some form of Diffie-Hellman key exchange for all of the threats. We started the processes of designing these mechanisms by going through each threat and spit-balling/whiteboarding ideas that could potentially work to address or solve them. After an initial look, we went back and tried to flesh out each idea. During this process, we could determine if it fell under one of the following buckets: “Good idea with potential”, “Could potentially work but has some flaws”, “Insecure or Has too many flaws to work”. We then worked further with the ideas in the first two buckets and didn’t put effort into ones that fell into the last bucket.  
 </p>
 
 <p>
