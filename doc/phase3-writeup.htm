@@ -179,16 +179,16 @@ your group has decided to use to address threats T1–T4.</p>
 </p>
 
 <p>
-  Several encryption schemes will be used to ensure communication confidentiality. Along with the what is mentioned above in T1, T2, and T3. However for normal communication used between the client and the two servers will break down as such: commands and objects. Commands will be encrypted with AES CFB mode. CFB mode is good for small none block sized data transmission, which is exactly what a command is. For file and UserToken transmission something less error prone and heavy duty is needed to encrypt the messages. This is where AES CBC mode can play an important role. It allows large data blocks to be encrypted with little error.
+  Several encryption schemes will be used to ensure communication confidentiality. Along with the what is mentioned above in T1, T2, and T3, normal communication between the client and the servers AES CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors, however the increment state of the initialization vector needs to be passed between client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
 </p>
 
-<p>
+<!-- <p>
   The way we decided to combat this threat is with asymmetric key cryptography through RSA. The user will share a private key with the server utilizing EKE (described earlier). We will then utilize RSA encryption and decryption on both client and server side in order to secure communications between the two. This will make it very difficult for a listener to obtain usable information from communications. 
 </p>
 
 <p>
   This approach is correct because it allows for a secure communication channel between the server and user only if the user’s public key is a pair of the private key. Utilizing EKE is a correct way to transport the private key as any listeners would only see randomness and not know if they actually have the key or not. 
-</p>
+</p> -->
 
 <p>
   Sources: <br> 
@@ -203,12 +203,13 @@ your group has decided to use to address threats T1–T4.</p>
       <h2>Discussion</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Conclude with a paragraph or two discussing the interplay between your
-proposed mechanisms, and commenting on the design process that your group
-followed. Did you discuss other ideas that didn’t pan out before settling on the
-above-documented approach? Did you end up designing a really interesting
-protocol suite that addresses multiple threats at once? Use this space to show
-off your hard work!</p>
+<p>
+  There would be quite a bit of overlap within all of the systems we are proposing. We are utilizing some form of Diffie-Hellman key exchange for all of the threats. We started the processes of designing these mechanisms by going through each threat and spit-balling/whiteboarding ideas that could potentially work to address or solve them. After an initial look, we went back and tried to flesh out each idea. During this process, we could determine if it fell under one of the following buckets: “Good idea with potential”, “Could potentially work but has some flaws”, “Insecure or Has too many flaws to work”. We then worked further with the ideas in the first two buckets and didn’t put effort into ones that fell into the last bucket. 
+</p>
+
+<p>
+  We discussed and whiteboard quite a few ideas prior to solidifying what we decided to go with. For T1, we talked about the potential to use some form of 2-factor authentication along with a password to increase security of the system. We talked about different types of 2-factor auth and how we could get it to work for free as most providers (like DUO or other mobile authenticators) can cost quite a bit of money. For T2, we talked about the potential to hash a User’s token within the File Server so there would be some form of validation. However, anything we would hash the token with was either insecure or “annoying” (like entering a password every time). This led us to thinking about having some talk with the group server which is the approach we ended up going with. 
+</p>
 
 <p>If your group did any extra credit, please discuss that in this section, as
 well.</p>
