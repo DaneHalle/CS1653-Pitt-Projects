@@ -1,4 +1,7 @@
-<html><head>
+<html style="
+    background: black;
+    color: cornflowerblue;
+"><head>
   <meta charset="utf-8">
   <title>CS 1653 Project P3 Writeup</title>
   <style>
@@ -18,6 +21,15 @@ header {
 
 figcaption {
   text-align: center;
+  color: aquamarine;
+}
+
+h2 {
+    color: coral;
+}
+
+h1 {
+    color: crimson;
 }
 
 /* END CHANGES HERE */
@@ -121,15 +133,16 @@ your group has decided to use to address threats T1–T4.</p>
 
 <p>
   This threat is that an adversary could attempt to impersonate file server s with another file server s<sup>’</sup>. Therefore, the user must be able to authenticate the file server it is communicating with before it shares any information with it. It is assumed that once a file server is authenticated it is to be trusted. If the user can’t authenticate a file server, then there's a possibility of them connecting to an imposter file server. The ramifications of this are that the imposter file server could then leak any files the user uploads, corrupt the files, or steal the user’s token.
-
 </p>
 
 <p>
-  We can protect against this threat using a signed Diffie-Hellman encrypted key exchange. During the initial User/File Server Connection we will set up a secure channel (as described in T4). The user will generate an RSA keypair. They will share their public key U<sub>P</sub> with the file server using EKE as described earlier. The file server will then generate a secure random number R (the secret key) and encrypt it with U<sub>P</sub>, making S<sub>K</sub>. The server will send S<sub>K</sub> to the user, and the user will decrypt it to get R.
+  We can protect against this threat using a signed Diffie-Hellman encrypted key exchange. During the initial User/File Server Connection we will set up a secure channel (as described in T4). <i>The user will generate an RSA keypair. They will share their public key U<sub>P</sub> with the file server using EKE as described earlier. The file server will then generate a secure random number R (the secret key) and encrypt it with U<sub>P</sub>, making S<sub>K</sub>. The server will send S<sub>K</sub> to the user, and the user will decrypt it to get R.</i>
 </p>
 
 <p>
-  Then in following connections with the file server the user will again send U<sub>P</sub> to the file server, and the file server's job will be to send the same R encrypted with UP back to the user. If the server does not send back the same R, it is an imposter server and the user will disconnect from it.
+  <i>Then in following connections with the file server the user will again send U<sub>P</sub> to the file server, and the file server's job will be to send the same R encrypted with UP back to the user. If the server does not send back the same R, it is an imposter server and the user will disconnect from it.
+  <br><br>
+  <b>Italicized part will probably be removed.</b></i>
 </p>
 
 <figure>
@@ -160,7 +173,21 @@ your group has decided to use to address threats T1–T4.</p>
       <h2>Threat T4: Information Leakage via Passive Monitoring</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Repeat the steps as for Threat T1.</p>
+<p>
+  A passive attacker has the ability to read all communications between the client and the servers. This attacker can either be an external threat or just a nosy administrator or client. Sensitive data such as UserTokens, passwords, and commands are being sent between the clients and the servers. Access to this confidential data could lead to a malicious actor performing an impersonation attack against the system. Encryption is needed in order to deter an passive attacker from being able to interpret the contents of what is being communicated between the client and the servers
+</p>
+
+<p>
+  Several encryption schemes will be used to ensure communication confidentiality. Along with the what is mentioned above in T1, T2, and T3. However for normal communication used between the client and the two servers will break down as such: commands and objects. Commands will be encrypted with AES CFB mode. CFB mode is good for small none block sized data transmission, which is exactly what a command is. For file and UserToken transmission something less error prone and heavy duty is needed to encrypt the messages. This is where AES CBC mode can play an important role. It allows large data blocks to be encrypted with little error.
+</p>
+
+<p>
+  The way we decided to combat this threat is with asymmetric key cryptography through RSA. The user will share a private key with the server utilizing EKE (described earlier). We will then utilize RSA encryption and decryption on both client and server side in order to secure communications between the two. This will make it very difficult for a listener to obtain usable information from communications. 
+</p>
+
+<p>
+  This approach is correct because it allows for a secure communication channel between the server and user only if the user’s public key is a pair of the private key. Utilizing EKE is a correct way to transport the private key as any listeners would only see randomness and not know if they actually have the key or not. 
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
