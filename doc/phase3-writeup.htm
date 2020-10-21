@@ -64,11 +64,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  We determined that a Diffie-Hellman password sharing approach would be effective. The group we will be using is group 21 which is a 521-bit random elliptic curve. This provides adequate security against modern threats as well as being strong enough to encompass a 256-bit AES-CBC key. The password sharing approach we decided to go with is Encrypted Key Exchange or EKE for short. T1.1, which is taken from our lecture notes, details how EKE works::
+  Being that a user account is created by an ADMIN user, we do not expect, nor do we encourage the user to tell the ADMIN their password to their account for setup purposes. We can assume some form of external communication outside of the system is reasonable due to the fact that an ADMIN will not make a user account without being prompted. We will continue under the assumption that User U will contact ADMIN A over a phone call to request an account. Over that call A will verbally prompt U for a username and then make a simple, yet unique temporary password that the User account made for U will be initialized with. A will then verbally deliver the temporary password to U. When U signs into their account for the first time with the temporary password, it will prompt them for a new, different password so that A cannot access U’s account at a later point. 
 </p>
 
 <p>
-  Being that a user account is created by an ADMIN user, we do not expect, nor do we encourage the user to tell the ADMIN their password to their account for setup purposes. We can assume some form of external communication outside of the system is reasonable due to the fact that an ADMIN will not make a user account without being prompted. We will continue under the assumption that User U will contact ADMIN A over a phone call to request an account. Over that call A will verbally prompt U for a username and then make a simple, yet unique temporary password that the User account made for U will be initialized with. A will then verbally deliver the temporary password to U. When U signs into their account for the first time with the temporary password, it will prompt them for a new, different password so that A cannot access U’s account at a later point. 
+  We determined that a Diffie-Hellman password sharing approach would be effective. The group we will be using is group 21 which is a 521-bit random elliptic curve. This provides adequate security against modern threats as well as being strong enough to encompass a 256-bit AES-CBC key. The password sharing approach we decided to go with is Encrypted Key Exchange or EKE for short. T1.1, which is taken from our lecture notes, details how EKE works::
 </p>
 
 <figure>
