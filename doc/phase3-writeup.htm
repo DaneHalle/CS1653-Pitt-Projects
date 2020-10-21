@@ -64,7 +64,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  We determined that a Diffie-Hellman password sharing approach would be effective. The group we will be using is group 21 which is a 521-bit random elliptic curve due to it providing adequate security against modern threats as well as being strong enough to encompass a 256-bit AES-CBC key. The password sharing approach we decided to go with is Encrypted Key Exchange or EKE for short. T1.1, which is taken from our lecture notes, details how EKE works:
+  We determined that a Diffie-Hellman password sharing approach would be effective. The group we will be using is group 21 which is a 521-bit random elliptic curve. This provides adequate security against modern threats as well as being strong enough to encompass a 256-bit AES-CBC key. The password sharing approach we decided to go with is Encrypted Key Exchange or EKE for short. T1.1, which is taken from our lecture notes, details how EKE works::
+</p>
+
+<p>
+  Being that a user account is created by an ADMIN user, we do not expect, nor do we encourage the user to tell the ADMIN their password to their account for setup purposes. We can assume some form of external communication outside of the system is reasonable due to the fact that an ADMIN will not make a user account without being prompted. We will continue under the assumption that User U will contact ADMIN A over a phone call to request an account. Over that call A will verbally prompt U for a username and then make a simple, yet unique temporary password that the User account made for U will be initialized with. A will then verbally deliver the temporary password to U. When U signs into their account for the first time with the temporary password, it will prompt them for a new, different password so that A cannot access U’s account at a later point. 
 </p>
 
 <figure>
@@ -73,15 +77,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </figure>
 
 <p>
-  This would work through the initialization of a user account on the server by a weak secret being made/generated that is known between the User and the Server. That secret will be generated using the Password Based Key Derivation Function V2 (PBKDF2). Then the user will make some random b and send their username and the message of “g<sup>b</sup> mod p” encrypted with the weak secret. The server will then make a random s, choose a challenge C1, and compute “K = g<sup>bs</sup> mod p”. The server will return “g<sup>s</sup> mod p, C<sub>1</sub>” encrypted with the weak secret back to the user. The user would then choose a challenge C<sub>2</sub> and compute the same K as the server. They would then send back both C<sub>1</sub> and C<sub>2</sub> encrypted with K to the server who would decrypt and send back the encryption of C<sub>2</sub> with K to the user.
+  This would work through a user providing a password after being prompted which will be used to generate a weak secret that is known between the User and the Server. That secret will be generated using the Password Based Key Derivation Function V2 (PBKDF2). Then the user will make some random b and send their username and the message of “g<sup>b</sup> mod p” encrypted with the weak secret. The server will then make a random s, choose a challenge C1, and compute “K = g<sup>bs</sup> mod p”. The server will return “g<sup>s</sup> mod p, C<sub>1</sub>” encrypted with the weak secret back to the user. The user would then choose a challenge C<sub>2</sub> and compute the same K as the server. They would then send back both C<sub>1</sub> and C<sub>2</sub> encrypted with K to the server who would decrypt and send back the encryption of C<sub>2</sub> with K to the user.
 </p>
 
 <p>
-  Being that a user account is created by an ADMIN user, we do not expect, nor do we encourage the user to tell the ADMIN their password to their account for setup purposes. This means that when an ADMIN creates a user account, that account will be given a System-Wide-Default-Password. When a client logs into an account using the System-Wide-Default-Password, it will prompt for a new password (that can’t be the System-Wide-Default-Password) and update that user account accordingly.
-</p>
-
-<p>
-  This key exchange works because it not only authenticates the server to the user but it authenticates the user to the server. If another user attempts to impersonate a user, there is no practical way to ensure they can bypass the system. The imposter also does not know when they have correct information as everything looks randomized if the random b is unknown. 
+  This key exchange works because it not only authenticates the server to the user but it authenticates the user to the server. If another user attempts to impersonate a user, there is no practical way to ensure they can bypass the system. The imposter also does not know when they have correct information as everything looks randomized if the random b is unknown. The initializations of user accounts works because it assumes that Users will use a phone to call the ADMIN’s in order to request an account where they will be given an temporary unique password generated by the ADMIN. Then the prompt for a new password after the first time signing in with the temporary password will ensure that no one other than the server and User know that secret and the ADMIN can’t access information that account gains access to later. 
 </p>
 
 <p>
@@ -96,11 +96,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  The group server and the file server are only able to communicate via UserTokens. It is assumed that users may attempt to modify or forge these UserTokens. This will provide the illegitimate users, who forged or modified UserTokens, unauthenticated access to upload, download, modify, or delete files on the file server. The attacker can do this by changing the group values in the UserTokens to be whatever group they desire. The integrity of the UserToken is made possible with RSA signatures. These signatures provide a verification that the UserToken was in fact generated by the group server. 
+  The group server and the file server are only able to communicate via UserTokens. It is assumed that users may attempt to modify or forge these UserTokens. This will provide the illegitimate users, who forged or modified UserTokens, unauthenticated access to upload, download, modify, or delete files on the file server. The attacker can do this by changing the group values in the UserTokens to be whatever group they desire. The integrity of the UserToken shall be made possible with the use of RSA signatures. These signatures provide a verification that the UserToken was in fact generated by the group server.
 </p>
 
 <p>
-  RSA signatures prevent users modifying or forging UserTokens without access to the group server’s private keys. When a UserToken is generated the information will be signed by a 2048-bit RSA private key. This signature will be sent along with the UserToken to provide verification for when it arrives at the file server (via the client).
+  RSA signatures prevent users from modifying or forging UserTokens without access to the group server’s private keys. When a UserToken is generated the information will be signed by a 2048-bit RSA private key. This signature will be sent along with the UserToken to provide verification for when it arrives at the file server (via the client).
 </p>
 
 <figure>
@@ -109,7 +109,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </figure>
 
 <p>
-  Here it assumes there exists a method to verify that the public key being sent does in fact belong to the group server (i.e. an out of bounds request to the admin). The diagram above demonstrates how the UserToken will be used in communicating with the file server. When requested the UserToken is sent with the UserToken’s signature, signed with the file server’s private key. Whenever the client performs a command the signature will provide a permission check to guarantee that the client has the correct permissions on both servers.
+  Here it assumes there exists a method to verify that the public key being sent does in fact belong to the group server (i.e. an out of bounds request to the admin). The diagram above demonstrates how the UserToken will be used in communicating with the file server. When requested, the UserToken is sent with the UserToken’s signature, signed with the file server’s private key. Whenever the client performs a command the signature will provide a permission check to guarantee that the client has the correct permissions on both servers.
 </p>
 
 <p>
@@ -127,11 +127,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  This threat is that an adversary could attempt to impersonate file server s with another file server s<sup>’</sup>. Therefore, the user must be able to authenticate the file server it is communicating with before it shares any information with it. It is assumed that once a file server is authenticated it is to be trusted. If the user can’t authenticate a file server, then there's a possibility of them connecting to an imposter file server. The ramifications of this are that the imposter file server could then leak any files the user uploads, corrupt the files, or steal the user’s token.
+  This threat is that an adversary could attempt to impersonate file server s with another file server s<sup>’</sup>. Therefore, the user must be able to authenticate the file server it is communicating with before it shares any information with it. It is assumed that once a file server is authenticated, it is to be trusted. If the user can’t authenticate a file server, then there's a possibility of them connecting to an imposter file server. The ramifications of this are that the imposter file server could then leak any files the user uploads, corrupt the files, or steal the user’s token.
 </p>
 
 <p>
-  We can protect against this threat using a signed Diffie-Hellman encrypted key exchange. During the initial User/File Server Connection we will set up a secure channel (as described in T4).
+  We can protect against this threat using a signed Diffie-Hellman encrypted key exchange using a 2048-bit RSA key pair. During the initial User/File Server Connection we will set up a secure channel (as described in T4).
 </p>
 
 
@@ -142,12 +142,12 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </figure>
 
 <p>
-  In figure T3.1 we see the authentication process between the client and a file server. The client sends gb mod q, b being a random number they generate. When the file server receives this they respond with gb mod q signed with their private key, along with their public key. During the initial connection the client will verify the signature using a key they get from the Admin. If the signature cannot be verified we will terminate the connection. If we can verify the connection we will store the file server’s public key in a list of trusted file servers. In following connections the authentication process will be virtually identical except that we will use the public key stored for that file server to verify that they aren’t an imposter.
+  In figure T3.1 we see the authentication process between the client and a file server. The client sends g<sup>b</sup> mod q, b being a random number they generate. When the file server receives this they respond with g<sup>b</sup> mod q signed with their private key, along with their public key appended at the end. During the initial connection, the client will contact the admin to verify that they have received the correct public key for the file server they want to connect to. If the public key cannot be verified, we will terminate the connection. If we can verify the public key, we will store it in a list of trusted file servers. We will then compute the verification of the signed g<sup>b</sup> mod q using that public key. In following connections the authentication process will be virtually identical except that we will use the public key stored for that file server to verify that they aren’t an imposter.
 </p>
 
-<!-- <p>
-  In figure T3.2 we see the user authenticating the file server while connecting post the initial connection. The user sends a request for the File server’s fingerprint. The file server responds with it’s fingerprint. Once the fingerprint is received by the client they compare that fingerprint with the fingerprint they have saved for that server. If they match the connection continues. If they do not the connection is terminated.
-</p> -->
+<p>
+  This approach sufficiently solves the problem of determining if the file server we are connected to is authentic or not. Without the file server’s private key they will have no way to sign g<sup>b</sup> mod q in a way that it will successfully be verified by the client since it is hard to factor the public key to derive the private key. The user contacting the admin to make sure they have received the correct public key for that file server, and not a fake one, ensures that a malicious file server can’t just make up its one RSA key pair. It also expects the user to accept the verification using only the public key that the admin verifies.
+</p>
 
 <p>
   Sources: <br>
@@ -165,11 +165,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  Several encryption schemes will be used to ensure communication confidentiality. Along with what is mentioned above in T1, T2, and T3, normal communication between the client and the server's 256-bit AES CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors; however, the increment state of the initialization vector needs to be passed between the client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also, the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
-</p>
-
-<p>
-  Referencing back to the T1 and T3, the key will be generated again using ECC Diffie Hellman exchange protocol. The number of bits will be shaved down to make a usable key. All 256 AES-CBC mode operations will be done using this key format.
+  Several encryption schemes will be used to ensure communication confidentiality. Along with what is mentioned above in T1, T2, and T3, normal communication between the client and the server's 256-bit AES-CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors; however, the increment state of the initialization vector needs to be passed between the client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also, the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
 </p>
 
 <p>
