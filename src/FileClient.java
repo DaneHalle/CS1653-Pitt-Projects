@@ -27,7 +27,10 @@ public class FileClient extends Client implements FileClientInterface {
                 System.out.printf("File %s deleted successfully\n", filename);
             } else {
                 System.out.printf("Error deleting file %s (%s)\n", filename, env.getMessage());
-                System.out.printf("%s\n", env.getObjContents().get(0));
+                try {
+                    System.out.printf("%s\n", env.getObjContents().get(0));
+                } catch (Exception e) {
+                }
                 return false;
             }
         } catch (IOException e1) {
