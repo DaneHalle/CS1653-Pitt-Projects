@@ -5,12 +5,28 @@ import java.io.BufferedReader;      // Needed to read from the console
 import java.io.InputStreamReader;   // Needed to read from the console
 import java.lang.UnsupportedOperationException;
 
+// Crypto libraries
+import org.bouncycastle.*;
+import org.bouncycastle.jce.provider.*;
+import org.bouncycastle.jce.*;
+import java.security.*;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.interfaces.ECPublicKey;
+
+import javax.crypto.KeyAgreement;
+
 public class RunClient {
     private GroupClient g_cli;
     private FileClient f_cli;
     private UserToken token;
 
+    private Key group_key; // may change to key
+    private KeyPair rsa_key;
+
     public RunClient() {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
         g_cli = new GroupClient();
         f_cli = new FileClient();
     }
@@ -38,10 +54,14 @@ public class RunClient {
         server = cmds.nextToken();
         port = Integer.parseInt(cmds.nextToken());
 
+        rsa_key = g_cli.generateRSA();
+
         switch(server_type) {
             case "GROUP":
                 g_cli.connect(server, port);
-                g_cli.verify("GROUP");
+                // TODO: Change username
+                g_cli.keyExchange("Q", "GROUP");
+                // g_cli.verify("GROUP");
                 break;            
             case "FILE":
                 f_cli.connect(server, port);

@@ -6,7 +6,22 @@ import java.io.ObjectOutputStream;
 import java.lang.Thread;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Base64;
+import java.nio.ByteBuffer;
+
+// Crypto libraries
+import org.bouncycastle.*;
+import org.bouncycastle.jce.provider.*;
+import org.bouncycastle.jce.*;
+import java.security.*;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.interfaces.ECPublicKey;
+
+import javax.crypto.KeyAgreement;
 
 public class GroupThread extends Thread {
     private final Socket socket;
@@ -27,9 +42,7 @@ public class GroupThread extends Thread {
             final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
-            response = new Envelope("GROUP");
-            response.addObject(null);
-            output.writeObject(response);
+            establishConnection(input, output);
 
             do {
                 Envelope message = (Envelope)input.readObject();
@@ -501,6 +514,52 @@ public class GroupThread extends Thread {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
         }
+    }
+
+    void establishConnection(ObjectInputStream input, ObjectOutputStream output) throws Exception {
+        Envelope response;
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(256);
+        KeyPair kp = kpg.generateKeyPair();
+        byte[] ourPk = kp.getPublic().getEncoded();
+
+        String encodedPk = Base64.getEncoder().encodeToString(ourPk);
+        System.out.println("Public Key: " + encodedPk);
+
+        response = (Envelope)input.readObject();
+        String username = response.getMessage();
+        
+        String ecc_pub_key_str = (String)response.getObjContents().get(0);
+        System.out.println("ECC Public Key: " + ecc_pub_key_str);
+
+        response = new Envelope("GROUP");
+        response.addObject(encodedPk);
+        output.writeObject(response);
+
+        byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
+
+        KeyFactory kf = KeyFactory.getInstance("EC");
+        X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(ecc_pub_key);
+        PublicKey otherPublicKey = kf.generatePublic(pkSpec);
+
+        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+        ka.init(kp.getPrivate());
+        ka.doPhase(otherPublicKey, true);
+
+        byte[] sharedSecret = ka.generateSecret();
+        System.out.println("Shared Secret: " + Base64.getEncoder().encodeToString(sharedSecret));
+        
+        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+        hash.update(sharedSecret);
+
+        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
+        Collections.sort(keys);
+        hash.update(keys.get(0));
+        hash.update(keys.get(1)); 
+
+        byte[] derivedKey = hash.digest();
+        System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
     }
 
     //Method to create tokens
