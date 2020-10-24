@@ -121,7 +121,7 @@ public class RunClient {
     }
 
     private boolean getToken(StringTokenizer args) {
-        if (args.countTokens() != 1) {
+        if (args.countTokens() != 2) {
             System.out.println("Usage: GET <USERNAME>");
             return false;
         } else if (!g_cli.isConnected()) {
@@ -432,7 +432,7 @@ public class RunClient {
         String cmd = preformat.toUpperCase();
 
         if (token!=null) {
-            token = g_cli.refreshToken(token, token.getPasswordSecret());
+            token = g_cli.refreshToken(token);
         }
 
         switch(cmd) {

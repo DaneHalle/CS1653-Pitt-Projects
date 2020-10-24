@@ -76,6 +76,7 @@ public class GroupThread extends Thread {
 
                             String password = (String)message.getObjContents().get(1);
                             if (password == null) {
+                                response = new Envelope("FAIL");
                                 response.addObject(null);
                                 action="\tFAIL-GET | as given password was null\n";
                                 response.addObject(action.substring(1,action.length()-1));
@@ -87,24 +88,32 @@ public class GroupThread extends Thread {
                                 char[] passwordChars = password.toCharArray();
                                 byte[] saltBytes = salt.getBytes();
                                 byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                String passSecret = new String(hashedBytes);
+                                String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
+
 
                                 if (my_gs.userList.getPasswordHash(username).equals(passSecret)) {
+                                            System.out.println("Test"); 
                                     UserToken yourToken = createToken(username, false, true); //Create a token
+                                            System.out.println("Test"); 
                                     if (my_gs.userList.isTemp(username)) {
+                                            System.out.println("Test"); 
                                         response = new Envelope("REQUEST-NEW");
-                                        Envelope returned = (Envelope)input.readObject();
+                                        output.writeObject(response);
+                                        Envelope returned = null;
                                         String newPassSecret = passSecret;
                                         do {
+                                            returned = (Envelope)input.readObject();
+                                            output.reset();
                                             if (returned.getMessage().equals("NEW")) {
                                                 password = (String)returned.getObjContents().get(0);
                                                 passwordChars = password.toCharArray();
                                                 saltBytes = salt.getBytes();
                                                 hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                                newPassSecret = new String(hashedBytes);
+                                                newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
                                                 if (newPassSecret.equals(passSecret)) {
                                                     continue;
                                                 } else {
+                                                    System.out.println(newPassSecret);
                                                     break;
                                                 }
                                             } else {
@@ -112,6 +121,7 @@ public class GroupThread extends Thread {
                                             }
                                         } while (newPassSecret.equals(passSecret));
                                         if (returned.getMessage().equals("NEW")) {
+                                            my_gs.userList.resetHash(username, newPassSecret);
                                             yourToken.setPasswordSecret(newPassSecret);
                                         }
                                     } else {
@@ -141,7 +151,8 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject(); //Get username associated with the token
-                        String password = (String)message.getObjContents().get(2);
+                        String password = (String)message.getObjContents().get(1);
+                        System.out.println(my_gs.userList.getPasswordHash(username));
                         if (my_gs.userList.getPasswordHash(username).equals(password)) {
                             UserToken newToken = createToken(username, true, false); //Create a refreshed token 
                             // Response to the client. On eror, the clien will reveive a null token
@@ -191,7 +202,7 @@ public class GroupThread extends Thread {
                             char[] passwordChars = password.toCharArray();
                             byte[] saltBytes = salt.getBytes();
                             byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                            String passSecret = new String(hashedBytes);
+                            String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
 
                             action = createUser(username, yourToken, passSecret); //Creates user with given username
                             if (action.equals("OK")){
