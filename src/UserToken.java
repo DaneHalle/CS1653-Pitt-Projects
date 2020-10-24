@@ -57,4 +57,8 @@ public interface UserToken {
 
     public List<String> getShownGroups();
 
+    public void setPasswordSecret(String newSecret);
+
+    public String getPasswordSecret();
+
 }   //-- end interface UserToken

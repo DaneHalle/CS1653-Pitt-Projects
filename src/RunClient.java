@@ -129,7 +129,7 @@ public class RunClient {
             return false;
         }
 
-        token = g_cli.getToken(args.nextToken());
+        token = g_cli.getToken(args.nextToken(), args.nextToken());
         
         if(token == null) {
             System.out.println("Failed to retrieve token");
@@ -190,6 +190,7 @@ public class RunClient {
         String src_file;
         String dst_file;
         String group;
+        String pass;
 
         boolean groupConnected=g_cli.isConnected();
         boolean fileConnected=f_cli.isConnected();
@@ -199,10 +200,11 @@ public class RunClient {
             case "CUSER":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
-                if (!checkCmd(args, 1, "Usage: CUSER <USER>", true))
+                if (!checkCmd(args, 2, "Usage: CUSER <USER>", true))
                     return CommandResult.ARGS;
                 user = args.nextToken();
-                if(g_cli.createUser(user, token))
+                pass = args.nextToken();
+                if(g_cli.createUser(user, token, pass))
                     System.out.printf("Created user: %s\n", user);
                 else
                     return CommandResult.FAIL;
@@ -430,7 +432,7 @@ public class RunClient {
         String cmd = preformat.toUpperCase();
 
         if (token!=null) {
-            token = g_cli.refreshToken(token);
+            token = g_cli.refreshToken(token, token.getPasswordSecret());
         }
 
         switch(cmd) {

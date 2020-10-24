@@ -9,7 +9,7 @@ import java.io.InputStreamReader;   // Needed to read from the console
 
 public class GroupClient extends Client implements GroupClientInterface {
 
-    public UserToken getToken(String username) {
+    public UserToken getToken(String username, String password) {
         try {
             UserToken token = null;
             Envelope message = null, response = null;
@@ -17,10 +17,17 @@ public class GroupClient extends Client implements GroupClientInterface {
             //Tell the server to return a token.
             message = new Envelope("GET");
             message.addObject(username); //Add user name string
+            message.addObject(password);
             output.writeObject(message);
 
             //Get the response from the server
             response = (Envelope)input.readObject();
+            do {
+                if (response.getMessage().equals("REQUEST-NEW")) {
+                    //Get some new password...how though?
+                }
+                response = (Envelope)input.readObject();
+            } while (response.getMessage().equals("REQUEST-NEW"));
 
             //Successful response
             if(response.getMessage().equals("OK")) {
@@ -43,7 +50,7 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     }
 
-    public UserToken refreshToken(UserToken token) {
+    public UserToken refreshToken(UserToken token, String password) {
         try {
             UserToken newToken = null;
             Envelope message = null, response = null;
@@ -51,6 +58,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             //Tell the server to return a token.
             message = new Envelope("REFRESH");
             message.addObject(token); //Add user name string
+            message.addObject(password);
             output.writeObject(message);
 
             //Get the response from the server
@@ -78,13 +86,14 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     }
 
-    public boolean createUser(String username, UserToken token) {
+    public boolean createUser(String username, UserToken token, String password) {
         try {
             Envelope message = null, response = null;
             //Tell the server to create a user
             message = new Envelope("CUSER");
             message.addObject(username); //Add user name string
             message.addObject(token); //Add the requester's token
+            message.addObject(password);
             output.writeObject(message);
 
             response = (Envelope)input.readObject();

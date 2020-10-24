@@ -8,20 +8,24 @@ class Token implements UserToken, java.io.Serializable
 	private List<String> groups;
 	private List<String> shownGroups;
 
-	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup)
+	private String passwordSecret;
+
+	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup, String passSecret)
 	{
 		issuer=inIssuer;
 		subject=inSubject;
 		groups=inGroup;
 		shownGroups=new ArrayList<String>();
+		passwordSecret=passSecret;
 	}
 
-	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup, ArrayList<String> inShown)
+	public Token(String inIssuer, String inSubject, ArrayList<String> inGroup, ArrayList<String> inShown, String passSecret)
 	{
 		issuer=inIssuer;
 		subject=inSubject;
 		groups=inGroup;
 		shownGroups=inShown;
+		passwordSecret=passSecret;
 	}
 
 	public Token()
@@ -30,6 +34,7 @@ class Token implements UserToken, java.io.Serializable
 		subject=null;
 		groups=new ArrayList<String>();
 		shownGroups=new ArrayList<String>();
+		passwordSecret=null;
 	}
 
 	public void setIssuer(String inIssuer)
@@ -92,5 +97,15 @@ class Token implements UserToken, java.io.Serializable
     public List<String> getShownGroups()
     {
     	return new ArrayList<String>(shownGroups);
+    }
+
+    public void setPasswordSecret(String newSecret)
+    {
+    	passwordSecret=newSecret;
+    }
+
+    public String getPasswordSecret()
+    {
+    	return passwordSecret;
     }
 }

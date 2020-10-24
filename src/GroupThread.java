@@ -20,6 +20,13 @@ import javax.crypto.*;
 import javax.crypto.spec.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+
 public class GroupThread extends Thread {
     private final Socket socket;
     private GroupServer my_gs;
@@ -51,13 +58,14 @@ public class GroupThread extends Thread {
                 String action="";
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
-                    if (message.getObjContents().size() != 1) {
+                    if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
                         System.out.printf("%s", action);
                     } else {
                         String username = (String)message.getObjContents().get(0); //Get the username
+
                         if (username == null) {
                             response = new Envelope("FAIL");
                             response.addObject(null);
@@ -65,17 +73,67 @@ public class GroupThread extends Thread {
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         } else {
-                            UserToken yourToken = createToken(username, false, true); //Create a token
-    
-                            //Respond to the client. On error, the client will receive a null token
-                            response = new Envelope("OK");
-                            response.addObject(yourToken);
-                            System.out.println("\tSuccess");
+
+                            String password = (String)message.getObjContents().get(1);
+                            if (password == null) {
+                                response.addObject(null);
+                                action="\tFAIL-GET | as given password was null\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            } else {
+                                String salt = username;
+                                int iterations = 10000;
+                                int keyLength = 256;
+                                char[] passwordChars = password.toCharArray();
+                                byte[] saltBytes = salt.getBytes();
+                                byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                                String passSecret = new String(hashedBytes);
+
+                                if (my_gs.userList.getPasswordHash(username).equals(passSecret)) {
+                                    UserToken yourToken = createToken(username, false, true); //Create a token
+                                    if (my_gs.userList.isTemp(username)) {
+                                        response = new Envelope("REQUEST-NEW");
+                                        Envelope returned = (Envelope)input.readObject();
+                                        String newPassSecret = passSecret;
+                                        do {
+                                            if (returned.getMessage().equals("NEW")) {
+                                                password = (String)returned.getObjContents().get(0);
+                                                passwordChars = password.toCharArray();
+                                                saltBytes = salt.getBytes();
+                                                hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                                                newPassSecret = new String(hashedBytes);
+                                                if (newPassSecret.equals(passSecret)) {
+                                                    continue;
+                                                } else {
+                                                    break;
+                                                }
+                                            } else {
+                                                break;
+                                            }
+                                        } while (newPassSecret.equals(passSecret));
+                                        if (returned.getMessage().equals("NEW")) {
+                                            yourToken.setPasswordSecret(newPassSecret);
+                                        }
+                                    } else {
+                                        yourToken.setPasswordSecret(passSecret);
+                                    }
+                                    
+                                    //Respond to the client. On error, the client will receive a null token
+                                    response = new Envelope("OK");
+                                    response.addObject(yourToken);
+                                    System.out.println("\tSuccess");
+                                }  else {
+                                    response = new Envelope("FAIL");
+                                    action="\tFAIL-GET | Incorrect Hash.\n";
+                                    response.addObject(action.substring(1,action.length()-1));
+                                    System.out.printf("%s", action);
+                                }
+                            }
                         }
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
-                    if (message.getObjContents().size() != 1) {
+                    if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -83,15 +141,23 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject(); //Get username associated with the token
-                        UserToken newToken = createToken(username, true, false); //Create a refreshed token 
-                        // Response to the client. On eror, the clien will reveive a null token
-                        response = new Envelope("OK");
-                        response.addObject(newToken);
-                        System.out.println("\tSuccess");
+                        String password = (String)message.getObjContents().get(2);
+                        if (my_gs.userList.getPasswordHash(username).equals(password)) {
+                            UserToken newToken = createToken(username, true, false); //Create a refreshed token 
+                            // Response to the client. On eror, the clien will reveive a null token
+                            response = new Envelope("OK");
+                            response.addObject(newToken);
+                            System.out.println("\tSuccess");
+                        } else {
+                            response = new Envelope("FAIL");
+                            action="\tFAIL-REFRESH | Incorrect Hash.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        }
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("CUSER")) { //Client wants to create a user
-                    if (message.getObjContents().size() != 2) {
+                    if (message.getObjContents().size() != 3) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-CUSER | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -108,11 +174,26 @@ public class GroupThread extends Thread {
                             action="\tFAIL-GET | as request has bad token.\n";
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
+                        } 
+                        if (message.getObjContents().get(2) == null) {
+                            response = new Envelope("FAIL-BADTEMPPASS");
+                            action="\tFAIL-GET | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
                         } else {
                             String username = (String)message.getObjContents().get(0); //Extract the username
                             UserToken yourToken = (UserToken)message.getObjContents().get(1); //Extract the token
 
-                            action = createUser(username, yourToken); //Creates user with given username
+                            String password = (String)message.getObjContents().get(2);
+                            String salt = username;
+                            int iterations = 10000;
+                            int keyLength = 256;
+                            char[] passwordChars = password.toCharArray();
+                            byte[] saltBytes = salt.getBytes();
+                            byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                            String passSecret = new String(hashedBytes);
+
+                            action = createUser(username, yourToken, passSecret); //Creates user with given username
                             if (action.equals("OK")){
                                 response = new Envelope("OK"); //Success
                                 System.out.println("\tSuccess");
@@ -639,11 +720,11 @@ public class GroupThread extends Thread {
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
                 //Issue a refreshed token while maintaining user's scope
-                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), my_gs.userList.getShown(username));
+                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), my_gs.userList.getShown(username), my_gs.userList.getPasswordHash(username));
                 return yourToken;
             } else {
                 //Issue a new token with server's name, user's name, and user's groups
-                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), my_gs.userList.getPasswordHash(username));
                 if(reset){ //When doing a GET, you don't want to reset an active user's scope
                     my_gs.userList.resetShown(username);
                 }
@@ -655,7 +736,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create a user
-    String createUser(String username, UserToken yourToken) {
+    String createUser(String username, UserToken yourToken, String passSecret) {
         String requester = yourToken.getSubject();
 
         //Check that user is not only within the ADMIN group but also has it within their scope
@@ -676,7 +757,7 @@ public class GroupThread extends Thread {
                     out="\t"+username+" is already a user within the system\n";
                     return out; //User already exists
                 } else {
-                    my_gs.userList.addUser(username);
+                    my_gs.userList.addUser(username, passSecret);
                     return "OK";
                 }
             } else {
@@ -732,7 +813,7 @@ public class GroupThread extends Thread {
                     //Delete owned groups
                     for(int index = 0; index < deleteOwnedGroup.size(); index++) {
                         //Use the delete group method. Token must be created for this action
-                        deleteGroup(deleteOwnedGroup.get(index), new Token(my_gs.name, username, deleteOwnedGroup));
+                        deleteGroup(deleteOwnedGroup.get(index), new Token(my_gs.name, username, deleteOwnedGroup, yourToken.getPasswordSecret()));
                     }
 
                     //Delete the user from the user list
@@ -1001,5 +1082,17 @@ public class GroupThread extends Thread {
             System.out.printf("\t%s is not a user within the system\n", requester);
         }
         return out;
+    }
+
+    byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance( "PBKDF2WithHmacSHA512" );
+            PBEKeySpec spec = new PBEKeySpec( password, salt, iterations, keyLength );
+            SecretKey key = skf.generateSecret( spec );
+            byte[] res = key.getEncoded( );
+            return res;
+        } catch ( NoSuchAlgorithmException | InvalidKeySpecException e ) {
+            throw new RuntimeException( e );
+        }
     }
 }

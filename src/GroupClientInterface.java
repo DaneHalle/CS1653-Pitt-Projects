@@ -37,7 +37,7 @@ public interface GroupClientInterface {
      *         If this user does not exist, a null value will be returned.
      *
      */
-    public UserToken getToken(final String username);
+    public UserToken getToken(final String username, String password);
 
 
     /**
@@ -50,7 +50,7 @@ public interface GroupClientInterface {
      * @return true if the new user was created, false otherwise
      *
      */
-    public boolean createUser(final String username, final UserToken token);
+    public boolean createUser(final String username, final UserToken token, String password);
 
 
     /**
