@@ -29,6 +29,7 @@ public class RunClient {
 
         g_cli = new GroupClient();
         f_cli = new FileClient();
+        rsa_key = g_cli.generateRSA(); // could also be g_cli
     }
 
     private enum CommandResult {
@@ -54,18 +55,14 @@ public class RunClient {
         server = cmds.nextToken();
         port = Integer.parseInt(cmds.nextToken());
 
-        rsa_key = g_cli.generateRSA();
-
         switch(server_type) {
             case "GROUP":
                 g_cli.connect(server, port);
                 // TODO: Change username
-                g_cli.keyExchange("Q", "GROUP");
-                // g_cli.verify("GROUP");
+                g_cli.keyExchange("Q", "GROUP", rsa_key);
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
-                f_cli.verify("FILE");
                 break;
             default:
                 return false;

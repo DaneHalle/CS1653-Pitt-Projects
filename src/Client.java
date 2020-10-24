@@ -29,6 +29,8 @@ public abstract class Client {
     protected ObjectInputStream input;
     protected UserToken token;
 
+    private SecureRandom secureRandom = null;
+
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
 
@@ -65,8 +67,8 @@ public abstract class Client {
 
         return keyPair.generateKeyPair();
     }
-    
-    public Key keyExchange(String username, String sign) {
+
+    public Key keyExchange(String username, String sign, KeyPair rsa_key) {
         try {
             Envelope message = new Envelope(username);
             KeyPairGenerator kpg;
@@ -76,15 +78,11 @@ public abstract class Client {
             KeyPair kp = kpg.generateKeyPair();
             byte[] ourPk = kp.getPublic().getEncoded();
             
-            String encodedPk = Base64.getEncoder().encodeToString(ourPk);
-            System.out.println("Public Key: " + encodedPk);
-
-            message.addObject(encodedPk);
+            addSignature(message, ourPk, rsa_key);
             output.writeObject(message);
 
             message = (Envelope)input.readObject();
-            if (!message.getMessage().equals(sign)) {
-                System.out.printf("Server is not a %s server\n", sign);
+            if (!verify(message, sign)) {
                 disconnect();
                 return null;
             }
@@ -123,6 +121,30 @@ public abstract class Client {
         return null;
     }
 
+    private void addSignature(Envelope message, byte[] ourPk, KeyPair rsa_key) {
+        byte[] rsaSign;
+        byte[] rsaPubK;
+        String encodedPk = Base64.getEncoder().encodeToString(ourPk);
+        System.out.println("Public Key: " + encodedPk);
+
+        try {
+            Signature rsa_signature = Signature.getInstance("RSA");
+
+            rsa_signature.initSign(rsa_key.getPrivate(), secureRandom);
+            rsa_signature.update(ourPk);
+
+            rsaSign = rsa_signature.sign();
+            rsaPubK = rsa_key.getPublic().getEncoded();
+        } catch(Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        
+        message.addObject(encodedPk);
+        // message.addObject(Base64.getEncoder().encodeToString(rsaSign));
+        // message.addObject(Base64.getEncoder().encodeToString(rsaPubK));
+    }
+
     public boolean isConnected() {
         if (sock == null || sock.isClosed()) {
             return false;
@@ -147,16 +169,44 @@ public abstract class Client {
         }
     }
 
-    public boolean verify(String sign) {
+    private boolean verify(Envelope message, String server_type) {
+        if (!message.getMessage().equals(server_type)) {
+            System.out.printf("Server is not a %s server\n", server_type);
+            return false;
+        }
+
+        ArrayList<Object> contents = message.getObjContents();
+        if (contents.size() != 3) {
+            System.out.println("Invalid establishing connection");
+            return false;
+        }
+
+        // Extract the crypto values
+        byte[] eccKey    = Base64.getDecoder().decode((String)contents.get(0));
+        byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
+        byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
+
         try {
-            Envelope server_type = (Envelope)input.readObject();
-            if (!server_type.getMessage().equals(sign)) {
-                System.out.printf("Server is not a %s server\n", sign);
-                disconnect();
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKey);
+            PublicKey serverPubKey = kf.generatePublic(pkSpec);
+
+            Signature rsa_signature = Signature.getInstance("RSA");
+
+            rsa_signature.initVerify(serverPubKey);
+            rsa_signature.update(eccKey);
+
+            boolean verified = rsa_signature.verify(eccSign);
+            
+            if (verified) {
+                // Signature matches
+                System.out.println("Success: Verified key");
+                return true;
+            } else {
+                // Signature DOES NOT match
+                System.out.println("Invalid session establishment (Unverified key)");
                 return false;
             }
-
-            return true;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);

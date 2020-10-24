@@ -527,6 +527,10 @@ public class GroupThread extends Thread {
         String encodedPk = Base64.getEncoder().encodeToString(ourPk);
         System.out.println("Public Key: " + encodedPk);
 
+        String encodedSignature = Base64.getEncoder().encodeToString(my_gs.signData(ourPk));
+        byte[] rsaPublicKeyByte = my_gs.getPublicKey().getEncoded();
+        String encodedRSAPk     = Base64.getEncoder().encodeToString(rsaPublicKeyByte);
+
         response = (Envelope)input.readObject();
         String username = response.getMessage();
         
@@ -535,6 +539,8 @@ public class GroupThread extends Thread {
 
         response = new Envelope("GROUP");
         response.addObject(encodedPk);
+        response.addObject(encodedSignature);
+        response.addObject(encodedRSAPk);
         output.writeObject(response);
 
         byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
