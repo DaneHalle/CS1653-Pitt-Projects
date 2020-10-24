@@ -141,8 +141,8 @@ public abstract class Client {
         }
         
         message.addObject(encodedPk);
-        // message.addObject(Base64.getEncoder().encodeToString(rsaSign));
-        // message.addObject(Base64.getEncoder().encodeToString(rsaPubK));
+        message.addObject(Base64.getEncoder().encodeToString(rsaSign));
+        message.addObject(Base64.getEncoder().encodeToString(rsaPubK));
     }
 
     public boolean isConnected() {

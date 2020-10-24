@@ -42,7 +42,10 @@ public class GroupThread extends Thread {
             final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
-            establishConnection(input, output);
+            if(!establishConnection(input, output)) {
+                socket.close();
+                proceed = false;
+            }
 
             do {
                 Envelope message = (Envelope)input.readObject();
@@ -516,7 +519,7 @@ public class GroupThread extends Thread {
         }
     }
 
-    void establishConnection(ObjectInputStream input, ObjectOutputStream output) throws Exception {
+    boolean establishConnection(ObjectInputStream input, ObjectOutputStream output) throws Exception {
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
@@ -533,6 +536,10 @@ public class GroupThread extends Thread {
 
         response = (Envelope)input.readObject();
         String username = response.getMessage();
+
+        if(!verifyData(response)) {
+            return false;
+        }
         
         String ecc_pub_key_str = (String)response.getObjContents().get(0);
         System.out.println("ECC Public Key: " + ecc_pub_key_str);
@@ -566,6 +573,48 @@ public class GroupThread extends Thread {
 
         byte[] derivedKey = hash.digest();
         System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
+
+        return true;
+    }
+
+    private boolean verifyData(Envelope message) {
+        ArrayList<Object> contents = message.getObjContents();
+        if (contents.size() != 3) {
+            System.out.println("Invalid establishing connection");
+            return false;
+        }
+
+        // Extract the crypto values
+        byte[] eccKey    = Base64.getDecoder().decode((String)contents.get(0));
+        byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
+        byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
+
+        try {
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKey);
+            PublicKey serverPubKey = kf.generatePublic(pkSpec);
+
+            Signature rsa_signature = Signature.getInstance("RSA");
+
+            rsa_signature.initVerify(serverPubKey);
+            rsa_signature.update(eccKey);
+
+            boolean verified = rsa_signature.verify(eccSign);
+            
+            if (verified) {
+                // Signature matches
+                System.out.println("Success: Verified key");
+                return true;
+            } else {
+                // Signature DOES NOT match
+                System.out.println("Invalid session establishment (Unverified key)");
+                return false;
+            }
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
     }
 
     //Method to create tokens
