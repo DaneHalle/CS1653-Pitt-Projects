@@ -76,6 +76,7 @@ public class GroupThread extends Thread {
 
                             String password = (String)message.getObjContents().get(1);
                             if (password == null) {
+                                response = new Envelope("FAIL");
                                 response.addObject(null);
                                 action="\tFAIL-GET | as given password was null\n";
                                 response.addObject(action.substring(1,action.length()-1));
