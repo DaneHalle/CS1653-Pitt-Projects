@@ -7,6 +7,9 @@ import java.io.ObjectOutputStream;  // Used to write objects to the server
 import java.io.BufferedReader;      // Needed to read from the console
 import java.io.InputStreamReader;   // Needed to read from the console
 
+import java.util.StringTokenizer;
+import java.util.Base64;
+
 public class GroupClient extends Client implements GroupClientInterface {
 
     public UserToken getToken(String username, String password) {
@@ -21,10 +24,21 @@ public class GroupClient extends Client implements GroupClientInterface {
             output.writeObject(message);
 
             //Get the response from the server
+                System.out.println("Test");
             response = (Envelope)input.readObject();
+                System.out.println(response.getMessage());
+            boolean first=true; 
+            StringTokenizer cmd;
+            // if(response.getMessage().equals("REQUEST-NEW"));
             do {
                 if (response.getMessage().equals("REQUEST-NEW")) {
                     //Get some new password...how though?
+                    String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
+                    System.out.println(print);
+                    cmd = new StringTokenizer(readInput());
+                    message = new Envelope("NEW");
+                    message.addObject(cmd.nextToken());
+                    output.writeObject(message);
                 }
                 response = (Envelope)input.readObject();
             } while (response.getMessage().equals("REQUEST-NEW"));
@@ -50,7 +64,7 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     }
 
-    public UserToken refreshToken(UserToken token, String password) {
+    public UserToken refreshToken(UserToken token) {
         try {
             UserToken newToken = null;
             Envelope message = null, response = null;
@@ -58,7 +72,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             //Tell the server to return a token.
             message = new Envelope("REFRESH");
             message.addObject(token); //Add user name string
-            message.addObject(password);
+            message.addObject(token.getPasswordSecret());
             output.writeObject(message);
 
             //Get the response from the server

@@ -17,6 +17,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Base64;
 import java.util.Scanner;
 
 // Crypto Libraries
@@ -78,7 +79,8 @@ public class GroupServer extends Server {
             char[] passwordChars = password.toCharArray();
             byte[] saltBytes = salt.getBytes();
             byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-            String passSecret = new String(hashedBytes);
+            String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
+            System.out.println(passSecret);
 
             //Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
             userList = new UserList();
