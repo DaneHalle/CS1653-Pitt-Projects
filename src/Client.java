@@ -9,15 +9,12 @@ import java.util.Base64;
 import java.nio.ByteBuffer;
 
 // Crypto Libraries
-import org.bouncycastle.*;
-import org.bouncycastle.jce.provider.*;
-import org.bouncycastle.jce.*;
 import java.security.*;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.security.interfaces.ECPublicKey;
+import java.security.spec.*;
 
-import javax.crypto.KeyAgreement;
+import javax.crypto.*;
+import javax.crypto.spec.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public abstract class Client {
 
@@ -30,6 +27,7 @@ public abstract class Client {
     protected UserToken token;
 
     private SecureRandom secureRandom = null;
+    private final int TAG_LENGTH_BIT = 128;
 
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
@@ -88,6 +86,7 @@ public abstract class Client {
             }
 
             String ecc_pub_key_str = (String)message.getObjContents().get(0);
+            String ivEncoded = (String)message.getObjContents().get(3);
             System.out.println("ECC Public Key: " + ecc_pub_key_str);
 
             byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
@@ -113,6 +112,21 @@ public abstract class Client {
 
             byte[] derivedKey = hash.digest();
             System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
+
+            // AES Test
+            byte[] iv = Base64.getDecoder().decode(ivEncoded);
+            IvParameterSpec ivParams = new IvParameterSpec(iv);
+
+
+            byte[] test = "AES Test String".getBytes("UTF-8");
+            SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
+            Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            aes.init(Cipher.ENCRYPT_MODE, aesSpec, ivParams);
+            byte[] result = aes.doFinal(test);
+            String resultEncoded = Base64.getEncoder().encodeToString(result);
+            System.out.println("---------------------------------------");
+            System.out.println("Result: " + resultEncoded);
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -176,7 +190,7 @@ public abstract class Client {
         }
 
         ArrayList<Object> contents = message.getObjContents();
-        if (contents.size() != 3) {
+        if (contents.size() != 4) {
             System.out.println("Invalid establishing connection");
             return false;
         }

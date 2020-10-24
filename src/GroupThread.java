@@ -13,15 +13,12 @@ import java.util.Base64;
 import java.nio.ByteBuffer;
 
 // Crypto libraries
-import org.bouncycastle.*;
-import org.bouncycastle.jce.provider.*;
-import org.bouncycastle.jce.*;
 import java.security.*;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.security.interfaces.ECPublicKey;
+import java.security.spec.*;
 
-import javax.crypto.KeyAgreement;
+import javax.crypto.*;
+import javax.crypto.spec.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class GroupThread extends Thread {
     private final Socket socket;
@@ -544,10 +541,20 @@ public class GroupThread extends Thread {
         String ecc_pub_key_str = (String)response.getObjContents().get(0);
         System.out.println("ECC Public Key: " + ecc_pub_key_str);
 
+        // AES Test Part 1
+        Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        SecureRandom rnd = new SecureRandom();
+        byte[] iv = new byte[aes.getBlockSize()];
+        rnd.nextBytes(iv);
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        
+        String ivEncoded = Base64.getEncoder().encodeToString(iv);
+
         response = new Envelope("GROUP");
         response.addObject(encodedPk);
         response.addObject(encodedSignature);
         response.addObject(encodedRSAPk);
+        response.addObject(ivEncoded);
         output.writeObject(response);
 
         byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
@@ -573,6 +580,15 @@ public class GroupThread extends Thread {
 
         byte[] derivedKey = hash.digest();
         System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
+
+        // AES Test Part 2
+        byte[] test = "AES Test String".getBytes("UTF-8");
+        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
+        aes.init(Cipher.ENCRYPT_MODE, aesSpec, ivParams);
+        byte[] result = aes.doFinal(test);
+        String resultEncoded = Base64.getEncoder().encodeToString(result);
+        System.out.println("---------------------------------------");
+        System.out.println("Result: " + resultEncoded);
 
         return true;
     }
