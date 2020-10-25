@@ -1,4 +1,5 @@
 */*.bin
 */shared_files
 *.class
+*lib*
 .DS_Store
