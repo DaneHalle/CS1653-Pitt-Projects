@@ -1,6 +1,7 @@
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.lang.reflect.Field;
 
 import java.security.*;
 import java.security.spec.*;
@@ -21,6 +22,7 @@ class Token implements UserToken, java.io.Serializable
 	private List<String> groups;
 	private List<String> shownGroups;
 
+	private ArrayList<String> metaVars = new ArrayList<String>();
 	private String encodedPubKey;
 	private String encodedSign;
 
@@ -205,34 +207,32 @@ class Token implements UserToken, java.io.Serializable
 	}
 
 	public String toString() {
-		// private String issuer;
-		// private String subject;
-		// private List<String> groups;
-		// private List<String> shownGroups;
+		String str = "";
 
-		// private String passwordSecret;
+		// Variables to ignore
+		metaVars.add("metaVars");
+		metaVars.add("encodedPubKey");
+		metaVars.add("encodedSign");
 
-		String str = "{";
+		try {
+			Class<?> objClass = this.getClass();
 
-		str += "issuer:" + issuer + ",";
-		str += "subject:" + subject + ",";
+			Field[] fields = objClass.getDeclaredFields();
 
-		str += "groups:[";
-		for(int i=0; i < groups.size(); i++) {
-			str += groups.get(i);
-			if (i < groups.size()-1)
-				str += ",";
+			for(int i=0; i < fields.length; i++) {
+				if (fields[i] == null)
+					continue;
+
+				String name = fields[i].getName();
+				Object value = fields[i].get(this);
+
+				if (!metaVars.contains(name)) {
+					str += name + ": " + value.toString() + "\n";
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		str += "],";
-		str += "shownGroups:[";
-		for(int i=0; i < shownGroups.size(); i++) {
-			str += shownGroups.get(i);
-			if (i < shownGroups.size()-1)
-				str += ",";
-		}
-		str += "]";
-
-		str += "}";
 
 		return str;
 	}
@@ -247,8 +247,8 @@ class Token implements UserToken, java.io.Serializable
 		groups.add("fish");
 
 		ArrayList<String> shownGroups = new ArrayList<String>();
-		groups.add("car");
-		groups.add("bike");
+		shownGroups.add("car");
+		shownGroups.add("bike");
 
 		KeyPair publicKey;
 
