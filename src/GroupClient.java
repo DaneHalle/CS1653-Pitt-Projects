@@ -45,7 +45,7 @@ public class GroupClient extends Client implements GroupClientInterface {
         try {
             Security.addProvider(new BouncyCastleProvider());
             UserToken token = null;
-            Envelope message1 = null, message2 = null, message3 = null, response = null;
+            Envelope message1 = null, message2 = null, message3 = null, message4 = null, actual = null, response = null;
 
             //Tell the server to return a token.
             message1 = new Envelope("GET");
@@ -65,7 +65,13 @@ public class GroupClient extends Client implements GroupClientInterface {
             byte[] ourPk = kp.getPublic().getEncoded();
 
             Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-            SecretKeySpec key = new SecretKeySpec(Base64.getEncoder().encode(hashedBytes), "AES");
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(passSecret.getBytes("UTF-8"));
+            byte[] keyBytes = new byte[16];
+            System.arraycopy(digest.digest(), 0, keyBytes, 0, keyBytes.length);
+
+            SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
             byte[] iv = new byte[16];
             SecureRandom random = new SecureRandom();
             random.nextBytes(iv);
@@ -74,7 +80,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             byte[] encrypted = encrypt.doFinal(ourPk);
 
             message1.addObject(Base64.getEncoder().encodeToString(encrypted)); //{g^b mod p}W
-            message1.addObject(ivParameterSpec);
+            message1.addObject(iv);
             output.writeObject(message1); 
 
             //--------------------------------------------------------------
@@ -83,7 +89,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             if (message2.getMessage().equals("MESSAGE2")) {
                 String encryptedKey = (String)message2.getObjContents().get(0);
                 String encryptedChallenge = (String)message2.getObjContents().get(1);
-                IvParameterSpec ivSpec = (IvParameterSpec)message2.getObjContents().get(2);
+                IvParameterSpec ivSpec = new IvParameterSpec((byte[])message2.getObjContents().get(2));
 
                 Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
                 decrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
@@ -110,6 +116,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
 
                 SecureRandom challenge = new SecureRandom();
+                String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
 
                 iv = new byte[16];
                 random = new SecureRandom();
@@ -117,73 +124,82 @@ public class GroupClient extends Client implements GroupClientInterface {
                 ivParameterSpec = new IvParameterSpec(iv);
                 encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
                 byte[] encryptedOther = encrypt.doFinal(otherChallenge); //Server's challenge
-                byte[] encryptedThis = encrypt.doFinal(challenge.generateSeed(64)); //Server's challenge
+                byte[] encryptedThis = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge)); //Server's challenge
 
                 message3 = new Envelope("MESSAGE3");
                 message3.addObject(Base64.getEncoder().encodeToString(encryptedOther));
                 message3.addObject(Base64.getEncoder().encodeToString(encryptedThis));
-                message3.addObject(ivParameterSpec);
+                message3.addObject(iv);
                 output.writeObject(message3); 
 
                 //--------------------------------------------------------------
 
                 message4 = (Envelope)input.readObject();
                 if (message4.getMessage().equals("MESSAGE4")) {
-                    String encryptedThisChallenge = (String)message2.getObjContents().get(0);
-                    ivSpec = (IvParameterSpec)message2.getObjContents().get(1);
+                    String encryptedThisChallenge = (String)message4.getObjContents().get(0);
+                    ivSpec = new IvParameterSpec((byte[])message4.getObjContents().get(1));
 
                     decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
                     decrypt.init(Cipher.DECRYPT_MODE, derived, ivSpec);
                     byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(encryptedThisChallenge));
 
                     if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
+                        actual = new Envelope("GOOD");
+                        output.writeObject(actual);
+                        response = (Envelope)input.readObject();
+                        boolean first=true; 
+                        StringTokenizer cmd;
+                        do {
+                            System.out.println("Test");
+                            if (response.getMessage().equals("REQUEST-NEW")) {
+                                //Get some new password...how though?
+                                String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
+                                System.out.println(print);
+                                cmd = new StringTokenizer(readInput());
+                                actual = new Envelope("NEW");
+                                actual.addObject(cmd.nextToken());
+                                output.writeObject(actual);
+                            } else {
+                                break;
+                            }
+                            response = (Envelope)input.readObject();
+                        } while (response.getMessage().equals("REQUEST-NEW"));
+
+                        //Get the response from the server
+
+                        //Successful response
+                        if(response.getMessage().equals("OK")) {
+                            //If there is a token in the Envelope, return it
+                            ArrayList<Object> temp = null;
+                            temp = response.getObjContents();
+
+                            if(temp.size() == 1) {
+                                token = (UserToken)temp.get(0);
+                                return token;
+                            }
+                        }
                         //Continue
                     } else {
-                        //Return FAIL
+                        actual = new Envelope("FAIL");
+                        output.writeObject(actual);
+                        response = (Envelope)input.readObject();
                         return null;
                     }
                 } else {
-                    //Return FAIL
+                    actual = new Envelope("FAIL");
+                    output.writeObject(actual);
+                    response = (Envelope)input.readObject();
                     return null;
                 }
 
 
             } else {
-                //Return FAIL
+                
                 return null;
             }
 
 
 
-            //Get the response from the server
-            response = (Envelope)input.readObject();
-            // boolean first=true; 
-            // StringTokenizer cmd;
-            // if(response.getMessage().equals("REQUEST-NEW"));
-            // do {
-            //     if (response.getMessage().equals("REQUEST-NEW")) {
-            //         //Get some new password...how though?
-            //         String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
-            //         System.out.println(print);
-            //         cmd = new StringTokenizer(readInput());
-            //         message = new Envelope("NEW");
-            //         message.addObject(cmd.nextToken());
-            //         output.writeObject(message);
-            //     }
-            //     response = (Envelope)input.readObject();
-            // } while (response.getMessage().equals("REQUEST-NEW"));
-
-            //Successful response
-            if(response.getMessage().equals("OK")) {
-                //If there is a token in the Envelope, return it
-                ArrayList<Object> temp = null;
-                temp = response.getObjContents();
-
-                if(temp.size() == 1) {
-                    token = (UserToken)temp.get(0);
-                    return token;
-                }
-            }
 
             return null;
         } catch(Exception e) {

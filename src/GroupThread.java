@@ -96,7 +96,7 @@ public class GroupThread extends Thread {
                                 System.out.printf("%s", action);
                             } else {
 
-                                IvParameterSpec ivSpec = (IvParameterSpec)message.getObjContents().get(2);
+                                IvParameterSpec ivSpec = new IvParameterSpec((byte[])message.getObjContents().get(2));
                                 if (ivSpec == null) {
                                     response = new Envelope("FAIL");
                                     action="\tFAIL-GET | IV was null\n";
@@ -110,8 +110,13 @@ public class GroupThread extends Thread {
                                     KeyPair kp = kpg.generateKeyPair();
                                     byte[] ourPk = kp.getPublic().getEncoded();
 
+                                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                                    digest.update(passSecret.getBytes("UTF-8"));
+                                    byte[] keyBytes = new byte[16];
+                                    System.arraycopy(digest.digest(), 0, keyBytes, 0, keyBytes.length);
+
                                     Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                    SecretKeySpec key = new SecretKeySpec(Base64.getDecoder().decode(passSecret), "AES");
+                                    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
                                     decrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
                                     byte[] otherPk = decrypt.doFinal(Base64.getDecoder().decode(encrypted));
 
@@ -144,12 +149,12 @@ public class GroupThread extends Thread {
                                     IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
                                     encrypt.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
                                     byte[] encryptedKey = encrypt.doFinal(ourPk);
-                                    byte[] encryptedChallenge = encrypt.doFinal(challenge.generateSeed(64));
+                                    byte[] encryptedChallenge = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge));
 
                                     Envelope message2 = new Envelope("MESSAGE2");
                                     message2.addObject(Base64.getEncoder().encodeToString(encryptedKey));
-                                    message2.addObject(encodedChallenge);
-                                    message2.addObject(ivParameterSpec);
+                                    message2.addObject(Base64.getEncoder().encodeToString(encryptedChallenge));
+                                    message2.addObject(iv);
                                     output.writeObject(message2);
 
                                     //--------------------------------------------------------------
@@ -158,7 +163,7 @@ public class GroupThread extends Thread {
                                     if (message3.getMessage().equals("MESSAGE3")) {
                                         String thisChallenge = (String)message3.getObjContents().get(0);
                                         String otherChallenge = (String)message3.getObjContents().get(1);
-                                        IvParameterSpec newIv = (IvParameterSpec)message3.getObjContents().get(2);
+                                        IvParameterSpec newIv = new IvParameterSpec((byte[])message3.getObjContents().get(2));
     
                                         decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
                                         decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
@@ -171,21 +176,71 @@ public class GroupThread extends Thread {
                                         random.nextBytes(iv);
                                         ivParameterSpec = new IvParameterSpec(iv);
                                         encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
-                                        byte[] encryptOther = encrypt.doFinal(otherChallenge.getBytes());
+                                        byte[] encryptOther = encrypt.doFinal(decryptOtherChallenge);
     
                                         if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
                                             Envelope message4 = new Envelope("MESSAGE4");
                                             message4.addObject(Base64.getEncoder().encodeToString(encryptOther));
-                                            message4.addObject(ivParameterSpec);
+                                            message4.addObject(iv);
                                             output.writeObject(message4);
 
                                             Envelope actual = (Envelope)input.readObject();
-                                            
+                                            if (actual.getMessage().equals("GOOD")) {
+                                                UserToken yourToken = createToken(username, false, true); //Create a token
+                                                if (my_gs.userList.isTemp(username)) {
+                                                    response = new Envelope("REQUEST-NEW");
+                                                    output.writeObject(response);
+                                                    Envelope returned = null;
+                                                    String newPassSecret = passSecret;
+                                                    String password, salt = username;
+                                                    int iterations = 10000, keyLength = 256;
+                                                    char[] passwordChars;
+                                                    byte[] saltBytes, hashedBytes;
+
+                                                    do {
+                                                        System.out.println("Test");
+                                                        returned = (Envelope)input.readObject();
+                                                        if (returned.getMessage().equals("NEW")) {
+                                                            password = (String)returned.getObjContents().get(0);
+                                                            passwordChars = password.toCharArray();
+                                                            saltBytes = salt.getBytes();
+                                                            hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                                                            newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
+                                                            if (newPassSecret.equals(passSecret)) {
+                                                                continue;
+                                                            } else {
+                                                                break;
+                                                            }
+                                                        } else {
+                                                            break;
+                                                        }
+                                                    } while (newPassSecret.equals(passSecret));
+                                                    if (returned.getMessage().equals("NEW")) {
+                                                        my_gs.userList.resetHash(username, newPassSecret);
+                                                        yourToken.setPasswordSecret(newPassSecret);
+                                                    }
+                                                }
+                                                
+                                                //Respond to the client. On error, the client will receive a null token
+                                                response = new Envelope("OK");
+                                                response.addObject(yourToken);
+                                                System.out.println("\tSuccess");
+                                            } else {
+                                                response = new Envelope("FAIL");
+                                                action="\tFAIL-GET | Given challenge was incorrect\n";
+                                                response.addObject(action.substring(1,action.length()-1));
+                                                System.out.printf("%s", action);
+                                            }
+
                                             //Continue
                                         } else {
                                             Envelope message4 = new Envelope("FAIL");
-                                            action="\tFAIL-GET | Challenge was incorrect\n";
+                                            action="\tFAIL-GET | Challenge response was incorrect\n";
                                             message4.addObject(action.substring(1,action.length()-1));
+                                            System.out.printf("%s", action);
+                                            response = new Envelope("FAIL");
+                                            action="\tFAIL-GET | Unexpected response\n";
+                                            response.addObject(action.substring(1,action.length()-1));
                                             System.out.printf("%s", action);
                                         }
                                     } else {
@@ -193,59 +248,16 @@ public class GroupThread extends Thread {
                                         action="\tFAIL-GET | Unexpected response\n";
                                         message4.addObject(action.substring(1,action.length()-1));
                                         System.out.printf("%s", action);
+                                        response = new Envelope("FAIL");
+                                        action="\tFAIL-GET | Unexpected response\n";
+                                        response.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
                                     }
 
-                                }
-
-
-
-                                // if (my_gs.userList.getPasswordHash(username).equals(passSecret)) {
-                                //     UserToken yourToken = createToken(username, false, true); //Create a token
-                                //     if (my_gs.userList.isTemp(username)) {
-                                //         response = new Envelope("REQUEST-NEW");
-                                //         output.writeObject(response);
-                                //         Envelope returned = null;
-                                //         String newPassSecret = passSecret;
-                                //         do {
-                                //             returned = (Envelope)input.readObject();
-                                //             output.reset();
-                                //             if (returned.getMessage().equals("NEW")) {
-                                //                 password = (String)returned.getObjContents().get(0);
-                                //                 passwordChars = password.toCharArray();
-                                //                 saltBytes = salt.getBytes();
-                                //                 hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                //                 newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
-                                //                 if (newPassSecret.equals(passSecret)) {
-                                //                     continue;
-                                //                 } else {
-                                //                     break;
-                                //                 }
-                                //             } else {
-                                //                 break;
-                                //             }
-                                //         } while (newPassSecret.equals(passSecret));
-                                //         if (returned.getMessage().equals("NEW")) {
-                                //             my_gs.userList.resetHash(username, newPassSecret);
-                                //             yourToken.setPasswordSecret(newPassSecret);
-                                //         }
-                                //     } else {
-                                //         yourToken.setPasswordSecret(passSecret);
-                                //     }
-                                    
-                                //     //Respond to the client. On error, the client will receive a null token
-                                //     response = new Envelope("OK");
-                                //     response.addObject(yourToken);
-                                //     System.out.println("\tSuccess");
-                                // }  else {
-                                //     response = new Envelope("FAIL");
-                                //     action="\tFAIL-GET | Incorrect Hash.\n";
-                                //     response.addObject(action.substring(1,action.length()-1));
-                                //     System.out.printf("%s", action);
-                                // }
-                            }
+                                }                             }
                         }
                     }
-                    // output.writeObject(response);
+                    output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
