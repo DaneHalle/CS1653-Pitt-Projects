@@ -80,7 +80,6 @@ public class GroupServer extends Server {
             byte[] saltBytes = salt.getBytes();
             byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
             String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
-            System.out.println(passSecret);
 
             //Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
             userList = new UserList();

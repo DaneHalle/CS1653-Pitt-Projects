@@ -11,21 +11,36 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Base64;
 import java.nio.ByteBuffer;
+import java.util.*;
 
 // Crypto libraries
-import java.security.*;
-import java.security.spec.*;
-
-import javax.crypto.*;
-import javax.crypto.spec.*;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.KeyAgreement;
+import javax.crypto.Cipher;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.UnsupportedEncodingException;
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
+
+import java.security.Security;
+import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.KeyPairGenerator;
+import java.security.KeyPair;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.PrivateKey;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.interfaces.ECPublicKey;
 
 public class GroupThread extends Thread {
     private final Socket socket;
@@ -38,7 +53,7 @@ public class GroupThread extends Thread {
 
     public void run() {
         boolean proceed = true;
-
+        Security.addProvider(new BouncyCastleProvider());
         try {
             //Announces connection and opens object streams
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
@@ -58,7 +73,7 @@ public class GroupThread extends Thread {
                 String action="";
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
-                    if (message.getObjContents().size() != 2) {
+                    if (message.getObjContents().size() != 3) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -68,80 +83,169 @@ public class GroupThread extends Thread {
 
                         if (username == null) {
                             response = new Envelope("FAIL");
-                            response.addObject(null);
                             action="\tFAIL-GET | as given username was null\n";
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         } else {
 
-                            String password = (String)message.getObjContents().get(1);
-                            if (password == null) {
+                            String encrypted = (String)message.getObjContents().get(1);
+                            if (encrypted == null) {
                                 response = new Envelope("FAIL");
-                                response.addObject(null);
-                                action="\tFAIL-GET | as given password was null\n";
+                                action="\tFAIL-GET | encryption was null\n";
                                 response.addObject(action.substring(1,action.length()-1));
                                 System.out.printf("%s", action);
                             } else {
-                                String salt = username;
-                                int iterations = 10000;
-                                int keyLength = 256;
-                                char[] passwordChars = password.toCharArray();
-                                byte[] saltBytes = salt.getBytes();
-                                byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
 
-
-                                if (my_gs.userList.getPasswordHash(username).equals(passSecret)) {
-                                            System.out.println("Test"); 
-                                    UserToken yourToken = createToken(username, false, true); //Create a token
-                                            System.out.println("Test"); 
-                                    if (my_gs.userList.isTemp(username)) {
-                                            System.out.println("Test"); 
-                                        response = new Envelope("REQUEST-NEW");
-                                        output.writeObject(response);
-                                        Envelope returned = null;
-                                        String newPassSecret = passSecret;
-                                        do {
-                                            returned = (Envelope)input.readObject();
-                                            output.reset();
-                                            if (returned.getMessage().equals("NEW")) {
-                                                password = (String)returned.getObjContents().get(0);
-                                                passwordChars = password.toCharArray();
-                                                saltBytes = salt.getBytes();
-                                                hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                                newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
-                                                if (newPassSecret.equals(passSecret)) {
-                                                    continue;
-                                                } else {
-                                                    System.out.println(newPassSecret);
-                                                    break;
-                                                }
-                                            } else {
-                                                break;
-                                            }
-                                        } while (newPassSecret.equals(passSecret));
-                                        if (returned.getMessage().equals("NEW")) {
-                                            my_gs.userList.resetHash(username, newPassSecret);
-                                            yourToken.setPasswordSecret(newPassSecret);
-                                        }
-                                    } else {
-                                        yourToken.setPasswordSecret(passSecret);
-                                    }
-                                    
-                                    //Respond to the client. On error, the client will receive a null token
-                                    response = new Envelope("OK");
-                                    response.addObject(yourToken);
-                                    System.out.println("\tSuccess");
-                                }  else {
+                                IvParameterSpec ivSpec = (IvParameterSpec)message.getObjContents().get(2);
+                                if (ivSpec == null) {
                                     response = new Envelope("FAIL");
-                                    action="\tFAIL-GET | Incorrect Hash.\n";
+                                    action="\tFAIL-GET | IV was null\n";
                                     response.addObject(action.substring(1,action.length()-1));
                                     System.out.printf("%s", action);
+                                } else {
+                                    String passSecret = my_gs.userList.getPasswordHash(username);
+
+                                    KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+                                    kpg.initialize(256);
+                                    KeyPair kp = kpg.generateKeyPair();
+                                    byte[] ourPk = kp.getPublic().getEncoded();
+
+                                    Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                    SecretKeySpec key = new SecretKeySpec(Base64.getDecoder().decode(passSecret), "AES");
+                                    decrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
+                                    byte[] otherPk = decrypt.doFinal(Base64.getDecoder().decode(encrypted));
+
+                                    KeyFactory kf = KeyFactory.getInstance("EC");
+                                    X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(otherPk);
+                                    PublicKey otherPublicKey = kf.generatePublic(pkSpec);
+
+                                    KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+                                    ka.init(kp.getPrivate());
+                                    ka.doPhase(otherPublicKey, true);
+
+                                    byte[] sharedSecret = ka.generateSecret();
+                                    MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                                    hash.update(sharedSecret);
+                                    List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+                                    Collections.sort(keys);
+                                    hash.update(keys.get(0));
+                                    hash.update(keys.get(1));
+                                    byte[] derivedKey = hash.digest();
+                                    String k = Base64.getEncoder().encodeToString(derivedKey);
+                                    SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+
+                                    SecureRandom challenge = new SecureRandom();
+                                    String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
+
+                                    Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                    byte[] iv = new byte[16];
+                                    SecureRandom random = new SecureRandom();
+                                    random.nextBytes(iv);
+                                    IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+                                    encrypt.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
+                                    byte[] encryptedKey = encrypt.doFinal(ourPk);
+                                    byte[] encryptedChallenge = encrypt.doFinal(challenge.generateSeed(64));
+
+                                    Envelope message2 = new Envelope("MESSAGE2");
+                                    message2.addObject(Base64.getEncoder().encodeToString(encryptedKey));
+                                    message2.addObject(encodedChallenge);
+                                    message2.addObject(ivParameterSpec);
+                                    output.writeObject(message2);
+
+                                    //--------------------------------------------------------------
+
+                                    Envelope message3 = (Envelope)input.readObject();
+                                    if (message3.getMessage().equals("MESSAGE3")) {
+                                        String thisChallenge = (String)message3.getObjContents().get(0);
+                                        String otherChallenge = (String)message3.getObjContents().get(1);
+                                        IvParameterSpec newIv = (IvParameterSpec)message3.getObjContents().get(2);
+    
+                                        decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                        decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
+                                        byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(thisChallenge));
+                                        byte[] decryptOtherChallenge = decrypt.doFinal(Base64.getDecoder().decode(otherChallenge));
+
+                                        encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                        iv = new byte[16];
+                                        random = new SecureRandom();
+                                        random.nextBytes(iv);
+                                        ivParameterSpec = new IvParameterSpec(iv);
+                                        encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
+                                        byte[] encryptOther = encrypt.doFinal(otherChallenge.getBytes());
+    
+                                        if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
+                                            Envelope message4 = new Envelope("MESSAGE4");
+                                            message4.addObject(Base64.getEncoder().encodeToString(encryptOther));
+                                            message4.addObject(ivParameterSpec);
+                                            output.writeObject(message4);
+
+                                            Envelope actual = (Envelope)input.readObject();
+                                            
+                                            //Continue
+                                        } else {
+                                            Envelope message4 = new Envelope("FAIL");
+                                            action="\tFAIL-GET | Challenge was incorrect\n";
+                                            message4.addObject(action.substring(1,action.length()-1));
+                                            System.out.printf("%s", action);
+                                        }
+                                    } else {
+                                        Envelope message4 = new Envelope("FAIL");
+                                        action="\tFAIL-GET | Unexpected response\n";
+                                        message4.addObject(action.substring(1,action.length()-1));
+                                        System.out.printf("%s", action);
+                                    }
+
                                 }
+
+
+
+                                // if (my_gs.userList.getPasswordHash(username).equals(passSecret)) {
+                                //     UserToken yourToken = createToken(username, false, true); //Create a token
+                                //     if (my_gs.userList.isTemp(username)) {
+                                //         response = new Envelope("REQUEST-NEW");
+                                //         output.writeObject(response);
+                                //         Envelope returned = null;
+                                //         String newPassSecret = passSecret;
+                                //         do {
+                                //             returned = (Envelope)input.readObject();
+                                //             output.reset();
+                                //             if (returned.getMessage().equals("NEW")) {
+                                //                 password = (String)returned.getObjContents().get(0);
+                                //                 passwordChars = password.toCharArray();
+                                //                 saltBytes = salt.getBytes();
+                                //                 hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                                //                 newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
+                                //                 if (newPassSecret.equals(passSecret)) {
+                                //                     continue;
+                                //                 } else {
+                                //                     break;
+                                //                 }
+                                //             } else {
+                                //                 break;
+                                //             }
+                                //         } while (newPassSecret.equals(passSecret));
+                                //         if (returned.getMessage().equals("NEW")) {
+                                //             my_gs.userList.resetHash(username, newPassSecret);
+                                //             yourToken.setPasswordSecret(newPassSecret);
+                                //         }
+                                //     } else {
+                                //         yourToken.setPasswordSecret(passSecret);
+                                //     }
+                                    
+                                //     //Respond to the client. On error, the client will receive a null token
+                                //     response = new Envelope("OK");
+                                //     response.addObject(yourToken);
+                                //     System.out.println("\tSuccess");
+                                // }  else {
+                                //     response = new Envelope("FAIL");
+                                //     action="\tFAIL-GET | Incorrect Hash.\n";
+                                //     response.addObject(action.substring(1,action.length()-1));
+                                //     System.out.printf("%s", action);
+                                // }
                             }
                         }
                     }
-                    output.writeObject(response);
+                    // output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
                     if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
