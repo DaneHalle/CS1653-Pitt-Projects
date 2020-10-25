@@ -24,8 +24,6 @@ import javax.crypto.Cipher;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.UnsupportedEncodingException;
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
-import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 import java.security.Security;
 import java.security.SecureRandom;
@@ -728,19 +726,19 @@ public class GroupThread extends Thread {
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-        kpg.initialize(256);
+        kpg.initialize(256); //why 256????? should be 2048
         KeyPair kp = kpg.generateKeyPair();
-        byte[] ourPk = kp.getPublic().getEncoded();
+        byte[] ourPk = kp.getPublic().getEncoded(); //clarify use of encoded keys
 
         String encodedPk = Base64.getEncoder().encodeToString(ourPk);
         System.out.println("Public Key: " + encodedPk);
 
         String encodedSignature = Base64.getEncoder().encodeToString(my_gs.signData(ourPk));
         byte[] rsaPublicKeyByte = my_gs.getPublicKey().getEncoded();
-        String encodedRSAPk     = Base64.getEncoder().encodeToString(rsaPublicKeyByte);
+        String encodedRSAPk     = Base64.getEncoder().encodeToString(rsaPublicKeyByte); //what makes this dif from 'ourPK'
 
         response = (Envelope)input.readObject();
-        String username = response.getMessage();
+        String username = response.getMessage(); //why get username? not used
 
         if(!verifyData(response)) {
             return false;
@@ -813,7 +811,7 @@ public class GroupThread extends Thread {
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
 
-        try {
+        try { //what are we accomplishing here
             KeyFactory kf = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKey);
             PublicKey serverPubKey = kf.generatePublic(pkSpec);

@@ -127,7 +127,8 @@ public class GroupServer extends Server {
         KeyPairGenerator keyPair;
 
         try {
-            keyPair = KeyPairGenerator.getInstance("RSA");
+            keyPair = KeyPairGenerator.getInstance("RSA"); //shouldnt we initialize to 2048?????
+            keyPair.initialize(2048);
             secureRandom = new SecureRandom();
         } catch(Exception e) {
             e.printStackTrace();
@@ -136,7 +137,6 @@ public class GroupServer extends Server {
             return;
         }
 
-        keyPair.initialize(keySize);
         rsa_key = keyPair.generateKeyPair();
     }
 
