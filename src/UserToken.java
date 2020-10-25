@@ -1,6 +1,8 @@
 
 import java.util.List;
 
+import javax.crypto.*;
+
 /**
  * A simple interface to the token data structure that will be
  * returned by a group server.
@@ -56,5 +58,16 @@ public interface UserToken {
     public boolean removeFromShown(String name);
 
     public List<String> getShownGroups();
+
+    // Token Integrity
+    public byte[] getPublicKey();
+
+    public byte[] getSignature();
+
+    public String getPublicKeyEncoded();
+
+    public String getSignatureEncoded();
+
+    public boolean verify();
 
 }   //-- end interface UserToken

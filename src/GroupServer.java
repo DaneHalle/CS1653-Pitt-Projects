@@ -17,15 +17,34 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Base64;
 import java.util.Scanner;
+
+// Crypto Libraries
+import java.security.*;
+
+import javax.crypto.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class GroupServer extends Server {
 
     public UserList userList;
     public GroupList groupList;
 
+    private KeyPair rsa_key;
+    private SecureRandom secureRandom = null;
+    private final int keySize = 2048;
+
     public GroupServer(int _port) {
         super(_port, "alpha");
+
+        Security.addProvider(new BouncyCastleProvider());
     }
 
     public void start() {
@@ -71,6 +90,9 @@ public class GroupServer extends Server {
         aSave.setDaemon(true);
         aSave.start();
 
+        // Generate the keyPair
+        generateKey();
+
         //This block listens for connections and creates threads on new connections
         try {
             final ServerSocket serverSock = new ServerSocket(port);
@@ -91,6 +113,44 @@ public class GroupServer extends Server {
 
     }
 
+    private void generateKey() {
+        KeyPairGenerator keyPair;
+
+        try {
+            keyPair = KeyPairGenerator.getInstance("RSA");
+            secureRandom = new SecureRandom();
+        } catch(Exception e) {
+            e.printStackTrace();
+            rsa_key = null;
+            
+            return;
+        }
+
+        keyPair.initialize(keySize);
+        rsa_key = keyPair.generateKeyPair();
+    }
+
+    public synchronized byte[] signData(byte[] data) {
+        try {
+            Signature rsa_signature = Signature.getInstance("RSA");
+            
+            rsa_signature.initSign(rsa_key.getPrivate(), secureRandom);
+            rsa_signature.update(data);
+
+            return rsa_signature.sign();
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public synchronized PublicKey getPublicKey() {
+        return rsa_key.getPublic();
+    }
+
+    public synchronized KeyPair getRSAKey() {
+        return rsa_key;
+    }
 }
 
 //This thread saves the user list

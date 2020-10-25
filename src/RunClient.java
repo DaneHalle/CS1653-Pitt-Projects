@@ -59,6 +59,14 @@ public class RunClient {
         String f_connection = f_cli.isConnected() ? "CONNECTED" : "DISCONNECTED";
         System.out.println("GROUP SERVER: " + g_connection);
         System.out.println("FILE SERVER: " + f_connection);
+
+        if(token != null) {
+            if (token.verify()) {
+                System.out.println("SUCCESS: Token is valid");
+            } else {
+                System.out.println("FAILED: Token is invalid");
+            }
+        }
     }
 
     public void printToken() {
@@ -123,6 +131,22 @@ public class RunClient {
         return true;
     }
 
+    private void corruptToken() {
+        if (token == null)
+            return;
+        
+        // Modify the data
+        token.addToGroup("corrupted");
+        
+        if (token.verify()) {
+            System.out.println("VERIFIED");
+        } else {
+            System.out.println("ERROR INVALID");
+        }
+
+        printToken();
+    }
+
     public List<String> getUnShownGroups() {
         List<String> out = new ArrayList<String>();
         List<String> allGroups = token.getGroups();
@@ -177,6 +201,7 @@ public class RunClient {
         boolean groupConnected=g_cli.isConnected();
         boolean fileConnected=f_cli.isConnected();
         
+        // TODO: Try to add corruptToken to each instruction
         switch(cmd) {
             case "CU":
             case "CUSER":

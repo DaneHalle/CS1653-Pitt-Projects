@@ -45,7 +45,8 @@ public class FileThread extends Thread {
                         response.addObject(action.substring(1,action.length()-1));
                         System.out.printf("%s", action);
                     } else {
-                        if(e.getObjContents().get(0) == null) {
+                        UserToken t = (UserToken)e.getObjContents().get(0);
+                        if(t == null || !t.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action="\tFAIL-LFILES | as request has bad token.\n";
                             response.addObject(action.substring(1,action.length()-1));
@@ -80,7 +81,8 @@ public class FileThread extends Thread {
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         } 
-                        if(e.getObjContents().get(1) == null) {
+                        UserToken t = (UserToken)e.getObjContents().get(1);
+                        if(t == null || !t.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action="\tFAIL-LFORGROUP | as request has bad token.\n";
                             response.addObject(action.substring(1,action.length()-1));
@@ -134,7 +136,8 @@ public class FileThread extends Thread {
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         }
-                        if(e.getObjContents().get(2) == null) {
+                        UserToken t = (UserToken)e.getObjContents().get(2);
+                        if(t == null || !t.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action="\tFAIL-UPLOADF | as request has bad token.\n";
                             response.addObject(action.substring(1,action.length()-1));
@@ -197,7 +200,13 @@ public class FileThread extends Thread {
                     String remotePath = (String)e.getObjContents().get(0);
                     Token t = (Token)e.getObjContents().get(1);
                     ShareFile sf = FileServer.fileList.getFile("/"+remotePath);
-                    if (sf == null) {
+                    if (t == null || !t.verify()) {
+                        e = new Envelope("FAIL-BADTOKEN");
+                        action="\tFAIL-DELETEF | as request has bad token.\n";
+                        e.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                        output.writeObject(response);
+                    } else if (sf == null) {
                         e = new Envelope("ERROR_FILEMISSING");
                         action="\tError: File "+remotePath+" doesn't exist\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -290,7 +299,12 @@ public class FileThread extends Thread {
                     String remotePath = (String)e.getObjContents().get(0);
                     Token t = (Token)e.getObjContents().get(1);
                     ShareFile sf = FileServer.fileList.getFile("/"+remotePath);
-                    if (sf == null) {
+                    if (t == null || !t.verify()) {
+                        e = new Envelope("FAIL-BADTOKEN");
+                        action="\tFAIL-DELETEF | as request has bad token.\n";
+                        e.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else if (sf == null) {
                         e = new Envelope("ERROR_DOESNTEXIST");
                         action="\tError: File "+remotePath+" doesn't exist\n";
                         response.addObject(action.substring(1,action.length()-1));

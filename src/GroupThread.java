@@ -509,11 +509,22 @@ public class GroupThread extends Thread {
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
                 //Issue a refreshed token while maintaining user's scope
-                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username), my_gs.userList.getShown(username));
+                UserToken yourToken = new Token(
+                    my_gs.name,
+                    username,
+                    my_gs.userList.getUserGroups(username),
+                    my_gs.userList.getShown(username),
+                    my_gs.getRSAKey()
+                );
                 return yourToken;
             } else {
                 //Issue a new token with server's name, user's name, and user's groups
-                UserToken yourToken = new Token(my_gs.name, username, my_gs.userList.getUserGroups(username));
+                UserToken yourToken = new Token(
+                    my_gs.name,
+                    username,
+                    my_gs.userList.getUserGroups(username),
+                    my_gs.getRSAKey()
+                );
                 if(reset){ //When doing a GET, you don't want to reset an active user's scope
                     my_gs.userList.resetShown(username);
                 }
@@ -526,6 +537,10 @@ public class GroupThread extends Thread {
 
     //Method to create a user
     String createUser(String username, UserToken yourToken) {
+        if (yourToken == null || !yourToken.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = yourToken.getSubject();
 
         //Check that user is not only within the ADMIN group but also has it within their scope
@@ -561,6 +576,10 @@ public class GroupThread extends Thread {
 
     //Method to delete a user
     String deleteUser(String username, UserToken yourToken) {
+        if (yourToken == null || !yourToken.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = yourToken.getSubject();
 
         //Check that user is not only within the ADMIN group but also has it within their scope
@@ -602,7 +621,15 @@ public class GroupThread extends Thread {
                     //Delete owned groups
                     for(int index = 0; index < deleteOwnedGroup.size(); index++) {
                         //Use the delete group method. Token must be created for this action
-                        deleteGroup(deleteOwnedGroup.get(index), new Token(my_gs.name, username, deleteOwnedGroup));
+                        deleteGroup(
+                            deleteOwnedGroup.get(index),
+                            new Token(
+                                my_gs.name,
+                                username,
+                                deleteOwnedGroup,
+                                my_gs.getRSAKey()
+                            )
+                        );
                     }
 
                     //Delete the user from the user list
@@ -626,6 +653,10 @@ public class GroupThread extends Thread {
     }
 
     String deleteGroup(String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         // TODO: Delete the group
         String requester = token.getSubject();        
 
@@ -665,6 +696,10 @@ public class GroupThread extends Thread {
     }
 
     String createGroup(String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -687,6 +722,10 @@ public class GroupThread extends Thread {
     }
 
     String addUserToGroup(String toAdd, String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
         UserToken toAddToken = createToken(toAdd, false, false);
 
@@ -738,6 +777,10 @@ public class GroupThread extends Thread {
     }
 
     String removeUserFromGroup(String toRemove, String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
         UserToken toRemoveToken = createToken(toRemove, false, false);
 
@@ -789,6 +832,10 @@ public class GroupThread extends Thread {
     }
 
     String showGroup(String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -813,6 +860,10 @@ public class GroupThread extends Thread {
     }
 
     String showAll(UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -835,6 +886,10 @@ public class GroupThread extends Thread {
     }
 
     String hideGroup(String groupname, UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
 
         String out="FAIL";
@@ -855,6 +910,10 @@ public class GroupThread extends Thread {
     }
 
     String hideAll(UserToken token) {
+        if (token == null || !token.verify()) {
+            return "\tUserToken was invalid\n";
+        }
+
         String requester = token.getSubject();
 
         String out="FAIL";
