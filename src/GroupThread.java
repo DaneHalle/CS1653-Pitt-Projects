@@ -46,9 +46,14 @@ public class GroupThread extends Thread {
     private final Socket socket;
     private GroupServer my_gs;
 
+    private SecretKeySpec k;
+    private byte[] IVk;
+
     public GroupThread(Socket _socket, GroupServer _gs) {
         socket = _socket;
         my_gs = _gs;
+        k = null;
+        IVk = null;
     }
 
     public void run() {
@@ -104,138 +109,145 @@ public class GroupThread extends Thread {
                                     System.out.printf("%s", action);
                                 } else {
                                     String passSecret = my_gs.userList.getPasswordHash(username);
-
-                                    KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-                                    kpg.initialize(256);
-                                    KeyPair kp = kpg.generateKeyPair();
-                                    byte[] ourPk = kp.getPublic().getEncoded();
-
-                                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                                    digest.update(passSecret.getBytes("UTF-8"));
-                                    byte[] keyBytes = new byte[16];
-                                    System.arraycopy(digest.digest(), 0, keyBytes, 0, keyBytes.length);
-
-                                    Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-                                    decrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
-                                    byte[] otherPk = decrypt.doFinal(Base64.getDecoder().decode(encrypted));
-
-                                    KeyFactory kf = KeyFactory.getInstance("EC");
-                                    X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(otherPk);
-                                    PublicKey otherPublicKey = kf.generatePublic(pkSpec);
-
-                                    KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-                                    ka.init(kp.getPrivate());
-                                    ka.doPhase(otherPublicKey, true);
-
-                                    byte[] sharedSecret = ka.generateSecret();
-                                    MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                                    hash.update(sharedSecret);
-                                    List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
-                                    Collections.sort(keys);
-                                    hash.update(keys.get(0));
-                                    hash.update(keys.get(1));
-                                    byte[] derivedKey = hash.digest();
-                                    String k = Base64.getEncoder().encodeToString(derivedKey);
-                                    SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
-
-                                    SecureRandom challenge = new SecureRandom();
-                                    String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
-
-                                    Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                    byte[] iv = new byte[16];
-                                    SecureRandom random = new SecureRandom();
-                                    random.nextBytes(iv);
-                                    IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-                                    encrypt.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
-                                    byte[] encryptedKey = encrypt.doFinal(ourPk);
-                                    byte[] encryptedChallenge = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge));
-
-                                    Envelope message2 = new Envelope("MESSAGE2");
-                                    message2.addObject(Base64.getEncoder().encodeToString(encryptedKey));
-                                    message2.addObject(Base64.getEncoder().encodeToString(encryptedChallenge));
-                                    message2.addObject(iv);
-                                    output.writeObject(message2);
-
-                                    //--------------------------------------------------------------
-
-                                    Envelope message3 = (Envelope)input.readObject();
-                                    if (message3.getMessage().equals("MESSAGE3")) {
-                                        String thisChallenge = (String)message3.getObjContents().get(0);
-                                        String otherChallenge = (String)message3.getObjContents().get(1);
-                                        IvParameterSpec newIv = new IvParameterSpec((byte[])message3.getObjContents().get(2));
+                                    try {
+                                        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+                                        kpg.initialize(256);
+                                        KeyPair kp = kpg.generateKeyPair();
+                                        byte[] ourPk = kp.getPublic().getEncoded();
     
-                                        decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                        decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
-                                        byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(thisChallenge));
-                                        byte[] decryptOtherChallenge = decrypt.doFinal(Base64.getDecoder().decode(otherChallenge));
-
-                                        encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                        iv = new byte[16];
-                                        random = new SecureRandom();
+                                        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                                        digest.update(passSecret.getBytes("UTF-8"));
+                                        byte[] keyBytes = new byte[16];
+                                        System.arraycopy(digest.digest(), 0, keyBytes, 0, keyBytes.length);
+    
+                                        Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                        SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+                                        decrypt.init(Cipher.DECRYPT_MODE, key, ivSpec);
+                                        byte[] otherPk = decrypt.doFinal(Base64.getDecoder().decode(encrypted));
+    
+                                        KeyFactory kf = KeyFactory.getInstance("EC");
+                                        X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(otherPk);
+                                        PublicKey otherPublicKey = kf.generatePublic(pkSpec);
+    
+                                        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+                                        ka.init(kp.getPrivate());
+                                        ka.doPhase(otherPublicKey, true);
+    
+                                        byte[] sharedSecret = ka.generateSecret();
+                                        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                                        hash.update(sharedSecret);
+                                        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+                                        Collections.sort(keys);
+                                        hash.update(keys.get(0));
+                                        hash.update(keys.get(1));
+                                        byte[] derivedKey = hash.digest();
+                                        // String k = Base64.getEncoder().encodeToString(derivedKey);
+                                        SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+                                        k = derived;
+    
+                                        SecureRandom challenge = new SecureRandom();
+                                        String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
+    
+                                        Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                        byte[] iv = new byte[16];
+                                        SecureRandom random = new SecureRandom();
                                         random.nextBytes(iv);
-                                        ivParameterSpec = new IvParameterSpec(iv);
-                                        encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
-                                        byte[] encryptOther = encrypt.doFinal(decryptOtherChallenge);
+                                        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+                                        encrypt.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
+                                        byte[] encryptedKey = encrypt.doFinal(ourPk);
+                                        byte[] encryptedChallenge = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge));
+                                        IVk = iv;
     
-                                        if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
-                                            Envelope message4 = new Envelope("MESSAGE4");
-                                            message4.addObject(Base64.getEncoder().encodeToString(encryptOther));
-                                            message4.addObject(iv);
-                                            output.writeObject(message4);
-
-                                            Envelope actual = (Envelope)input.readObject();
-                                            if (actual.getMessage().equals("GOOD")) {
-                                                UserToken yourToken = createToken(username, false, true); //Create a token
-                                                if (my_gs.userList.isTemp(username)) {
-                                                    response = new Envelope("REQUEST-NEW");
-                                                    output.writeObject(response);
-                                                    Envelope returned = null;
-                                                    String newPassSecret = passSecret;
-                                                    String password, salt = username;
-                                                    int iterations = 10000, keyLength = 256;
-                                                    char[] passwordChars;
-                                                    byte[] saltBytes, hashedBytes;
-
-                                                    do {
-                                                        System.out.println("Test");
-                                                        returned = (Envelope)input.readObject();
-                                                        if (returned.getMessage().equals("NEW")) {
-                                                            password = (String)returned.getObjContents().get(0);
-                                                            passwordChars = password.toCharArray();
-                                                            saltBytes = salt.getBytes();
-                                                            hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
-                                                            newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
-                                                            if (newPassSecret.equals(passSecret)) {
-                                                                continue;
+                                        Envelope message2 = new Envelope("MESSAGE2");
+                                        message2.addObject(Base64.getEncoder().encodeToString(encryptedKey));
+                                        message2.addObject(Base64.getEncoder().encodeToString(encryptedChallenge));
+                                        message2.addObject(iv);
+                                        output.writeObject(message2);
+                                    //--------------------------------------------------------------
+                                        Envelope message3 = (Envelope)input.readObject();
+                                        if (message3.getMessage().equals("MESSAGE3")) {
+                                            String thisChallenge = (String)message3.getObjContents().get(0);
+                                            String otherChallenge = (String)message3.getObjContents().get(1);
+                                            IvParameterSpec newIv = new IvParameterSpec((byte[])message3.getObjContents().get(2));
+        
+                                            decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                            decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
+                                            byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(thisChallenge));
+                                            byte[] decryptOtherChallenge = decrypt.doFinal(Base64.getDecoder().decode(otherChallenge));
+    
+                                            encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+                                            iv = new byte[16];
+                                            random = new SecureRandom();
+                                            random.nextBytes(iv);
+                                            ivParameterSpec = new IvParameterSpec(iv);
+                                            encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
+                                            byte[] encryptOther = encrypt.doFinal(decryptOtherChallenge);
+        
+                                            if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
+                                                Envelope message4 = new Envelope("MESSAGE4");
+                                                message4.addObject(Base64.getEncoder().encodeToString(encryptOther));
+                                                message4.addObject(iv);
+                                                output.writeObject(message4);
+    
+                                                Envelope actual = (Envelope)input.readObject();
+                                                if (actual.getMessage().equals("GOOD")) {
+                                                    UserToken yourToken = createToken(username, false, true); //Create a token
+                                                    if (my_gs.userList.isTemp(username)) {
+                                                        response = new Envelope("REQUEST-NEW");
+                                                        output.writeObject(response);
+                                                        Envelope returned = null;
+                                                        String newPassSecret = passSecret;
+                                                        String password, salt = username;
+                                                        int iterations = 10000, keyLength = 256;
+                                                        char[] passwordChars;
+                                                        byte[] saltBytes, hashedBytes;
+    
+                                                        do {
+                                                            returned = (Envelope)input.readObject();
+                                                            if (returned.getMessage().equals("NEW")) {
+                                                                password = (String)returned.getObjContents().get(0);
+                                                                passwordChars = password.toCharArray();
+                                                                saltBytes = salt.getBytes();
+                                                                hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+                                                                newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
+                                                                if (newPassSecret.equals(passSecret)) {
+                                                                    continue;
+                                                                } else {
+                                                                    break;
+                                                                }
                                                             } else {
                                                                 break;
                                                             }
-                                                        } else {
-                                                            break;
+                                                        } while (newPassSecret.equals(passSecret));
+                                                        if (returned.getMessage().equals("NEW")) {
+                                                            my_gs.userList.resetHash(username, newPassSecret);
+                                                            yourToken.setPasswordSecret(newPassSecret);
                                                         }
-                                                    } while (newPassSecret.equals(passSecret));
-                                                    if (returned.getMessage().equals("NEW")) {
-                                                        my_gs.userList.resetHash(username, newPassSecret);
-                                                        yourToken.setPasswordSecret(newPassSecret);
                                                     }
+                                                    
+                                                    //Respond to the client. On error, the client will receive a null token
+                                                    response = new Envelope("OK");
+                                                    response.addObject(yourToken);
+                                                    System.out.println("\tSuccess");
+                                                } else {
+                                                    response = new Envelope("FAIL");
+                                                    action="\tFAIL-GET | Given challenge was incorrect\n";
+                                                    response.addObject(action.substring(1,action.length()-1));
+                                                    System.out.printf("%s", action);
                                                 }
-                                                
-                                                //Respond to the client. On error, the client will receive a null token
-                                                response = new Envelope("OK");
-                                                response.addObject(yourToken);
-                                                System.out.println("\tSuccess");
                                             } else {
+                                                Envelope message4 = new Envelope("FAIL");
+                                                action="\tFAIL-GET | Challenge response was incorrect\n";
+                                                message4.addObject(action.substring(1,action.length()-1));
+                                                System.out.printf("%s", action);
                                                 response = new Envelope("FAIL");
-                                                action="\tFAIL-GET | Given challenge was incorrect\n";
+                                                action="\tFAIL-GET | Unexpected response\n";
                                                 response.addObject(action.substring(1,action.length()-1));
                                                 System.out.printf("%s", action);
-                                            }
-
-                                            //Continue
+                                            }                                        
                                         } else {
                                             Envelope message4 = new Envelope("FAIL");
-                                            action="\tFAIL-GET | Challenge response was incorrect\n";
+                                            action="\tFAIL-GET | Unexpected response\n";
                                             message4.addObject(action.substring(1,action.length()-1));
                                             System.out.printf("%s", action);
                                             response = new Envelope("FAIL");
@@ -243,7 +255,7 @@ public class GroupThread extends Thread {
                                             response.addObject(action.substring(1,action.length()-1));
                                             System.out.printf("%s", action);
                                         }
-                                    } else {
+                                    } catch (Exception e) {
                                         Envelope message4 = new Envelope("FAIL");
                                         action="\tFAIL-GET | Unexpected response\n";
                                         message4.addObject(action.substring(1,action.length()-1));
@@ -253,13 +265,13 @@ public class GroupThread extends Thread {
                                         response.addObject(action.substring(1,action.length()-1));
                                         System.out.printf("%s", action);
                                     }
-
-                                }                             }
+                                }                           
+                            }
                         }
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
-                    if (message.getObjContents().size() != 2) {
+                    if (message.getObjContents().size() != 1) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -267,8 +279,7 @@ public class GroupThread extends Thread {
                     } else {
                         UserToken yourToken = (UserToken)message.getObjContents().get(0); // Extract the token
                         String username = yourToken.getSubject(); //Get username associated with the token
-                        String password = (String)message.getObjContents().get(1);
-                        System.out.println(my_gs.userList.getPasswordHash(username));
+                        String password = yourToken.getPasswordSecret();
                         if (my_gs.userList.getPasswordHash(username).equals(password)) {
                             UserToken newToken = createToken(username, true, false); //Create a refreshed token 
                             // Response to the client. On eror, the clien will reveive a null token

@@ -29,6 +29,9 @@ public abstract class Client {
     private SecureRandom secureRandom = null;
     private final int TAG_LENGTH_BIT = 128;
 
+    protected SecretKeySpec k;
+    protected byte[] IVk;
+
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
 
