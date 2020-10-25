@@ -22,6 +22,8 @@ class Token implements UserToken, java.io.Serializable
 	private List<String> groups;
 	private List<String> shownGroups;
 
+	private String passwordSecret;
+
 	private ArrayList<String> metaVars = new ArrayList<String>();
 	private String encodedPubKey;
 	private String encodedSign;
@@ -36,12 +38,14 @@ class Token implements UserToken, java.io.Serializable
 		String inIssuer,
 		String inSubject,
 		ArrayList<String> inGroup,
+		String passSecret,
 		KeyPair rsa_key
 	) {
 		issuer=inIssuer;
 		subject=inSubject;
 		groups=inGroup;
 		shownGroups=new ArrayList<String>();
+		passwordSecret=passSecret;
 
 		// Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
@@ -53,12 +57,14 @@ class Token implements UserToken, java.io.Serializable
 		String inSubject,
 		ArrayList<String> inGroup,
 		ArrayList<String> inShown,
+		String passSecret,
 		KeyPair rsa_key
 	) {
 		issuer=inIssuer;
 		subject=inSubject;
 		groups=inGroup;
 		shownGroups=inShown;
+		passwordSecret=passSecret;
 
 		//Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
@@ -153,6 +159,16 @@ class Token implements UserToken, java.io.Serializable
     	return new ArrayList<String>(shownGroups);
     }
 
+	public void setPasswordSecret(String newSecret)
+    {
+    	passwordSecret=newSecret;
+    }
+
+    public String getPasswordSecret()
+    {
+    	return passwordSecret;
+    }
+	
 	public byte[] getPublicKey() {
 		return Base64.getDecoder().decode(encodedPubKey);
 	}
@@ -261,7 +277,7 @@ class Token implements UserToken, java.io.Serializable
 			return;
 		}
 
-		Token t = new Token(issuer, subject, groups, shownGroups, publicKey);
+		Token t = new Token(issuer, subject, groups, shownGroups, "PASS", publicKey);
 
 		System.out.println(t);
 	}

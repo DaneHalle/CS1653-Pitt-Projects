@@ -12,8 +12,8 @@ public class UserList implements java.io.Serializable {
     private static final long serialVersionUID = 7600343803563417992L;
     private Hashtable<String, User> list = new Hashtable<String, User>();
 
-    public synchronized void addUser(String username) {
-        User newUser = new User();
+    public synchronized void addUser(String username, String passHash) {
+        User newUser = new User(passHash);
         list.put(username, newUser);
     }
 
@@ -70,6 +70,18 @@ public class UserList implements java.io.Serializable {
         list.get(user).resetShown();
     }
 
+    public synchronized String getPasswordHash(String username) {
+        return list.get(username).getPasswordHash();
+    }
+
+    public synchronized boolean isTemp(String username) {
+        return list.get(username).getTemp();
+    }
+
+    public synchronized void resetHash(String username, String newHash) {
+        list.get(username).resetPasswordHash(newHash);
+    }
+
     /**
      * Function to get all groups accessible to any given user. To be used by 
      * groupList. 
@@ -97,11 +109,15 @@ public class UserList implements java.io.Serializable {
         private ArrayList<String> groups;
         private ArrayList<String> ownership; // this is there own group
         private ArrayList<String> shown;
+        private String passHash;
+        private boolean temp;
 
-        public User() {
+        public User(String inPass) {
             groups = new ArrayList<String>();
             ownership = new ArrayList<String>();
             shown = new ArrayList<String>();
+            passHash=inPass;
+            temp=true;
         }
 
         public ArrayList<String> getGroups() {
@@ -163,6 +179,20 @@ public class UserList implements java.io.Serializable {
 
         public void resetShown() {
             shown=new ArrayList<String>();
+        }
+
+        public String getPasswordHash() {
+            return passHash;
+        }
+
+        public boolean getTemp() {
+            return temp;
+        }
+
+        public void resetPasswordHash(String newHash) {
+            if (temp)
+                passHash=newHash;
+            temp=false;
         }
     }
 

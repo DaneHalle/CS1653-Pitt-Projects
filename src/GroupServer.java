@@ -70,10 +70,20 @@ public class GroupServer extends Server {
             System.out.println("No users currently exist. Your account will be the administrator.");
             System.out.print("Enter your username: ");
             String username = console.next();
+            System.out.print("Enter your password: ");
+            String password = console.next();
+            
+            String salt = username;
+            int iterations = 10000;
+            int keyLength = 256;
+            char[] passwordChars = password.toCharArray();
+            byte[] saltBytes = salt.getBytes();
+            byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+            String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
 
             //Create a new list, add current user to the ADMIN group. They now own the ADMIN group.
             userList = new UserList();
-            userList.addUser(username);
+            userList.addUser(username, passSecret);
             userList.addGroup(username, "ADMIN");
             userList.addOwnership(username, "ADMIN");
             groupList = new GroupList(userList);
@@ -151,6 +161,19 @@ public class GroupServer extends Server {
     public synchronized KeyPair getRSAKey() {
         return rsa_key;
     }
+    
+    byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {
+        try {
+            SecretKeyFactory skf = SecretKeyFactory.getInstance( "PBKDF2WithHmacSHA512" );
+            PBEKeySpec spec = new PBEKeySpec( password, salt, iterations, keyLength );
+            SecretKey key = skf.generateSecret( spec );
+            byte[] res = key.getEncoded( );
+            return res;
+        } catch ( NoSuchAlgorithmException | InvalidKeySpecException e ) {
+            throw new RuntimeException( e );
+        }
+    }
+
 }
 
 //This thread saves the user list

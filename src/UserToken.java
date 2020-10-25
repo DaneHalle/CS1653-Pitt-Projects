@@ -59,6 +59,11 @@ public interface UserToken {
 
     public List<String> getShownGroups();
 
+    // Cryptography
+    public void setPasswordSecret(String newSecret);
+
+    public String getPasswordSecret();
+
     // Token Integrity
     public byte[] getPublicKey();
 

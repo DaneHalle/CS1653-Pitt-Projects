@@ -5,14 +5,31 @@ import java.io.BufferedReader;      // Needed to read from the console
 import java.io.InputStreamReader;   // Needed to read from the console
 import java.lang.UnsupportedOperationException;
 
+// Crypto libraries
+import org.bouncycastle.*;
+import org.bouncycastle.jce.provider.*;
+import org.bouncycastle.jce.*;
+import java.security.*;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.interfaces.ECPublicKey;
+
+import javax.crypto.KeyAgreement;
+
 public class RunClient {
     private GroupClient g_cli;
     private FileClient f_cli;
     private UserToken token;
 
+    private Key group_key; // may change to key
+    private KeyPair rsa_key;
+
     public RunClient() {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
         g_cli = new GroupClient();
         f_cli = new FileClient();
+        rsa_key = g_cli.generateRSA(); // could also be g_cli
     }
 
     private enum CommandResult {
@@ -41,11 +58,11 @@ public class RunClient {
         switch(server_type) {
             case "GROUP":
                 g_cli.connect(server, port);
-                g_cli.verify("GROUP");
+                // TODO: Change username
+                g_cli.keyExchange("Q", "GROUP", rsa_key);
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
-                f_cli.verify("FILE");
                 break;
             default:
                 return false;
@@ -112,7 +129,7 @@ public class RunClient {
     }
 
     private boolean getToken(StringTokenizer args) {
-        if (args.countTokens() != 1) {
+        if (args.countTokens() != 2) {
             System.out.println("Usage: GET <USERNAME>");
             return false;
         } else if (!g_cli.isConnected()) {
@@ -120,7 +137,7 @@ public class RunClient {
             return false;
         }
 
-        token = g_cli.getToken(args.nextToken());
+        token = g_cli.getToken(args.nextToken(), args.nextToken());
         
         if(token == null) {
             System.out.println("Failed to retrieve token");
@@ -197,6 +214,7 @@ public class RunClient {
         String src_file;
         String dst_file;
         String group;
+        String pass;
 
         boolean groupConnected=g_cli.isConnected();
         boolean fileConnected=f_cli.isConnected();
@@ -207,10 +225,11 @@ public class RunClient {
             case "CUSER":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
-                if (!checkCmd(args, 1, "Usage: CUSER <USER>", true))
+                if (!checkCmd(args, 2, "Usage: CUSER <USER>", true))
                     return CommandResult.ARGS;
                 user = args.nextToken();
-                if(g_cli.createUser(user, token))
+                pass = args.nextToken();
+                if(g_cli.createUser(user, token, pass))
                     System.out.printf("Created user: %s\n", user);
                 else
                     return CommandResult.FAIL;
