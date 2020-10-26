@@ -42,7 +42,7 @@ public class GroupServer extends Server {
     private final int keySize = 2048;
 
     public GroupServer(int _port) {
-        super(_port, "alpha");
+        super(_port, "beta");
 
         Security.addProvider(new BouncyCastleProvider());
     }
