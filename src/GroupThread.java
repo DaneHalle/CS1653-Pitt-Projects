@@ -146,7 +146,6 @@ public class GroupThread extends Thread {
                                         hash.update(keys.get(0));
                                         hash.update(keys.get(1));
                                         byte[] derivedKey = hash.digest();
-                                        // String k = Base64.getEncoder().encodeToString(derivedKey);
                                         SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
                                         k = derived;
     

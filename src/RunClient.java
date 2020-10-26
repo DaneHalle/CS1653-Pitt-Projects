@@ -113,9 +113,9 @@ public class RunClient {
         String f_connection = f_cli.isConnected() ? "" : "\tCONNECT file <IP> <PORT> - connects to the file server at the given \n\t\tIP and PORT\n";
         System.out.print(g_connection+""+f_connection);
         if(token==null){
-            System.out.println("\tNo token exists for the current client.\n\t\tGET <USER> - gets the token for the given USER");
+            System.out.println("\tNo token exists for the current client.\n\t\tGET <USER> <PASS> - gets the token for the given USER with the PASS being used for authentication");
         }else{
-            String admin=token.getShownGroups().contains("ADMIN") ? "\tCUSER <USER> - creates a user with the given USERname\n\tDUSER <USER> - deletes a user with the given USERname\n" : "";
+            String admin=token.getShownGroups().contains("ADMIN") ? "\tCUSER <USER> <TEMP_PASS>- creates a user with the given USERname and TEMProary PASSword\n\tDUSER <USER> - deletes a user with the given USERname\n" : "";
             System.out.print(admin);
             String groups="\tCGROUP <GROUPNAME> - creates a group with the given \n\t\tGROUPNAME\n\tDGROUP <GROUPNAME> - deletes a group with the given \n\t\tGROUPNAME should you be owner\n";
             System.out.print(groups);
@@ -131,7 +131,7 @@ public class RunClient {
 
     private boolean getToken(StringTokenizer args) {
         if (args.countTokens() != 2) {
-            System.out.println("Usage: GET <USERNAME>");
+            System.out.println("Usage: GET <USERNAME> <PASSWORD>");
             return false;
         } else if (!g_cli.isConnected()) {
             System.out.println("Group server is not connected");
@@ -231,7 +231,7 @@ public class RunClient {
             case "CUSER":
                 if (!groupConnected) 
                     return CommandResult.GNOT;
-                if (!checkCmd(args, 2, "Usage: CUSER <USER>", true))
+                if (!checkCmd(args, 2, "Usage: CUSER <USER> <TEMP_PASS>", true))
                     return CommandResult.ARGS;
                 user = args.nextToken();
                 pass = args.nextToken();
