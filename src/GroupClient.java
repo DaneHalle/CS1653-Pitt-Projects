@@ -202,6 +202,8 @@ public class GroupClient extends Client implements GroupClientInterface {
 
             return null;
         } catch(Exception e) {
+            k = null;
+            IVk = null;
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
             return null;

@@ -15,7 +15,7 @@ public class FileServer extends Server {
     public static FileList fileList;
 
     public FileServer(int _port) {
-        super(_port, "omega");
+        super(_port, "psi");
     }
 
     public void start() {

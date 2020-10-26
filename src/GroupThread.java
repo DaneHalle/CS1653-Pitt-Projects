@@ -77,6 +77,8 @@ public class GroupThread extends Thread {
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
                     if (message.getObjContents().size() != 3) {
+                        k = null;
+                        IVk = null;
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -85,6 +87,8 @@ public class GroupThread extends Thread {
                         String username = (String)message.getObjContents().get(0); //Get the username
 
                         if (username == null) {
+                            k = null;
+                            IVk = null;
                             response = new Envelope("FAIL");
                             action="\tFAIL-GET | as given username was null\n";
                             response.addObject(action.substring(1,action.length()-1));
@@ -93,6 +97,8 @@ public class GroupThread extends Thread {
 
                             String encrypted = (String)message.getObjContents().get(1);
                             if (encrypted == null) {
+                                k = null;
+                                IVk = null;
                                 response = new Envelope("FAIL");
                                 action="\tFAIL-GET | encryption was null\n";
                                 response.addObject(action.substring(1,action.length()-1));
@@ -101,6 +107,8 @@ public class GroupThread extends Thread {
 
                                 IvParameterSpec ivSpec = new IvParameterSpec((byte[])message.getObjContents().get(2));
                                 if (ivSpec == null) {
+                                    k = null;
+                                    IVk = null;
                                     response = new Envelope("FAIL");
                                     action="\tFAIL-GET | IV was null\n";
                                     response.addObject(action.substring(1,action.length()-1));
@@ -228,36 +236,32 @@ public class GroupThread extends Thread {
                                                     response.addObject(yourToken);
                                                     System.out.println("\tSuccess");
                                                 } else {
+                                                    k = null;
+                                                    IVk = null;
                                                     response = new Envelope("FAIL");
                                                     action="\tFAIL-GET | Given challenge was incorrect\n";
                                                     response.addObject(action.substring(1,action.length()-1));
                                                     System.out.printf("%s", action);
                                                 }
                                             } else {
-                                                Envelope message4 = new Envelope("FAIL");
-                                                action="\tFAIL-GET | Challenge response was incorrect\n";
-                                                message4.addObject(action.substring(1,action.length()-1));
-                                                System.out.printf("%s", action);
+                                                k = null;
+                                                IVk = null;
                                                 response = new Envelope("FAIL");
                                                 action="\tFAIL-GET | Unexpected response\n";
                                                 response.addObject(action.substring(1,action.length()-1));
                                                 System.out.printf("%s", action);
                                             }                                        
                                         } else {
-                                            Envelope message4 = new Envelope("FAIL");
-                                            action="\tFAIL-GET | Unexpected response\n";
-                                            message4.addObject(action.substring(1,action.length()-1));
-                                            System.out.printf("%s", action);
+                                            k = null;
+                                            IVk = null;
                                             response = new Envelope("FAIL");
                                             action="\tFAIL-GET | Unexpected response\n";
                                             response.addObject(action.substring(1,action.length()-1));
                                             System.out.printf("%s", action);
                                         }
                                     } catch (Exception e) {
-                                        Envelope message4 = new Envelope("FAIL");
-                                        action="\tFAIL-GET | Unexpected response\n";
-                                        message4.addObject(action.substring(1,action.length()-1));
-                                        System.out.printf("%s", action);
+                                        k = null;
+                                        IVk = null;
                                         response = new Envelope("FAIL");
                                         action="\tFAIL-GET | Unexpected response\n";
                                         response.addObject(action.substring(1,action.length()-1));
