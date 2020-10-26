@@ -221,6 +221,11 @@ public class RunClient {
         
         // TODO: Try to add corruptToken to each instruction
         switch(cmd) {
+            case "TEST":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                g_cli.testEncryption();
+                break;
             case "CU":
             case "CUSER":
                 if (!groupConnected) 

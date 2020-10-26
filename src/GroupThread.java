@@ -60,8 +60,8 @@ public class GroupThread extends Thread {
         try {
             //Announces connection and opens object streams
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
-            final ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-            final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+            final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
+            final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
             if(!establishConnection(input, output)) {
@@ -187,6 +187,8 @@ public class GroupThread extends Thread {
                                                 message4.addObject(iv);
                                                 output.writeObject(message4);
     
+                                                output.setEncryption(k, iv);
+                                                input.setEncryption(k, iv);
                                                 Envelope actual = (Envelope)input.readObject();
                                                 if (actual.getMessage().equals("GOOD")) {
                                                     UserToken yourToken = createToken(username, false, true); //Create a token
@@ -719,6 +721,23 @@ public class GroupThread extends Thread {
                         }
                     }
                     output.writeObject(response);
+                } else if (message.getMessage().equals("TEST")) {
+                    response = new Envelope("FAILED");
+                    if (k != null && IVk != null) {
+                        Cipher aes = Cipher.getInstance("AES");
+                        
+                        byte[] test = "AES Test String".getBytes("UTF-8");
+                        SecretKeySpec aesSpec = new SecretKeySpec(k.getEncoded(), "AES");
+                        IvParameterSpec ivParams = new IvParameterSpec(IVk);
+                        aes.init(Cipher.ENCRYPT_MODE, k, ivParams);
+                        byte[] result = aes.doFinal(test);
+                        String resultEncoded = Base64.getEncoder().encodeToString(result);
+                        System.out.println("---------------------------------------");
+                        System.out.println("Result: " + resultEncoded);
+
+                        response = new Envelope("OK");
+                    }
+                    output.writeObject(response);
                 } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop
@@ -733,7 +752,7 @@ public class GroupThread extends Thread {
         }
     }
 
-    boolean establishConnection(ObjectInputStream input, ObjectOutputStream output) throws Exception {
+    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception {
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");

@@ -143,6 +143,9 @@ public class GroupClient extends Client implements GroupClientInterface {
                     decrypt.init(Cipher.DECRYPT_MODE, derived, ivSpec);
                     byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(encryptedThisChallenge));
 
+
+                    output.setEncryption(k, iv);
+                    input.setEncryption(k, iv);
                     if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
                         actual = new Envelope("GOOD");
                         output.writeObject(actual);
@@ -207,6 +210,27 @@ public class GroupClient extends Client implements GroupClientInterface {
             return null;
         }
 
+    }
+
+    public void testEncryption() {
+        try {
+            Cipher aes = Cipher.getInstance("AES");
+                        
+            byte[] test = "AES Test String".getBytes("UTF-8");
+            SecretKeySpec aesSpec = new SecretKeySpec(k.getEncoded(), "AES");
+            IvParameterSpec ivParams = new IvParameterSpec(IVk);
+            aes.init(Cipher.ENCRYPT_MODE, k, ivParams);
+            byte[] result = aes.doFinal(test);
+            String resultEncoded = Base64.getEncoder().encodeToString(result);
+            System.out.println("---------------------------------------");
+            System.out.println("Result: " + resultEncoded);
+
+            Envelope message = new Envelope("TEST");
+            message.addObject(null);
+            output.writeObject(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
     }
 
     public UserToken refreshToken(UserToken token) {
