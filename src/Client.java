@@ -1,4 +1,6 @@
 import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
@@ -199,6 +201,29 @@ public abstract class Client {
         byte[] eccKey    = Base64.getDecoder().decode((String)contents.get(0));
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
+
+        System.out.printf("The authenticity of host '(%s)' can't be established.\n", sock.getInetAddress().getHostName());
+        System.out.printf("RSA key fingerprint is %s.\n", new String(publicKey));
+        
+        boolean checked = false;
+        while(!checked){
+            System.out.printf("Are you sure you want to continue connecting (yes/no)?");
+            String input = "";
+            try{	
+                BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                input =  in.readLine();
+            } catch(Exception e){
+                // Uh oh...
+                System.err.println("Buffer Reader Error");
+                e.printStackTrace();
+            }
+
+            if(input.equals("yes")){
+                checked = true;
+            }else if(input.equals("no")){
+                return false;
+            }
+        }
 
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");

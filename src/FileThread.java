@@ -2,7 +2,10 @@
 
 import java.lang.Thread;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,12 +31,14 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.KeyPairGenerator;
 import java.security.KeyPair;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.PrivateKey;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.security.spec.ECParameterSpec;
 import java.security.interfaces.ECPublicKey;
 
@@ -383,8 +388,7 @@ public class FileThread extends Thread {
         }
     }
 
-    boolean establishConnection(ObjectInputStream input, ObjectOutputStream output)
-            throws NoSuchAlgorithmException, IOException {
+    boolean establishConnection(ObjectInputStream input, ObjectOutputStream output) throws Exception{
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
@@ -400,12 +404,60 @@ public class FileThread extends Thread {
         byte[] rsaPublicKeyByte = my_fs.getPublicKey().getEncoded();
         String encodedRSAPk = Base64.getEncoder().encodeToString(rsaPublicKeyByte);
 
+        response = (Envelope)input.readObject();
+        // String username = response.getMessage();
+
+        String ecc_pub_key_str = (String)response.getObjContents().get(0);
+        System.out.println("ECC Public Key: " + ecc_pub_key_str);
+
+        // AES Test Part 1
+        Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
+        SecureRandom rnd = new SecureRandom();
+        byte[] iv = new byte[aes.getBlockSize()];
+        rnd.nextBytes(iv);
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        
+        String ivEncoded = Base64.getEncoder().encodeToString(iv);
+
         response = new Envelope("FILE");
         response.addObject(encodedPubKey);
         response.addObject(encodedSig);
         response.addObject(encodedRSAPk);
-        // response.addObject(ivEncoded);
+        response.addObject(ivEncoded);
         output.writeObject(response);
+
+        byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
+
+        KeyFactory kf = KeyFactory.getInstance("EC");
+        X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(ecc_pub_key);
+        PublicKey otherPublicKey = kf.generatePublic(pkSpec);
+
+        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+        ka.init(kp.getPrivate());
+        ka.doPhase(otherPublicKey, true);
+
+        byte[] sharedSecret = ka.generateSecret();
+        System.out.println("Shared Secret: " + Base64.getEncoder().encodeToString(sharedSecret));
+        
+        MessageDigest hash = MessageDigest.getInstance("SHA-256");
+        hash.update(sharedSecret);
+
+        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
+        Collections.sort(keys);
+        hash.update(keys.get(0));
+        hash.update(keys.get(1)); 
+
+        byte[] derivedKey = hash.digest();
+        System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
+
+        // AES Test Part 2
+        byte[] test = "AES Test String".getBytes("UTF-8");
+        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
+        aes.init(Cipher.ENCRYPT_MODE, aesSpec, ivParams);
+        byte[] result = aes.doFinal(test);
+        String resultEncoded = Base64.getEncoder().encodeToString(result);
+        System.out.println("---------------------------------------");
+        System.out.println("Result: " + resultEncoded);
 
         return true;
     }

@@ -63,6 +63,8 @@ public class RunClient {
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
+                // f_cli.authenticateFileServer();
+                f_cli.keyExchange();
                 break;
             default:
                 return false;
