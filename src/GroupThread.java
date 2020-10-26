@@ -64,10 +64,9 @@ public class GroupThread extends Thread {
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
-            if(!establishConnection(input, output)) {
-                socket.close();
-                proceed = false;
-            }
+            response = new Envelope("GROUP");
+            response.addObject(null);
+            output.writeObject(response);
 
             do {
                 Envelope message = (Envelope)input.readObject();
@@ -753,123 +752,6 @@ public class GroupThread extends Thread {
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
-        }
-    }
-
-    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception {
-        Envelope response;
-
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
-        kpg.initialize(256);
-        KeyPair kp = kpg.generateKeyPair();
-        byte[] ourPk = kp.getPublic().getEncoded();
-
-        String encodedPk = Base64.getEncoder().encodeToString(ourPk);
-        System.out.println("Public Key: " + encodedPk);
-
-        String encodedSignature = Base64.getEncoder().encodeToString(my_gs.signData(ourPk));
-        byte[] rsaPublicKeyByte = my_gs.getPublicKey().getEncoded();
-        String encodedRSAPk     = Base64.getEncoder().encodeToString(rsaPublicKeyByte);
-
-        response = (Envelope)input.readObject();
-        String username = response.getMessage();
-
-        if(!verifyData(response)) {
-            return false;
-        }
-        
-        String ecc_pub_key_str = (String)response.getObjContents().get(0);
-        System.out.println("ECC Public Key: " + ecc_pub_key_str);
-
-        // AES Test Part 1
-        Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
-        SecureRandom rnd = new SecureRandom();
-        byte[] iv = new byte[aes.getBlockSize()];
-        rnd.nextBytes(iv);
-        IvParameterSpec ivParams = new IvParameterSpec(iv);
-        
-        String ivEncoded = Base64.getEncoder().encodeToString(iv);
-
-        response = new Envelope("GROUP");
-        response.addObject(encodedPk);
-        response.addObject(encodedSignature);
-        response.addObject(encodedRSAPk);
-        response.addObject(ivEncoded);
-        output.writeObject(response);
-
-        byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
-
-        KeyFactory kf = KeyFactory.getInstance("EC");
-        X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(ecc_pub_key);
-        PublicKey otherPublicKey = kf.generatePublic(pkSpec);
-
-        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-        ka.init(kp.getPrivate());
-        ka.doPhase(otherPublicKey, true);
-
-        byte[] sharedSecret = ka.generateSecret();
-        System.out.println("Shared Secret: " + Base64.getEncoder().encodeToString(sharedSecret));
-        
-        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-        hash.update(sharedSecret);
-
-        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
-        Collections.sort(keys);
-        hash.update(keys.get(0));
-        hash.update(keys.get(1)); 
-
-        byte[] derivedKey = hash.digest();
-        System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
-
-        // AES Test Part 2
-        byte[] test = "AES Test String".getBytes("UTF-8");
-        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
-        aes.init(Cipher.ENCRYPT_MODE, aesSpec, ivParams);
-        byte[] result = aes.doFinal(test);
-        String resultEncoded = Base64.getEncoder().encodeToString(result);
-        System.out.println("---------------------------------------");
-        System.out.println("Result: " + resultEncoded);
-
-        return true;
-    }
-
-    private boolean verifyData(Envelope message) {
-        ArrayList<Object> contents = message.getObjContents();
-        if (contents.size() != 3) {
-            System.out.println("Invalid establishing connection");
-            return false;
-        }
-
-        // Extract the crypto values
-        byte[] eccKey    = Base64.getDecoder().decode((String)contents.get(0));
-        byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
-        byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
-
-        try {
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKey);
-            PublicKey serverPubKey = kf.generatePublic(pkSpec);
-
-            Signature rsa_signature = Signature.getInstance("RSA");
-
-            rsa_signature.initVerify(serverPubKey);
-            rsa_signature.update(eccKey);
-
-            boolean verified = rsa_signature.verify(eccSign);
-            
-            if (verified) {
-                // Signature matches
-                System.out.println("Success: Verified key");
-                return true;
-            } else {
-                // Signature DOES NOT match
-                System.out.println("Invalid session establishment (Unverified key)");
-                return false;
-            }
-        } catch(Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace(System.err);
-            return false;
         }
     }
 

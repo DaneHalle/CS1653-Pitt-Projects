@@ -59,10 +59,11 @@ public class RunClient {
             case "GROUP":
                 g_cli.connect(server, port);
                 // TODO: Change username
-                g_cli.keyExchange("Q", "GROUP", rsa_key);
+                g_cli.verifyServer("GROUP");
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
+                f_cli.keyExchange("FILE", rsa_key);
                 break;
             default:
                 return false;

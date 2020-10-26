@@ -1,4 +1,6 @@
 import java.net.Socket;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
@@ -69,9 +71,9 @@ public abstract class Client {
         return keyPair.generateKeyPair();
     }
 
-    public Key keyExchange(String username, String sign, KeyPair rsa_key) {
+    public Key keyExchange(String sign, KeyPair rsa_key) {
         try {
-            Envelope message = new Envelope(username);
+            Envelope message = new Envelope(sign);
             KeyPairGenerator kpg;
             
             kpg = KeyPairGenerator.getInstance("EC");
@@ -203,6 +205,29 @@ public abstract class Client {
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
 
+        System.out.printf("The authenticity of host '%s (%s)' can't be established.\n", sock.getInetAddress().getHostName(), sock.getInetAddress().getHostAddress());
+        System.out.printf("RSA key fingerprint is %s.\n", Base64.getEncoder().encodeToString(publicKey).substring(0,50));
+        
+        boolean checked = false;
+        while(!checked){
+            System.out.printf("Are you sure you want to continue connecting (yes/no)?");
+            String input = "";
+            try{	
+                BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                input =  in.readLine();
+            } catch(Exception e){
+                // Uh oh...
+                System.err.println("Buffer Reader Error");
+                e.printStackTrace();
+            }
+
+            if(input.equals("yes")){
+                checked = true;
+            }else if(input.equals("no")){
+                return false;
+            }
+        }
+
         try {
             KeyFactory kf = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec pkSpec = new X509EncodedKeySpec(publicKey);
@@ -224,6 +249,23 @@ public abstract class Client {
                 System.out.println("Invalid session establishment (Unverified key)");
                 return false;
             }
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
+    public boolean verifyServer(String sign) {
+        try {
+            Envelope server_type = (Envelope)input.readObject();
+            if (!server_type.getMessage().equals(sign)) {
+                System.out.printf("Server is not a %s server\n", sign);
+                disconnect();
+                return false;
+            }
+
+            return true;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
