@@ -405,6 +405,7 @@ public class FileThread extends Thread {
         }
     }
 
+
     boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception{
         Envelope response;
 
@@ -414,6 +415,7 @@ public class FileThread extends Thread {
         byte[] ourPk = kp.getPublic().getEncoded();
 
         String encodedPubKey = Base64.getEncoder().encodeToString(ourPk);
+        System.out.println("Public Key: " + encodedPubKey);
         String encodedSig = Base64.getEncoder().encodeToString(my_fs.signData(ourPk));
         
         byte[] rsaPublicKeyByte = my_fs.getPublicKey().getEncoded();
@@ -423,12 +425,16 @@ public class FileThread extends Thread {
         // String username = response.getMessage();
 
         String ecc_pub_key_str = (String)response.getObjContents().get(0);
+        System.out.println("ECC Public Key: " + ecc_pub_key_str);
+
+        // AES Test Part 1
 
         // Derive the initialization vector to be shared
         Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
         SecureRandom rnd = new SecureRandom();
         byte[] iv = new byte[aes.getBlockSize()];
         rnd.nextBytes(iv);
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
         IVk = iv;
         
         String ivEncoded = Base64.getEncoder().encodeToString(iv);
@@ -460,7 +466,6 @@ public class FileThread extends Thread {
         hash.update(keys.get(1)); 
 
         byte[] derivedKey = hash.digest();
-
         SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
         k = aesSpec;
                 

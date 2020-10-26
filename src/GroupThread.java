@@ -146,7 +146,6 @@ public class GroupThread extends Thread {
                                         hash.update(keys.get(0));
                                         hash.update(keys.get(1));
                                         byte[] derivedKey = hash.digest();
-                                        // String k = Base64.getEncoder().encodeToString(derivedKey);
                                         SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
                                         k = derived;
     
@@ -208,7 +207,7 @@ public class GroupThread extends Thread {
                                                         int iterations = 10000, keyLength = 256;
                                                         char[] passwordChars;
                                                         byte[] saltBytes, hashedBytes;
-    
+                                                      
                                                         do {
                                                             returned = (Envelope)input.readObject();
                                                             if (returned.getMessage().equals("NEW")) {
@@ -218,6 +217,7 @@ public class GroupThread extends Thread {
                                                                 hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
                                                                 newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
                                                                 if (newPassSecret.equals(passSecret)) {
+                                                                    output.writeObject(response);
                                                                     continue;
                                                                 } else {
                                                                     break;

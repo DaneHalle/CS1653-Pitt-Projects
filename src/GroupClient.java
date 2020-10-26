@@ -458,11 +458,10 @@ public class GroupClient extends Client implements GroupClientInterface {
 
     private static String readInput() {
         try{
-            System.out.print(" > ");	
+            System.out.print(" >>>> ");	
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             return in.readLine();
         } catch(Exception e){
-            // Uh oh...
             System.err.println("Buffer Reader Error");
             e.printStackTrace();
             return "";

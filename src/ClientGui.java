@@ -84,7 +84,7 @@ public class ClientGui{
 
 		// create user
 		JButton cuser_button = new JButton("Create User");
-		String[] cuser_prompts = {"Enter new username"};
+		String[] cuser_prompts = {"Enter new username", "Enter a temporary password"};
 		cuser_button.addActionListener(new arbAction(rcli, "cuser", cuser_prompts));
 
 		// delete user

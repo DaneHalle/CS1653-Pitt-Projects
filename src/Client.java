@@ -92,6 +92,7 @@ public abstract class Client {
 
             String ecc_pub_key_str = (String)message.getObjContents().get(0);
             String ivEncoded = (String)message.getObjContents().get(3);
+            System.out.println("ECC Public Key: " + ecc_pub_key_str);
 
             byte[] ecc_pub_key = Base64.getDecoder().decode(ecc_pub_key_str);
 
@@ -103,7 +104,8 @@ public abstract class Client {
             ka.init(kp.getPrivate());
             ka.doPhase(otherPublicKey, true);
 
-            byte[] sharedSecret = ka.generateSecret();            
+            byte[] sharedSecret = ka.generateSecret();
+            System.out.println("Shared Secret: " + Base64.getEncoder().encodeToString(sharedSecret));
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
             hash.update(sharedSecret);
 
@@ -133,7 +135,6 @@ public abstract class Client {
         byte[] rsaSign;
         byte[] rsaPubK;
         String encodedPk = Base64.getEncoder().encodeToString(ourPk);
-        // TODO: Do we need this if it shows the fingerprint later on
         System.out.println("Public Key: " + encodedPk);
 
         try {
@@ -179,7 +180,6 @@ public abstract class Client {
     }
 
     private boolean verify(Envelope message, String server_type) {
-        // TODO: Not retrieving stored keys
         if (!message.getMessage().equals(server_type)) {
             System.out.printf("Server is not a %s server\n", server_type);
             return false;
