@@ -106,7 +106,6 @@ public abstract class Client {
 
             byte[] sharedSecret = ka.generateSecret();
             System.out.println("Shared Secret: " + Base64.getEncoder().encodeToString(sharedSecret));
-            
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
             hash.update(sharedSecret);
 
@@ -116,22 +115,14 @@ public abstract class Client {
             hash.update(keys.get(1)); 
 
             byte[] derivedKey = hash.digest();
-            System.out.println("derived key: " + Base64.getEncoder().encodeToString(derivedKey));
-
-            // AES Test
-            byte[] iv = Base64.getDecoder().decode(ivEncoded);
-            IvParameterSpec ivParams = new IvParameterSpec(iv);
-
-
-            byte[] test = "AES Test String".getBytes("UTF-8");
             SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
-            Cipher aes = Cipher.getInstance("AES/CBC/PKCS7Padding");
-            aes.init(Cipher.ENCRYPT_MODE, aesSpec, ivParams);
-            byte[] result = aes.doFinal(test);
-            String resultEncoded = Base64.getEncoder().encodeToString(result);
-            System.out.println("---------------------------------------");
-            System.out.println("Result: " + resultEncoded);
+            byte[] iv = Base64.getDecoder().decode(ivEncoded);
 
+            k = aesSpec;
+            IVk = iv;
+
+            output.setEncryption(k, iv);
+            input.setEncryption(k, iv);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

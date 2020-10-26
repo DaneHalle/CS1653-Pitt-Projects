@@ -207,6 +207,7 @@ public class GroupThread extends Thread {
                                                         int iterations = 10000, keyLength = 256;
                                                         char[] passwordChars;
                                                         byte[] saltBytes, hashedBytes;
+                                                      
                                                         do {
                                                             returned = (Envelope)input.readObject();
                                                             if (returned.getMessage().equals("NEW")) {
