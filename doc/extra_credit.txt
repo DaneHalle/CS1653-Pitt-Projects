@@ -1,4 +1,4 @@
-ExtraCredit Least Privilege
+ExtraCredit Least Privilege - phase2
 ---------------------------
 We implemented a Least Privilege system of sorts.
 If a user want access to commands that would affect a group of some kind,
@@ -20,7 +20,7 @@ Should a user want to reset their scope entirely without one of the above comman
 they can either relog or re-retrieve their token with a GET.
 
 
-ExtraCredit Client GUI
+ExtraCredit Client GUI - phase2
 ----------------------
 We implemented a basic client GUI for a user to interact with the system without
 the use of the command line. This was done using java swing and java awt. All
@@ -34,7 +34,7 @@ Within the top bar, you can connect to the Group and File servers or exit the sy
 To use the functionality of the server, click the buttons on the side which will prompt
 if needed. 
 
-ExtraCredit Unit Tests
+ExtraCredit Unit Tests - phase2
 ----------------------
 Here we implemented a simple beginning testing frame work for the GroupThread.java
 functions. There should be a total of 12 different tests, and they test expected

@@ -110,8 +110,9 @@ public class GroupClient extends Client implements GroupClientInterface {
                 hash.update(keys.get(0));
                 hash.update(keys.get(1));
                 byte[] derivedKey = hash.digest();
-                String k = Base64.getEncoder().encodeToString(derivedKey);
+                // String k = Base64.getEncoder().encodeToString(derivedKey);
                 SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+                k = derived;
 
                 SecureRandom challenge = new SecureRandom();
                 String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
@@ -123,6 +124,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
                 byte[] encryptedOther = encrypt.doFinal(otherChallenge); //Server's challenge
                 byte[] encryptedThis = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge)); //Server's challenge
+                IVk = iv;
 
                 message3 = new Envelope("MESSAGE3");
                 message3.addObject(Base64.getEncoder().encodeToString(encryptedOther));
@@ -141,6 +143,9 @@ public class GroupClient extends Client implements GroupClientInterface {
                     decrypt.init(Cipher.DECRYPT_MODE, derived, ivSpec);
                     byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(encryptedThisChallenge));
 
+
+                    output.setEncryption(k, iv);
+                    input.setEncryption(k, iv);
                     if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
                         actual = new Envelope("GOOD");
                         output.writeObject(actual);
@@ -148,7 +153,6 @@ public class GroupClient extends Client implements GroupClientInterface {
                         boolean first=true; 
                         StringTokenizer cmd;
                         do {
-                            System.out.println("Test");
                             if (response.getMessage().equals("REQUEST-NEW")) {
                                 //Get some new password...how though?
                                 String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
@@ -178,31 +182,57 @@ public class GroupClient extends Client implements GroupClientInterface {
                         }
                         //Continue
                     } else {
+                        k = null;
+                        IVk = null;
                         actual = new Envelope("FAIL");
                         output.writeObject(actual);
                         response = (Envelope)input.readObject();
                         return null;
                     }
                 } else {
+                    k = null;
+                    IVk = null;
                     actual = new Envelope("FAIL");
                     output.writeObject(actual);
                     response = (Envelope)input.readObject();
                     return null;
                 }
-
-
             } else {
-                
+                k = null;
+                IVk = null;
                 return null;
             }
 
             return null;
         } catch(Exception e) {
+            k = null;
+            IVk = null;
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
             return null;
         }
 
+    }
+
+    public void testEncryption() {
+        try {
+            Cipher aes = Cipher.getInstance("AES");
+                        
+            byte[] test = "AES Test String".getBytes("UTF-8");
+            SecretKeySpec aesSpec = new SecretKeySpec(k.getEncoded(), "AES");
+            IvParameterSpec ivParams = new IvParameterSpec(IVk);
+            aes.init(Cipher.ENCRYPT_MODE, k, ivParams);
+            byte[] result = aes.doFinal(test);
+            String resultEncoded = Base64.getEncoder().encodeToString(result);
+            System.out.println("---------------------------------------");
+            System.out.println("Result: " + resultEncoded);
+
+            Envelope message = new Envelope("TEST");
+            message.addObject(null);
+            output.writeObject(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } 
     }
 
     public UserToken refreshToken(UserToken token) {
@@ -213,7 +243,6 @@ public class GroupClient extends Client implements GroupClientInterface {
             //Tell the server to return a token.
             message = new Envelope("REFRESH");
             message.addObject(token); //Add user name string
-            message.addObject(token.getPasswordSecret());
             output.writeObject(message);
 
             //Get the response from the server

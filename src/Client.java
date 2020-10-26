@@ -24,12 +24,15 @@ public abstract class Client {
      * Socket and input/output streams
      */
     protected Socket sock;
-    protected ObjectOutputStream output;
-    protected ObjectInputStream input;
+    protected EncryptedObjectOutputStream output;
+    protected EncryptedObjectInputStream input;
     protected UserToken token;
 
     private SecureRandom secureRandom = null;
     private final int TAG_LENGTH_BIT = 128;
+
+    protected SecretKeySpec k;
+    protected byte[] IVk;
 
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
@@ -42,8 +45,8 @@ public abstract class Client {
                 port
             );
 
-            output = new ObjectOutputStream(sock.getOutputStream());
-            input = new ObjectInputStream(sock.getInputStream());
+            output = new EncryptedObjectOutputStream(sock.getOutputStream());
+            input = new EncryptedObjectInputStream(sock.getInputStream());
 
             return true;
         } catch(Exception e) {

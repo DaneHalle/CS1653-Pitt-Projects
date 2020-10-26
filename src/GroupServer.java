@@ -42,7 +42,7 @@ public class GroupServer extends Server {
     private final int keySize = 2048;
 
     public GroupServer(int _port) {
-        super(_port, "alpha");
+        super(_port, "beta");
 
         Security.addProvider(new BouncyCastleProvider());
     }
@@ -156,6 +156,10 @@ public class GroupServer extends Server {
 
     public synchronized PublicKey getPublicKey() {
         return rsa_key.getPublic();
+    }
+
+    public synchronized KeyPair getRSAKey() {
+        return rsa_key;
     }
     
     byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {

@@ -27,7 +27,10 @@ public class FileClient extends Client implements FileClientInterface {
                 System.out.printf("File %s deleted successfully\n", filename);
             } else {
                 System.out.printf("Error deleting file %s (%s)\n", filename, env.getMessage());
-                System.out.printf("%s\n", env.getObjContents().get(0));
+                try {
+                    System.out.printf("%s\n", env.getObjContents().get(0));
+                } catch (Exception e) {
+                }
                 return false;
             }
         } catch (IOException e1) {
@@ -102,19 +105,19 @@ public class FileClient extends Client implements FileClientInterface {
     @SuppressWarnings("unchecked")
     public List<String> listFiles(UserToken token) {
         try {
-            Envelope message = null, e = null;
+            Envelope message = null, env = null;
             //Tell the server to return the member list
             message = new Envelope("LFILES");
             message.addObject(token); //Add requester's token
             output.writeObject(message);
 
-            e = (Envelope)input.readObject();
+            env = (Envelope)input.readObject();
 
             //If server indicates success, return the member list
-            if(e.getMessage().equals("OK")) {
+            if(env.getMessage().equals("OK")) {
                 List<String> toReturn = new ArrayList<String>();
-                for(int index = 0; index < e.getObjContents().size(); index++) {
-                    String toAdd = (String)e.getObjContents().get(index);
+                for(int index = 0; index < env.getObjContents().size(); index++) {
+                    String toAdd = (String)env.getObjContents().get(index);
                     if(!toReturn.contains(toAdd)) {
                         toReturn.add(toAdd);
                     }
@@ -122,7 +125,7 @@ public class FileClient extends Client implements FileClientInterface {
                 return toReturn;
                 // return (List<String>)e.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
-            System.out.printf("%s\n", e.getObjContents().get(0));
+            System.out.printf("%s\n", env.getObjContents().get(0));
 
             return null;
 
@@ -136,20 +139,20 @@ public class FileClient extends Client implements FileClientInterface {
     @SuppressWarnings("unchecked")
     public List<String> listFilesForGroup(String group, UserToken token) {
         try {
-            Envelope message = null, e = null;
+            Envelope message = null, env = null;
             //Tell the server to return the member list
             message = new Envelope("LFORGROUP");
             message.addObject(group);
             message.addObject(token); //Add requester's token
             output.writeObject(message);
 
-            e = (Envelope)input.readObject();
+            env = (Envelope)input.readObject();
 
             //If server indicates success, return the member list
-            if(e.getMessage().equals("OK")) {
+            if(env.getMessage().equals("OK")) {
                 List<String> toReturn = new ArrayList<String>();
-                for(int index = 0; index < e.getObjContents().size(); index++) {
-                    String toAdd = (String)e.getObjContents().get(index);
+                for(int index = 0; index < env.getObjContents().size(); index++) {
+                    String toAdd = (String)env.getObjContents().get(index);
                     if(!toReturn.contains(toAdd)) {
                         toReturn.add(toAdd);
                     }
@@ -157,7 +160,7 @@ public class FileClient extends Client implements FileClientInterface {
                 return toReturn;
                 // return (List<String>)e.getObjContents().get(0); //This cast creates compiler warnings. Sorry.
             }
-            System.out.printf("%s\n", e.getObjContents().get(0));
+            System.out.printf("%s\n", env.getObjContents().get(0));
 
             return null;
 
