@@ -252,4 +252,21 @@ public abstract class Client {
             return false;
         }
     }
+
+    public boolean verifyServer(String sign) {
+        try {
+            Envelope server_type = (Envelope)input.readObject();
+            if (!server_type.getMessage().equals(sign)) {
+                System.out.printf("Server is not a %s server\n", sign);
+                disconnect();
+                return false;
+            }
+
+            return true;
+        } catch(Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
 }
