@@ -62,6 +62,8 @@ public class FileThread extends Thread {
             final ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
             Envelope response;
 
+            response = new Envelope("FILE");
+
             if (!establishConnection(input, output)) {
                 socket.close();
                 proceed = false;

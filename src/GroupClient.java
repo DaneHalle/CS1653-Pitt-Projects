@@ -22,8 +22,6 @@ import javax.crypto.Cipher;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import java.io.UnsupportedEncodingException;
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
-import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 import java.security.Security;
 import java.security.SecureRandom;

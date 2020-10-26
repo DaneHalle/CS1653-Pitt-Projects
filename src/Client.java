@@ -68,9 +68,9 @@ public abstract class Client {
         return keyPair.generateKeyPair();
     }
 
-    public Key keyExchange(String username, String sign, KeyPair rsa_key) {
+    public Key keyExchange(String sign, KeyPair rsa_key) {
         try {
-            Envelope message = new Envelope(username);
+            Envelope message = new Envelope(sign);
             KeyPairGenerator kpg;
             
             kpg = KeyPairGenerator.getInstance("EC");
@@ -202,8 +202,8 @@ public abstract class Client {
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
 
-        System.out.printf("The authenticity of host '(%s)' can't be established.\n", sock.getInetAddress().getHostName());
-        System.out.printf("RSA key fingerprint is %s.\n", new String(publicKey));
+        System.out.printf("The authenticity of host '%s (%s)' can't be established.\n", sock.getInetAddress().getHostName(), sock.getInetAddress().getHostAddress());
+        System.out.printf("RSA key fingerprint is %s.\n", Base64.getEncoder().encodeToString(publicKey).substring(0,50));
         
         boolean checked = false;
         while(!checked){
