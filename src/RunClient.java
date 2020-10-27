@@ -24,11 +24,22 @@ public class RunClient {
     private Key group_key; // may change to key
     private KeyPair rsa_key;
 
+    private boolean gui = false;
+
     public RunClient() {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        g_cli = new GroupClient();
-        f_cli = new FileClient();
+        g_cli = new GroupClient(false);
+        f_cli = new FileClient(false);
+        rsa_key = g_cli.generateRSA(); // could also be g_cli
+    }
+
+    public RunClient(boolean _gui) {
+        gui = _gui;
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        g_cli = new GroupClient(gui);
+        f_cli = new FileClient(gui);
         rsa_key = g_cli.generateRSA(); // could also be g_cli
     }
 

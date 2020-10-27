@@ -9,6 +9,12 @@ import java.util.ArrayList;
 
 public class FileClient extends Client implements FileClientInterface {
 
+    private boolean gui = false;
+
+    public FileClient(boolean _gui){
+        gui = _gui;
+    }
+
     public boolean delete(String filename, UserToken token) {
         String remotePath;
         if (filename.charAt(0)=='/') {
