@@ -121,7 +121,7 @@ public class RunClient {
             System.out.print(groups);
             String management=token.getShownGroups().size()>0 ? "\tAUSERTOGROUP <USER> <GROUPNAME> - adds USER to group \n\t\tGROUPNAME if you are owner of GROUPNAME\n\tRUSERFROMGROUP <USER> <GROUPNAME> - removes USER from \n\t\tgroup GROUPNAME if you are the owner of GROUPNAME\n" : "";
             System.out.print(management);
-            String file=token.getShownGroups().size()>0 ? "\tLFILES - lists all files accessible to you\n\tUPLOADF <src_file> <dest_file> <GROUPNAME> - uplaods local src_file \n\t\tto GROUPNAME under name of dest_file\n\tDOWNLOADF <src_file> <dest_file> - downloads src_file \n\t\tfrom server to local file name dest_file\n\tDELETEF <file> - deletes file from the server\n" : "";
+            String file=token.getShownGroups().size()>0 ? "\tLFILES - lists all files accessible to you\n\tUPLOADF <src_file> <dest_file> <GROUPNAME> - uplaods local src_file \n\t\tto GROUPNAME under name of dest_file\n\tDOWNLOADF <src_file> <dest_file> - downloads src_file \n\t\tfrom server to local file name dest_file\n\tDELETEF <file> - deletes file from the server\n\tPUBLICK - shows the public keys of file servers client has connected to\n" : "";
             System.out.print(file);
             String least=token.getGroups().size()>0 ? "\tSHOW <GROUPNAME> - Adds GROUPNAME to scope to allow \n\t\tcommands and management\n\tSHOWALL - Adds all available groups to scope to allow \n\t\tcommands and management\n\tHIDE <GROUPNAME> - Removes GROUPNAME from scope to disallow \n\t\tcommands and management\n\tHIDEALL - Removes all available groups from scope to disallow \n\t\tcommands and management\n" : "";
             System.out.print(least);
@@ -222,11 +222,6 @@ public class RunClient {
         
         // TODO: Try to add corruptToken to each instruction
         switch(cmd) {
-            case "TEST":
-                if (!groupConnected)
-                    return CommandResult.GNOT;
-                g_cli.testEncryption();
-                break;
             case "CU":
             case "CUSER":
                 if (!groupConnected) 
@@ -380,6 +375,10 @@ public class RunClient {
                     System.out.printf("Deleted file %s\n", src_file);
                 else
                     return CommandResult.FAIL;
+                break;
+            case "PUB":
+            case "PUBLICK":
+                f_cli.printPublicKeys();
                 break;
             case "S":
             case "SHOW":
