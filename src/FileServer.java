@@ -100,20 +100,12 @@ public class FileServer extends Server {
     }
 
     private void generateKey() {
-        KeyPairGenerator keyPair;
-
-        try{
-            keyPair = KeyPairGenerator.getInstance("RSA");
-            keyPair.initialize(2048);
+        try {
             secureRandom = new SecureRandom();
+            rsa_key = fileList.generateKeys();
         } catch(Exception e) {
             e.printStackTrace();
-            rsa_key = null;
-
-            return;
         }
-
-        rsa_key = keyPair.generateKeyPair();
     }
 
     public synchronized byte[] signData(byte[] data){
