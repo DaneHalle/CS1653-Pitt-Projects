@@ -24,10 +24,21 @@ public class RunClient {
     private Key group_key; // may change to key
     private KeyPair rsa_key;
 
+    private boolean gui = false;
+
     public RunClient() {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        g_cli = new GroupClient();
+        g_cli = new GroupClient(false);
+        f_cli = new FileClient();
+        rsa_key = g_cli.generateRSA(); // could also be g_cli
+    }
+
+    public RunClient(boolean _gui) {
+        gui = _gui;
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        g_cli = new GroupClient(gui);
         f_cli = new FileClient();
         rsa_key = g_cli.generateRSA(); // could also be g_cli
     }
@@ -63,7 +74,7 @@ public class RunClient {
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
-                f_cli.keyExchange("FILE", rsa_key);
+                f_cli.keyExchange("FILE", rsa_key, gui);
                 break;
             default:
                 return false;

@@ -15,7 +15,7 @@ public class ClientGui{
 	}
 	public static void createAndRunGUI(){
 
-		RunClient rcli = new RunClient();
+		RunClient rcli = new RunClient(true);
 
 		JFrame frame = new JFrame("Client");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -59,7 +59,7 @@ public class ClientGui{
 		// USER ACTIONS
 		// get a user token
 		JButton get_button = new JButton("GET");
-		String[] get_prompts = {"Enter username"};
+		String[] get_prompts = {"Enter username", "Enter password"};
 		get_button.addActionListener(new arbAction(rcli, "get", get_prompts));
 
 		// show a group within a user's scope
@@ -193,6 +193,21 @@ public class ClientGui{
 			StringTokenizer cmd = new StringTokenizer("exit");
 			rcli.mapCommand(cmd);
 			System.exit(0);
+		}
+	}
+
+	static class getTokenAction implements ActionListener{
+		RunClient rcli;
+		String action = "get";
+		public getTokenAction(RunClient _rcli){
+			rcli = _rcli;
+		}
+		public void actionPerformed(ActionEvent ev){
+			boolean runGetFlag = true;
+			boolean askLoop = true;
+			while(askLoop){
+
+			}
 		}
 	}
 
