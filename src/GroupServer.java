@@ -124,20 +124,12 @@ public class GroupServer extends Server {
     }
 
     private void generateKey() {
-        KeyPairGenerator keyPair;
-
         try {
-            keyPair = KeyPairGenerator.getInstance("RSA"); //shouldnt we initialize to 2048?????
-            keyPair.initialize(2048);
             secureRandom = new SecureRandom();
+            rsa_key = userList.generateKeys();
         } catch(Exception e) {
             e.printStackTrace();
-            rsa_key = null;
-            
-            return;
         }
-
-        rsa_key = keyPair.generateKeyPair();
     }
 
     public synchronized byte[] signData(byte[] data) {

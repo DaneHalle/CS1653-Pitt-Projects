@@ -117,7 +117,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  When the UserToken is signed, the Java object will be serialized and that data used to serialize the object will generate the signature. All special characters will be replaced to prevent any complications in signing and sending the data. 
+  When the UserToken is signed, the Java will be converted into a string where almost all instance variables are added to the string. The instance variables not added to the string are the signature of the Token itself and the public key used to sign it. This is then encoded into Base64 to prevent invalid encoding of special characters. For verification it checks if the Base64 encoded toString is the same as the signature.
 </p>
 
 <p>
@@ -145,11 +145,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </figure>
 
 <p>
-  In figure T3.1 we see the authentication process between the client and a file server. The client sends g<sup>b</sup> mod q, b being a random number they generate. When the file server receives this they respond with g<sup>b</sup> mod q signed with their private key, along with their public key appended at the end. During the initial connection, the client will contact the admin to verify that they have received the correct public key for the file server they want to connect to. If the public key cannot be verified, we will terminate the connection. If we can verify the public key, we will store it in a list of trusted file servers. We will then compute the verification of the signed g<sup>b</sup> mod q using that public key. In following connections the authentication process will be virtually identical except that we will use the public key stored for that file server to verify that they aren’t an imposter.
+  In figure T3.1 we see the authentication process between the client and a file server. The client sends Q<sub>u</sub> the elliptic curve public key. When the file server receives this they respond with Q<sub>s</sub> signed with their private key, along with their public key appended at the end. During the initial connection, the client will contact the admin to verify that they have received the correct public key for the file server they want to connect to. This can be justified since to the client the admin is a trusted third party. If the public key cannot be verified, we will terminate the connection. If we can verify the public key, we will store it in a list of trusted file servers. We will then compute the verification of the signed Q<sub>u</sub> using that public key. In following connections the authentication process will be virtually identical except that we will use the public key stored for that file server to verify that they aren’t an imposter.
 </p>
 
 <p>
-  This approach sufficiently solves the problem of determining if the file server we are connected to is authentic or not. Without the file server’s private key they will have no way to sign g<sup>b</sup> mod q in a way that it will successfully be verified by the client since it is hard to factor the public key to derive the private key. The user contacting the admin to make sure they have received the correct public key for that file server, and not a fake one, ensures that a malicious file server can’t just make up its one RSA key pair. It also expects the user to accept the verification using only the public key that the admin verifies.
+  This approach sufficiently solves the problem of determining if the file server we are connected to is authentic or not. Without the file server’s private key they will have no way to sign Q<sub>u</sub> in a way that it will successfully be verified by the client since it is hard to factor the public key to derive the private key. The user contacting the admin to make sure they have received the correct public key for that file server, and not a fake one, ensures that a malicious file server can’t just make up its one RSA key pair. It also expects the user to accept the verification using only the public key that the admin verifies.
 </p>
 
 <p>
@@ -189,7 +189,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  There would be quite a bit of overlap within all of the systems we are proposing. We are utilizing some form of Diffie-Hellman key exchange for all of the threats. We started the processes of designing these mechanisms by going through each threat and spit-balling/whiteboarding ideas that could potentially work to address or solve them. After an initial look, we went back and tried to flesh out each idea. During this process, we could determine if it fell under one of the following buckets: “Good idea with potential”, “Could potentially work but has some flaws”, “Insecure or Has too many flaws to work”. We then worked further with the ideas in the first two buckets and didn’t put effort into ones that fell into the last bucket.  
+  There would be quite a bit of overlap within all of the systems we are proposing. We are utilizing some form of Diffie-Hellman key exchange for all of the threats. The key generated by a Diffie-Hellman key exchange done during a GET will be utilized for encryption of communications from that point after. We started the processes of designing these mechanisms by going through each threat and spit-balling/whiteboarding ideas that could potentially work to address or solve them. After an initial look, we went back and tried to flesh out each idea. During this process, we could determine if it fell under one of the following buckets: “Good idea with potential”, “Could potentially work but has some flaws”, “Insecure or Has too many flaws to work”. We then worked further with the ideas in the first two buckets and didn’t put effort into ones that fell into the last bucket.
 </p>
 
 <p>
@@ -203,12 +203,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  As part of this, we had to extend the function of the GUI to encompass the new base 
-  functionallity for the system. This included adding more prompts for GET and CUSER
-  buttons in order to accept a password. Then we got the GUI to be able to prompt for a 
-  new password should the user's account have a temporary password set to it. Much like
-  the CLI, this will prompt as many times as it takes for the user to input a different 
-  password than was previously set. 
+  As part of this, we had to extend the function of the GUI to encompass the new base  functionality for the system. This included adding more prompts for GET and CUSER buttons in order to accept a password. Then we got the GUI to be able to prompt for a  new password should the user's account have a temporary password set to it. Much like the CLI, this will prompt as many times as it takes for the user to input a different  password than was previously set. We also added a way for the Client to verify keys through the GUI. 
 </p>
 
 <!-- END CHANGES HERE -->
