@@ -20,6 +20,8 @@ import java.security.spec.*;
 
 import javax.crypto.*;
 import javax.crypto.spec.*;
+import javax.swing.JOptionPane;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public abstract class Client {
@@ -76,7 +78,7 @@ public abstract class Client {
         return keyPair.generateKeyPair();
     }
 
-    public Key keyExchange(String sign, KeyPair rsa_key) {
+    public Key keyExchange(String sign, KeyPair rsa_key, boolean gui) {
         try {
             Envelope message = new Envelope(sign);
             KeyPairGenerator kpg;
@@ -90,7 +92,7 @@ public abstract class Client {
             output.writeObject(message);
 
             message = (Envelope)input.readObject();
-            if (!verify(message, sign)) {
+            if (!verify(message, sign, gui)) {
                 disconnect();
                 return null;
             }
@@ -181,7 +183,7 @@ public abstract class Client {
         }
     }
 
-    private boolean verify(Envelope message, String server_type) {
+    private boolean verify(Envelope message, String server_type, boolean gui) {
         if (!message.getMessage().equals(server_type)) {
             System.out.printf("Server is not a %s server\n", server_type);
             return false;
@@ -202,27 +204,7 @@ public abstract class Client {
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
 
-        String s = new String("The authenticity of host '" + sock.getInetAddress().getHostName() + " (" + sock.getInetAddress().getHostAddress() + ")' can't be established.\nRSA key fingerprint is " + Base64.getEncoder().encodeToString(publicKey).substring(0,50) + ".\n");
-
-        System.out.printf("The authenticity of host '%s (%s)' can't be established.\n", sock.getInetAddress().getHostName(), sock.getInetAddress().getHostAddress());
-        System.out.printf("RSA key fingerprint is %s.\n", Base64.getEncoder().encodeToString(publicKey).substring(0,50));
-
-        boolean checked = false;
-        while(!checked){
-            System.out.printf("Are you sure you want to continue connecting (yes/no)?");
-            String input = "";
-            try{
-                if(gui == null){
-                    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-                    input =  in.readLine();
-                } else{
-                    input = JOptionPane.showInputDialog("");
-                }
-            } catch(Exception e){
-                // Uh oh...
-                System.err.println("Buffer Reader Error");
-                e.printStackTrace();
-            }
+        String rsaHashEncoded = "";
 
         try {
             MessageDigest hash = MessageDigest.getInstance("SHA-256");
@@ -234,21 +216,35 @@ public abstract class Client {
             rsaHashEncoded = Base64.getEncoder().encodeToString(publicKey);
         }
 
-        if (!publicKeyList.checkKey(rsaHashEncoded)) {
-            System.out.printf(
-                "The authenticity of host '%s (%s)' can't be established.\n",
-                sock.getInetAddress().getHostName(),
-                sock.getInetAddress().getHostAddress()
-            );
-            System.out.printf("RSA key fingerprint is %s.\n", rsaHashEncoded);
+        String s = new String("The authenticity of host '" 
+                                + sock.getInetAddress().getHostName()
+                                + " (" + sock.getInetAddress().getHostAddress()
+                                + ")' can't be established.\nRSA key fingerprint is "
+                                + rsaHashEncoded 
+                                + ".\nAre you sure you want to continue connecting (yes/no)?");
 
+        if (!publicKeyList.checkKey(rsaHashEncoded)) {
+            if(!gui){
+                System.out.printf(
+                    "The authenticity of host '%s (%s)' can't be established.\n",
+                    sock.getInetAddress().getHostName(),
+                    sock.getInetAddress().getHostAddress()
+                );
+                System.out.printf("RSA key fingerprint is %s.\n", rsaHashEncoded);
+            }
+            
             boolean checked = false;
             while(!checked){
-                System.out.printf("Are you sure you want to continue connecting (yes/no)?");
+                if(!gui) System.out.printf("Are you sure you want to continue connecting (yes/no)?");
                 String input = "";
                 try{
-                    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-                    input =  in.readLine();
+                    if(!gui){
+                        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                        input =  in.readLine();
+                    }else{
+                        input = JOptionPane.showInputDialog(s);
+                    }	
+                    
                 } catch(Exception e){
                     // Uh oh...
                     System.err.println("Buffer Reader Error");
