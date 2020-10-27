@@ -262,7 +262,17 @@ public class FileClient extends Client implements FileClientInterface {
         return true;
     }
 
+    public void printPublicKeys() {
+        if(publicKeyList == null) {
+            readPublicKeyList();
+        }
 
-
+        if (publicKeyList.isEmpty()) {
+                System.out.println("No public keys have been stored.");
+        } else {
+            System.out.println("Public Keys:");
+            System.out.println(publicKeyList);
+        }
+    }
 }
 
