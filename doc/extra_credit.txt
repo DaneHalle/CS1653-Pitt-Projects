@@ -1,44 +1,70 @@
-ExtraCredit Least Privilege - phase2
----------------------------
-We implemented a Least Privilege system of sorts.
-If a user want access to commands that would affect a group of some kind,
-they must explicitly specify it with a command. User's can only escalate
-their privilege on groups they are already apart of. The following functionality
-allows for this to be done:
+phase2
 
-SHOW <GROUPNAME> - Adds GROUPNAME to the current user's scope allowing for commands
-					affecting the File system and Group system to be used.
-SHOWALL - Adds all groups available to a current user to the scope allowing for
-			commands affecting the File and Group systems to be used.
-HIDE <GROUPNAME> - Removes GROUPNAME from the current user's scope disallowing for
-					commands affecting the File and Group systems from being used.
-HIDEALL - Removes all groups from the current user's scope disallowing commands
-			affecting the File and Group systems from being used.
+	ExtraCredit Least Privilege - phase2
+	---------------------------
+	We implemented a Least Privilege system of sorts.
+	If a user want access to commands that would affect a group of some kind,
+	they must explicitly specify it with a command. User's can only escalate
+	their privilege on groups they are already apart of. The following functionality
+	allows for this to be done:
 
-This was achieved by altering the User structures of Token.java and UserList.java.
-Should a user want to reset their scope entirely without one of the above commands,
-they can either relog or re-retrieve their token with a GET.
+	SHOW <GROUPNAME> - Adds GROUPNAME to the current user's scope allowing for commands
+						affecting the File system and Group system to be used.
+	SHOWALL - Adds all groups available to a current user to the scope allowing for
+				commands affecting the File and Group systems to be used.
+	HIDE <GROUPNAME> - Removes GROUPNAME from the current user's scope disallowing for
+						commands affecting the File and Group systems from being used.
+	HIDEALL - Removes all groups from the current user's scope disallowing commands
+				affecting the File and Group systems from being used.
+
+	This was achieved by altering the User structures of Token.java and UserList.java.
+	Should a user want to reset their scope entirely without one of the above commands,
+	they can either relog or re-retrieve their token with a GET.
 
 
-ExtraCredit Client GUI - phase2
-----------------------
-We implemented a basic client GUI for a user to interact with the system without
-the use of the command line. This was done using java swing and java awt. All
-the functionality from the cli client is built into the GUI with either a drop
-down menu or buttons within the interface. A console in the middle of the
-application lets the user see the progress of their commands and if they
-succeeded or failed.
+	ExtraCredit Client GUI - phase2
+	----------------------
+	We implemented a basic client GUI for a user to interact with the system without
+	the use of the command line. This was done using java swing and java awt. All
+	the functionality from the cli client is built into the GUI with either a drop
+	down menu or buttons within the interface. A console in the middle of the
+	application lets the user see the progress of their commands and if they
+	succeeded or failed.
 
-To use the client: java ClientGui
-Within the top bar, you can connect to the Group and File servers or exit the system. 
-To use the functionality of the server, click the buttons on the side which will prompt
-if needed. 
+	To use the client: java ClientGui
+	Within the top bar, you can connect to the Group and File servers or exit the system. 
+	To use the functionality of the server, click the buttons on the side which will prompt
+	if needed. 
 
-ExtraCredit Unit Tests - phase2
-----------------------
-Here we implemented a simple beginning testing frame work for the GroupThread.java
-functions. There should be a total of 12 different tests, and they test expected
-input for each of the functions. This was done by utilizing JUnit.
+	ExtraCredit Unit Tests - phase2
+	----------------------
+	Here we implemented a simple beginning testing frame work for the GroupThread.java
+	functions. There should be a total of 12 different tests, and they test expected
+	input for each of the functions. This was done by utilizing JUnit.
 
-To perform the tests, navigate the /tests/ folder and execute the test.sh file. 
-To see the tests being performed, see TestGroupServer.java.
+	To perform the tests, navigate the /tests/ folder and execute the test.sh file. 
+	To see the tests being performed, see TestGroupServer.java.
+
+phase3
+
+	EKE Implementation - phase3
+	----------------------
+	EKE, which was implemented to mitigate T1, provides several security benefits and mitigate
+	threats that we are not explicitly required to provide a response for. EKE provides 
+	protection against active attacks where an attacker attempts to guess the password. 
+	It also provides protection from dictionary attacks.
+
+	ExtraCredit Client GUI - phase3
+	----------------------
+	As part of this, we had to extend the function of the GUI to encompass the new base 
+	functionallity for the system. This included adding more prompts for GET and CUSER
+	buttons in order to accept a password. Then we got the GUI to be able to prompt for a 
+	new password should the user's account have a temporary password set to it. Much like
+	the CLI, this will prompt as many times as it takes for the user to input a different 
+	password than was previously set. 
+
+	To use the client on a Windows machine: java -cp "<PATH_TO_BOUNCY_CASTLE_JAR>;" ClientGui
+	To use the client on a Linux machine: java -cp .:<PATH_TO_BOUNCY_CASTLE_JAR> ClientGui
+	From there, the GUI can be used as normal. 
+
+	

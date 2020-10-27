@@ -1,4 +1,4 @@
 Once inside src/ folder,
 
-COMPILE: javac *.java
-
+COMPILE on a Windows Machine: javac -cp "<PATH_TO_BOUNCY_CASTLE_JAR>;" *.java
+COMPILE on a Linux Machine: javac -cp .:<PATH_TO_BOUNCY_CASTLE_JAR> *.java

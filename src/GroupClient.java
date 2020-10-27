@@ -49,6 +49,8 @@ public class GroupClient extends Client implements GroupClientInterface {
             message1 = new Envelope("GET");
             message1.addObject(username); //Username
 
+            //--------------------------------------------------------------
+
             String salt = username;
             int iterations = 10000;
             int keyLength = 256;
@@ -80,7 +82,6 @@ public class GroupClient extends Client implements GroupClientInterface {
             message1.addObject(Base64.getEncoder().encodeToString(encrypted)); //{g^b mod p}W
             message1.addObject(iv);
             output.writeObject(message1); 
-
             //--------------------------------------------------------------
 
             message2 = (Envelope)input.readObject();
@@ -161,13 +162,12 @@ public class GroupClient extends Client implements GroupClientInterface {
                                 actual = new Envelope("NEW");
                                 actual.addObject(cmd.nextToken());
                                 output.writeObject(actual);
+                                first = false;
                             } else {
                                 break;
                             }
                             response = (Envelope)input.readObject();
                         } while (response.getMessage().equals("REQUEST-NEW"));
-
-                        //Get the response from the server
 
                         //Successful response
                         if(response.getMessage().equals("OK")) {
