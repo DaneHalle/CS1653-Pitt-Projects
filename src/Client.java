@@ -37,7 +37,7 @@ public abstract class Client {
 
     protected SecretKeySpec k;
     protected byte[] IVk;
-    protected PublicKeyList publicKeyList;
+    protected PublicKeyList publicKeyList = null;
 
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
@@ -193,26 +193,8 @@ public abstract class Client {
             return false;
         }
 
-        // Get the saved public keys
-        String publicKeyListFile = "PublicKeyList.bin";
-        publicKeyList = null;
-        ObjectInputStream fileStream;
-        
-        try {
-            FileInputStream fis = new FileInputStream(publicKeyListFile);
-            fileStream = new ObjectInputStream(fis);
-            publicKeyList = (PublicKeyList)fileStream.readObject();
-        } catch(FileNotFoundException e) {
-            System.out.println("PublicKeyList Does Not Exist. Creating PublicKeyList...");
-
-            publicKeyList = new PublicKeyList();
-
-        } catch(IOException e) {
-            System.out.println("Error reading from FileList file");
-            System.exit(-1);
-        } catch(ClassNotFoundException e) {
-            System.out.println("Error reading from FileList file");
-            System.exit(-1);
+        if (publicKeyList == null) {
+            readPublicKeyList();
         }
 
         // Extract the crypto values
@@ -292,6 +274,29 @@ public abstract class Client {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
             return false;
+        }
+    }
+
+    public void readPublicKeyList() {
+        // Get the saved public keys
+        String publicKeyListFile = "PublicKeyList.bin";
+        ObjectInputStream fileStream;
+        
+        try {
+            FileInputStream fis = new FileInputStream(publicKeyListFile);
+            fileStream = new ObjectInputStream(fis);
+            publicKeyList = (PublicKeyList)fileStream.readObject();
+        } catch(FileNotFoundException e) {
+            System.out.println("PublicKeyList Does Not Exist. Creating PublicKeyList...");
+
+            publicKeyList = new PublicKeyList();
+
+        } catch(IOException e) {
+            System.out.println("Error reading from FileList file");
+            System.exit(-1);
+        } catch(ClassNotFoundException e) {
+            System.out.println("Error reading from FileList file");
+            System.exit(-1);
         }
     }
 

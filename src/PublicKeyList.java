@@ -1,4 +1,6 @@
 import java.util.Hashtable;
+import java.util.Set;
+import java.util.Iterator;
 
 import java.util.Enumeration;
 
@@ -18,6 +20,24 @@ public class PublicKeyList implements java.io.Serializable {
         } else {
             return false;
         }
+    }
+
+    public boolean isEmpty() {
+        return publicKeys.isEmpty();
+    }
+
+    public String toString() {
+        String str = "";
+        Set<String> keys = publicKeys.keySet();
+        Iterator<String> itr = keys.iterator();
+
+        while (itr.hasNext()) {
+            String pk = itr.next();
+            PublicKeyItem item = publicKeys.get(pk);
+            str += item.getUrl() + "," + item.getIp() + " " + pk + "\n";
+        }
+
+        return str;
     }
 
     class PublicKeyItem implements java.io.Serializable {
