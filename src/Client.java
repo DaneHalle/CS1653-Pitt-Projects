@@ -224,7 +224,7 @@ public abstract class Client {
             
             boolean checked = false;
             while(!checked){
-                System.out.printf("Are you sure you want to continue connecting (yes/no)?");
+                System.out.printf("Are you sure you want to continue connecting (yes/no)? ");
                 String input = "";
                 try{	
                     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -235,7 +235,7 @@ public abstract class Client {
                     e.printStackTrace();
                 }
 
-                if(input.equals("yes")){
+                if(input.toLowerCase().equals("yes") || input.toLowerCase().equals("y")){
                     checked = true;
                     publicKeyList.addKey(
                         sock.getInetAddress().getHostName(),
@@ -243,7 +243,7 @@ public abstract class Client {
                         rsaHashEncoded
                     );
                     writePublicKeyList();
-                }else if(input.equals("no")){
+                }else if(input.toLowerCase().equals("no") || input.toLowerCase().equals("n")){
                     return false;
                 }
             }
