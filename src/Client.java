@@ -196,6 +196,8 @@ public abstract class Client {
         byte[] eccSign = Base64.getDecoder().decode((String)contents.get(1));
         byte[] publicKey = Base64.getDecoder().decode((String)contents.get(2));
 
+        String s = new String("The authenticity of host '" + sock.getInetAddress().getHostName() + " (" + sock.getInetAddress().getHostAddress() + ")' can't be established.\nRSA key fingerprint is " + Base64.getEncoder().encodeToString(publicKey).substring(0,50) + ".\n");
+
         System.out.printf("The authenticity of host '%s (%s)' can't be established.\n", sock.getInetAddress().getHostName(), sock.getInetAddress().getHostAddress());
         System.out.printf("RSA key fingerprint is %s.\n", Base64.getEncoder().encodeToString(publicKey).substring(0,50));
         
@@ -203,9 +205,13 @@ public abstract class Client {
         while(!checked){
             System.out.printf("Are you sure you want to continue connecting (yes/no)?");
             String input = "";
-            try{	
-                BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-                input =  in.readLine();
+            try{
+                if(gui == null){
+                    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                    input =  in.readLine();
+                } else{
+                    input = JOptionPane.showInputDialog("");
+                }
             } catch(Exception e){
                 // Uh oh...
                 System.err.println("Buffer Reader Error");
