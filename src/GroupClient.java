@@ -3,9 +3,9 @@
 import java.util.ArrayList;
 import java.util.List;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;  // Used to write objects to the server
-import java.io.BufferedReader;      // Needed to read from the console
-import java.io.InputStreamReader;   // Needed to read from the console
+import java.io.ObjectOutputStream; // Used to write objects to the server
+import java.io.BufferedReader; // Needed to read from the console
+import java.io.InputStreamReader; // Needed to read from the console
 import java.nio.ByteBuffer;
 
 import java.util.StringTokenizer;
@@ -16,6 +16,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.JOptionPane;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.KeyAgreement;
 import javax.crypto.Cipher;
@@ -38,6 +39,12 @@ import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
 
 public class GroupClient extends Client implements GroupClientInterface {
+
+    private boolean gui = false;
+
+    public GroupClient(boolean _gui){
+        gui = _gui;
+    }
 
     public UserToken getToken(String username, String password) {
         try {
@@ -157,8 +164,12 @@ public class GroupClient extends Client implements GroupClientInterface {
                             if (response.getMessage().equals("REQUEST-NEW")) {
                                 //Get some new password...how though?
                                 String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
-                                System.out.println(print);
-                                cmd = new StringTokenizer(readInput());
+                                if(gui){
+                                    cmd = new StringTokenizer(JOptionPane.showInputDialog(print));
+                                } else {
+                                    System.out.println(print);
+                                    cmd = new StringTokenizer(readInput());
+                                }
                                 actual = new Envelope("NEW");
                                 actual.addObject(cmd.nextToken());
                                 output.writeObject(actual);

@@ -20,6 +20,8 @@ import java.security.spec.*;
 
 import javax.crypto.*;
 import javax.crypto.spec.*;
+import javax.swing.JOptionPane;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public abstract class Client {
@@ -63,7 +65,7 @@ public abstract class Client {
     public KeyPair generateRSA() {
         Security.addProvider(new BouncyCastleProvider());
         KeyPairGenerator keyPair;
-        
+
         try {
             keyPair = KeyPairGenerator.getInstance("RSA");
         } catch(Exception e) {
@@ -76,21 +78,21 @@ public abstract class Client {
         return keyPair.generateKeyPair();
     }
 
-    public Key keyExchange(String sign, KeyPair rsa_key) {
+    public Key keyExchange(String sign, KeyPair rsa_key, boolean gui) {
         try {
             Envelope message = new Envelope(sign);
             KeyPairGenerator kpg;
-            
+
             kpg = KeyPairGenerator.getInstance("EC");
             kpg.initialize(256);
             KeyPair kp = kpg.generateKeyPair();
             byte[] ourPk = kp.getPublic().getEncoded();
-            
+
             addSignature(message, ourPk, rsa_key);
             output.writeObject(message);
 
             message = (Envelope)input.readObject();
-            if (!verify(message, sign)) {
+            if (!verify(message, sign, gui)) {
                 disconnect();
                 return null;
             }
@@ -115,7 +117,7 @@ public abstract class Client {
             List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
             Collections.sort(keys);
             hash.update(keys.get(0));
-            hash.update(keys.get(1)); 
+            hash.update(keys.get(1));
 
             byte[] derivedKey = hash.digest();
             SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
@@ -151,7 +153,7 @@ public abstract class Client {
             e.printStackTrace();
             return;
         }
-        
+
         message.addObject(encodedPk);
         message.addObject(Base64.getEncoder().encodeToString(rsaSign));
         message.addObject(Base64.getEncoder().encodeToString(rsaPubK));
@@ -181,7 +183,7 @@ public abstract class Client {
         }
     }
 
-    private boolean verify(Envelope message, String server_type) {
+    private boolean verify(Envelope message, String server_type, boolean gui) {
         if (!message.getMessage().equals(server_type)) {
             System.out.printf("Server is not a %s server\n", server_type);
             return false;
@@ -214,21 +216,35 @@ public abstract class Client {
             rsaHashEncoded = Base64.getEncoder().encodeToString(publicKey);
         }
 
+        String s = new String("The authenticity of host '" 
+                                + sock.getInetAddress().getHostName()
+                                + " (" + sock.getInetAddress().getHostAddress()
+                                + ")' can't be established.\nRSA key fingerprint is "
+                                + rsaHashEncoded 
+                                + ".\nAre you sure you want to continue connecting (yes/no)?");
+
         if (!publicKeyList.checkKey(rsaHashEncoded)) {
-            System.out.printf(
-                "The authenticity of host '%s (%s)' can't be established.\n",
-                sock.getInetAddress().getHostName(),
-                sock.getInetAddress().getHostAddress()
-            );
-            System.out.printf("RSA key fingerprint is %s.\n", rsaHashEncoded);
+            if(!gui){
+                System.out.printf(
+                    "The authenticity of host '%s (%s)' can't be established.\n",
+                    sock.getInetAddress().getHostName(),
+                    sock.getInetAddress().getHostAddress()
+                );
+                System.out.printf("RSA key fingerprint is %s.\n", rsaHashEncoded);
+            }
             
             boolean checked = false;
             while(!checked){
                 System.out.printf("Are you sure you want to continue connecting (yes/no)? ");
                 String input = "";
-                try{	
-                    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-                    input =  in.readLine();
+                try{
+                    if(!gui){
+                        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+                        input =  in.readLine();
+                    }else{
+                        input = JOptionPane.showInputDialog(s);
+                    }	
+                    
                 } catch(Exception e){
                     // Uh oh...
                     System.err.println("Buffer Reader Error");
@@ -260,7 +276,7 @@ public abstract class Client {
             rsa_signature.update(eccKey);
 
             boolean verified = rsa_signature.verify(eccSign);
-            
+
             if (verified) {
                 // Signature matches
                 System.out.println("Success: Verified key");
@@ -281,7 +297,7 @@ public abstract class Client {
         // Get the saved public keys
         String publicKeyListFile = "PublicKeyList.bin";
         ObjectInputStream fileStream;
-        
+
         try {
             FileInputStream fis = new FileInputStream(publicKeyListFile);
             fileStream = new ObjectInputStream(fis);
