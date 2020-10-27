@@ -168,7 +168,11 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  Several encryption schemes will be used to ensure communication confidentiality. Along with what is mentioned above in T1, T2, and T3, normal communication between the client and the server's 256-bit AES-CBC will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors; however, the increment state of the initialization vector needs to be passed between the client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also, the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
+  Several encryption schemes will be used to ensure communication confidentiality. Along with what is mentioned above in T1, T2, and T3, normal communication between the client and the server's 256-bit AES-CBC with PKCS7Padding will be used to encrypt all messages. The reason for the mode is to for a handful of reasons. The first is that it is rarely prone to errors and is self-synchronizing. CTR is rarely prone to errors; however, the increment state of the initialization vector needs to be passed between the client and the servers for encryption and decryption. Another reason is that it is assumed that the messages being passed will be considerably large for a block cipher and not need a CFB 8-bit cipher. The reasoning for this is that UserToken and files that transfer will be large enough to use an entire block. Also, the UserToken will change frequently enough to provide some form of semantic security. For instructions smaller than the block size, the data will be padded.
+</p>
+
+<p>
+  This will work by having a wrapper around the ObjectInputStream and ObjectOutputStream to send encrypted SealedObjects. When SealedObjects is provided with the AES CBC cipher it will encrypt and send any data within the SealedObject. The only time unencrypted data will be sent is for the key exchange protocol and EKE.
 </p>
 
 <p>

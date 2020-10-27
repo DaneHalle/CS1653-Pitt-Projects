@@ -1,4 +1,9 @@
 Once inside src/ folder,
 
+Dependencies:
+ Download the .jar from Bouncy Castle's website (https://www.bouncycastle.org/latest_releases.html). 
+ Then take note of the relative path to where you decide to store the .jar as that will be used in 
+ compilation and running the system. 
+
 COMPILE on a Windows Machine: javac -cp "<PATH_TO_BOUNCY_CASTLE_JAR>;" *.java
 COMPILE on a Linux Machine: javac -cp .:<PATH_TO_BOUNCY_CASTLE_JAR> *.java
