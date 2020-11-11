@@ -15,6 +15,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
 
 public class RunClient {
     private GroupClient g_cli;
@@ -458,6 +459,20 @@ public class RunClient {
                     return CommandResult.FAIL;
                 }
                 break;
+            case "TESTCURKEY":
+                if (!fileConnected)
+                    return CommandResult.FNOT;
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: ", true))
+                    return CommandResult.ARGS;
+                group=args.nextToken();
+                Object[] res = g_cli.curKey(token, group);
+                SecretKey currentKey = (SecretKey)res[0];
+                String id = (String)res[1];
+                System.out.println(currentKey);
+                System.out.println(id);
+
             default:
                 return CommandResult.NOTCMD;
         }

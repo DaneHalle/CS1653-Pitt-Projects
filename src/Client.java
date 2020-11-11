@@ -333,6 +333,7 @@ public abstract class Client {
 
     public boolean verifyServer(String sign) {
         try {
+            System.out.println(sign);
             Envelope server_type = (Envelope)input.readObject();
             if (!server_type.getMessage().equals(sign)) {
                 System.out.printf("Server is not a %s server\n", sign);

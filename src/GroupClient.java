@@ -578,6 +578,29 @@ public class GroupClient extends Client implements GroupClientInterface {
         }
     }    
 
+    public Object[] curKey(UserToken token, String groupname) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("CURKEY");
+            message.addObject(token); 
+            message.addObject(groupname);
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                Object[] out = {(SecretKey)response.getObjContents().get(0), (String)response.getObjContents().get(1)};
+                return out;
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
     public SecretKey keyId(UserToken token, String groupname, String id) {
         try {
             Envelope message = null, response = null;
