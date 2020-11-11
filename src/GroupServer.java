@@ -51,6 +51,7 @@ public class GroupServer extends Server {
         // Overwrote server.start() because if no user file exists, initial admin account needs to be created
 
         String userFile = "UserList.bin";
+        String groupFile = "GroupList.bin";
         Scanner console = new Scanner(System.in);
         ObjectInputStream userStream;
         ObjectInputStream groupStream;
@@ -63,8 +64,11 @@ public class GroupServer extends Server {
         try {
             FileInputStream fis = new FileInputStream(userFile);
             userStream = new ObjectInputStream(fis);
+            fis = new FileInputStream(groupFile);
+            groupStream = new ObjectInputStream(fis);
+
             userList = (UserList)userStream.readObject();
-            groupList = new GroupList(userList);
+            groupList = (GroupList)groupStream.readObject();
         } catch(FileNotFoundException e) {
             System.out.println("UserList File Does Not Exist. Creating UserList...");
             System.out.println("No users currently exist. Your account will be the administrator.");
@@ -94,7 +98,7 @@ public class GroupServer extends Server {
             System.out.println("Error reading from UserList file");
             System.exit(-1);
         }
-
+        
         //Autosave Daemon. Saves lists every 5 minutes
         AutoSave aSave = new AutoSave(this);
         aSave.setDaemon(true);
@@ -182,6 +186,8 @@ class ShutDownListener extends Thread {
         try {
             outStream = new ObjectOutputStream(new FileOutputStream("UserList.bin"));
             outStream.writeObject(my_gs.userList);
+            outStream = new ObjectOutputStream(new FileOutputStream("GroupList.bin"));
+            outStream.writeObject(my_gs.groupList);
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
@@ -205,6 +211,8 @@ class AutoSave extends Thread {
                 try {
                     outStream = new ObjectOutputStream(new FileOutputStream("UserList.bin"));
                     outStream.writeObject(my_gs.userList);
+                    outStream = new ObjectOutputStream(new FileOutputStream("GroupList.bin"));
+                    outStream.writeObject(my_gs.groupList);
                 } catch(Exception e) {
                     System.err.println("Error: " + e.getMessage());
                     e.printStackTrace(System.err);

@@ -66,7 +66,6 @@ public class GroupThread extends Thread {
 
             response = new Envelope("GROUP");
             response.addObject(null);
-            System.out.println("GROUP");
             output.writeObject(response);
 
             do {

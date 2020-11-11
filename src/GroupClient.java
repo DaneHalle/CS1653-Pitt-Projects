@@ -584,6 +584,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             message = new Envelope("CURKEY");
             message.addObject(token); 
             message.addObject(groupname);
+            output.writeObject(message);
 
             response = (Envelope)input.readObject();
 
@@ -601,13 +602,15 @@ public class GroupClient extends Client implements GroupClientInterface {
         }
     }
 
-    public SecretKey keyId(UserToken token, String groupname, String id) {
+    public SecretKey keyID(UserToken token, String groupname, String id) {
         try {
             Envelope message = null, response = null;
             message = new Envelope("KEYID");
             message.addObject(token); 
             message.addObject(groupname);
             message.addObject(id);
+            output.writeObject(message);
+            
 
             response = (Envelope)input.readObject();
 

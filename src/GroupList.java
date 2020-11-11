@@ -90,7 +90,7 @@ public class GroupList implements java.io.Serializable {
     }
 
     public synchronized SecretKey getKey(String username, String groupname) {
-        if (list.get(groupname).getUsers().contains(username)) {
+        if (list.get(groupname).getUsers().contains(username) || list.get(groupname).getOwner().equals(username)) {
             return list.get(groupname).getKey();
         } else {
             return null;
@@ -98,7 +98,7 @@ public class GroupList implements java.io.Serializable {
     } 
 
     public synchronized SecretKey getKey(String username, String groupname, String id) {
-        if (list.get(groupname).getUsers().contains(username)) {
+        if (list.get(groupname).getUsers().contains(username) || list.get(groupname).getOwner().equals(username)) {
             return list.get(groupname).getKey(id);
         } else {
             return null;
@@ -106,7 +106,7 @@ public class GroupList implements java.io.Serializable {
     } 
 
     public synchronized String getID(String username, String groupname) {
-        if (list.get(groupname).getUsers().contains(username)) {
+        if (list.get(groupname).getUsers().contains(username) || list.get(groupname).getOwner().equals(username)) {
             return list.get(groupname).getID();
         } else {
             return null;
@@ -197,7 +197,7 @@ public class GroupList implements java.io.Serializable {
                 SecureRandom random = new SecureRandom();
                 random.nextBytes(iv);
                 ivString = Base64.getEncoder().encodeToString(iv);
-            } while (!keyStore.containsKey(ivString));
+            } while (keyStore.containsKey(ivString));
             curID = ivString;
             keyStore.put(ivString, keyGenerator.generateKey());
         }
