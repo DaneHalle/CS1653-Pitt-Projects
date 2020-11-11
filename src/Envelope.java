@@ -54,5 +54,7 @@ public class Envelope implements java.io.Serializable {
         messageCount = messageInit;
     }
 
-    public generateHash(SecretKeySpec integrity_key)
+    public generateHash(SecretKeySpec integrity_key) {
+        
+    }
 }
