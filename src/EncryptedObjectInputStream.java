@@ -19,6 +19,7 @@ public class EncryptedObjectInputStream {
     private ObjectInputStream input;
 
     private SecretKeySpec aes_key;
+    private int messageCount;
     private byte[] iv;
 
     public EncryptedObjectInputStream(InputStream socketInput) {
@@ -38,7 +39,7 @@ public class EncryptedObjectInputStream {
         iv = IVk;
     }
 
-    public Object readObject() throws IOException, ClassNotFoundException {
+    public Envelope readObject() throws IOException, ClassNotFoundException {
         // No key means no encryption so just deserialize
         if (input == null) {
             return null;
@@ -51,22 +52,29 @@ public class EncryptedObjectInputStream {
         }
     }
 
-    private Object readUnencrypted() throws IOException, ClassNotFoundException {
-        return input.readObject();
+    private Envelope readUnencrypted() throws IOException, ClassNotFoundException {
+        return (Envelope)input.readObject();
     }
 
-    private Object readEncrypted() throws IOException, ClassNotFoundException {
+    private enum MessageResult {
+        NONCE,
+        HMAC,
+        SUCCESS
+    }
+
+    private Envelope readEncrypted() throws IOException, ClassNotFoundException {
         Security.addProvider(new BouncyCastleProvider());
         
         SealedObject encObj = (SealedObject)input.readObject();
-        Object result = null;
+        Envelope result = null;
         try {
             Cipher aes = Cipher.getInstance("AES");
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
             aes.init(Cipher.DECRYPT_MODE, aes_key, ivSpec);
 
+            result = (Envelope)encObj.getObject(aes);
 
-            result = encObj.getObject(aes);
+            if ()
         } catch (Exception e) {
             e.printStackTrace();
         }

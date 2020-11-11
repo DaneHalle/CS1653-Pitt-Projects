@@ -20,6 +20,7 @@ public class EncryptedObjectOutputStream {
     private ObjectOutputStream output;
 
     private SecretKeySpec aes_key;
+    private int message_count;
     private byte[] iv;
 
     public EncryptedObjectOutputStream(OutputStream socketOutput) {
@@ -43,7 +44,7 @@ public class EncryptedObjectOutputStream {
         output.reset();
     }
 
-    public void writeObject(Serializable obj) throws IOException {
+    public void writeObject(Envelope obj) throws IOException {
         // No key means no encryption so just deserialize
         if (output == null) {
             return;
@@ -56,11 +57,11 @@ public class EncryptedObjectOutputStream {
         }
     }
 
-    private void writeUnencrypted(Serializable obj) throws IOException {
+    private void writeUnencrypted(Envelope obj) throws IOException {
         output.writeObject(obj);
     }
 
-    private void writeEncrypted(Serializable obj) throws IOException {
+    private void writeEncrypted(Envelope obj) throws IOException {
         Security.addProvider(new BouncyCastleProvider());
         
         SealedObject sealedObj = null;
