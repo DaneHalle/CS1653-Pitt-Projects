@@ -741,6 +741,99 @@ public class GroupThread extends Thread {
                         response = new Envelope("OK");
                     }
                     output.writeObject(response);
+                } else if (message.getMessage().equals("CURKEY")) {
+                    //Expects Token, Groupname
+                    //Returns Key and ID
+                    response = new Envelope("FAILED");
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-CURKEY | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else {
+                        UserToken token = (UserToken)message.getObjContents().get(0); //Token
+                        String groupname = (String)message.getObjContents().get(1); //Groupname
+
+                        if (token == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-CURKEY | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else if (groupname == null) {
+                            response = new Envelope("FAIL-GROUPNAME");
+                            action="\tFAIL-CURKEY | request has bad groupname.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else {
+                            SecretKey currentKey = my_gs.groupList.getKey(token.getSubject(), groupname);
+                            String id = my_gs.groupList.getID(token.getSubject(), groupname);
+
+                            if (currentKey == null) {
+                                response = new Envelope("FAIL-UNAUTHORIZED");
+                                action="\tFAIL-CURKEY | requestor is not in group "+groupname+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            } else if (id == null) {
+                                response = new Envelope("FAIL-UNAUTHORIZED");
+                                action="\tFAIL-CURKEY | requestor is not in group "+groupname+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            } else {
+                                response = new Envelope("OK");
+                                response.addObject(currentKey);
+                                response.addObject(id);
+                                System.out.println("\tSuccess");
+                            }
+                        }
+
+                    }
+                    output.writeObject(response);
+                } else if (message.getMessage().equals("KEYID")) {
+                    //Expects Token, Groupname, ID
+                    //Returns Key
+                    response = new Envelope("FAILED");
+                    if (message.getObjContents().size() != 3) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-KEYID | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        System.out.printf("%s", action);
+                    } else {
+                        UserToken token = (UserToken)message.getObjContents().get(0); //Token
+                        String groupname = (String)message.getObjContents().get(1); //Groupname
+                        String id = (String)message.getObjContents().get(2); //Unique ID
+
+                        if (token == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-KEYID | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else if (groupname == null) {
+                            response = new Envelope("FAIL-GROUPNAME");
+                            action="\tFAIL-KEYID | request has bad groupname.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else if (id == null) {
+                            response = new Envelope("FAIL-BADID");
+                            action="\tFAIL-KEYID | request had bad ID.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);
+                        } else {
+                            SecretKey someKey = my_gs.groupList.getKey(token.getSubject(), groupname, id);
+
+                            if (someKey == null) {
+                                response = new Envelope("FAIL-UNAUTHORIZED");
+                                action="\tFAIL-KEYID | requestor is not in group "+groupname+"\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                System.out.printf("%s", action);
+                            } else {
+                                response = new Envelope("OK");
+                                response.addObject(someKey);
+                                System.out.println("\tSuccess");
+                            }
+                        }
+
+                    }
+                    output.writeObject(response);
                 } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop

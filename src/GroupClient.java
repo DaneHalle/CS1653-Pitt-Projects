@@ -576,8 +576,30 @@ public class GroupClient extends Client implements GroupClientInterface {
             e.printStackTrace(System.err);
             return false;
         }
-
     }    
+
+    public SecretKey keyId(UserToken token, String groupname, String id) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("KEYID");
+            message.addObject(token); 
+            message.addObject(groupname);
+            message.addObject(id);
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                return (SecretKey)response.getObjContents().get(0);
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
 
     private byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {
         try {
