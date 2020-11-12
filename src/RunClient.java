@@ -381,6 +381,8 @@ public class RunClient {
             case "U":
             case "UF":
             case "UPLOADF":
+                if (!groupConnected) 
+                    return CommandResult.GNOT;
                 if (!fileConnected) 
                     return CommandResult.FNOT;
                 if (!checkCmd(args, 3, "Usage: UPLOADF <SRC-FILE> <DST-FILE> <GROUP>", false))
@@ -425,6 +427,8 @@ public class RunClient {
                 break;
             case "DOWN":
             case "DOWNLOADF":
+                if (!groupConnected) 
+                    return CommandResult.GNOT;
                 if (!fileConnected) 
                     return CommandResult.FNOT;
                 if (!checkCmd(args, 2, "Usage: DOWNLOADF <SRC-FILE> <DST-FILE>", false))
@@ -528,20 +532,6 @@ public class RunClient {
                     return CommandResult.FAIL;
                 }
                 break;
-            // case "TESTCURKEY":
-            //     if (!fileConnected)
-            //         return CommandResult.FNOT;
-            //     if (!groupConnected)
-            //         return CommandResult.GNOT;
-            //     if (!checkCmd(args, 1, "Usage: ", true))
-            //         return CommandResult.ARGS;
-            //     group=args.nextToken();
-            //     Object[] resCK = g_cli.curKey(token, group);
-            //     SecretKey currentKey = (SecretKey)resCK[0];
-            //     String idCK = (String)resCK[1];
-            //     System.out.println(currentKey);
-            //     System.out.println(idCK);
-                // break;
             default:
                 return CommandResult.NOTCMD;
         }
