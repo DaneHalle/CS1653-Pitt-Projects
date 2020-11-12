@@ -63,6 +63,9 @@ public class FileThread extends Thread {
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
+            // Establish I/O Connection
+            input.setOutputReference(output);
+            output.setInputReference(input);
             Envelope response;
 
             response = new Envelope("FILE");
@@ -230,6 +233,12 @@ public class FileThread extends Thread {
                                     System.out.printf("Transfer successful file %s\n", remotePath);
                                     FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath);
                                     response = new Envelope("OK"); // Success
+                                } else if (
+                                    e.getMessage().equals("FAIL-MSGCOUNT") ||
+                                    e.getMessage().equals("FAIL-HMAC")
+                                ) {
+                                    response = e;
+                                    System.out.printf("\t%s\n", e.getObjContents());
                                 } else {
                                     response = new Envelope("ERROR-TRANSFER"); // Success
                                     action = "\tError reading file " + remotePath + " from client\n";
@@ -397,6 +406,9 @@ public class FileThread extends Thread {
                 } else if (e.getMessage().equals("DISCONNECT")) {
                     socket.close();
                     proceed = false;
+                } else if (e.getObjContents().size() == 1) {
+                    System.out.printf("\t%s\n", e.getObjContents().get(0));
+                    output.writeObject(e);
                 }
             } while (proceed);
         } catch (Exception e) {

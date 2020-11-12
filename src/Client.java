@@ -37,7 +37,8 @@ public abstract class Client {
     private SecureRandom secureRandom = null;
     private final int TAG_LENGTH_BIT = 128;
 
-    protected SecretKeySpec k;
+    protected SecretKeySpec aes_k;
+    protected SecretKeySpec hmac_k;
     protected byte[] IVk;
     protected PublicKeyList publicKeyList = null;
 
@@ -54,6 +55,9 @@ public abstract class Client {
 
             output = new EncryptedObjectOutputStream(sock.getOutputStream());
             input = new EncryptedObjectInputStream(sock.getInputStream());
+            // Establish I/O Connection
+            input.setOutputReference(output);
+            output.setInputReference(input);
 
             return true;
         } catch(Exception e) {
@@ -111,29 +115,49 @@ public abstract class Client {
             ka.doPhase(otherPublicKey, true);
 
             byte[] sharedSecret = ka.generateSecret();
-            MessageDigest hash = MessageDigest.getInstance("SHA-256");
-            hash.update(sharedSecret);
+            deriveKeys(sharedSecret, ourPk, ecc_pub_key);
 
-            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
-            Collections.sort(keys);
-            hash.update(keys.get(0));
-            hash.update(keys.get(1));
-
-            byte[] derivedKey = hash.digest();
-            SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
             byte[] iv = Base64.getDecoder().decode(ivEncoded);
-
-            k = aesSpec;
             IVk = iv;
 
-            output.setEncryption(k, iv);
-            input.setEncryption(k, iv);
+            output.setEncryption(aes_k, iv);
+            input.setEncryption(aes_k, iv);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
 
         return null;
+    }
+
+    protected void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
+        try {
+            // Derive the aes Confidentiality Key
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Confidentiality".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            byte[] derivedKey = hash.digest();
+            SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+            aes_k = derived;
+
+            // Derive the aes Integrity Key
+            hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Integrity".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            derivedKey = hash.digest();
+            derived = new SecretKeySpec(derivedKey, "AES");
+            hmac_k = derived;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void addSignature(Envelope message, byte[] ourPk, KeyPair rsa_key) {

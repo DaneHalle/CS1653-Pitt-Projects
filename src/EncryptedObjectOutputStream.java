@@ -20,8 +20,12 @@ public class EncryptedObjectOutputStream {
     private ObjectOutputStream output;
 
     private SecretKeySpec aes_key;
-    private int message_count;
+    private SecretKeySpec hmac_key;
     private byte[] iv;
+    private long messageCount;
+    private final long initCount = 1;
+
+    private EncryptedObjectInputStream inputReference;
 
     public EncryptedObjectOutputStream(OutputStream socketOutput) {
         try {
@@ -32,12 +36,36 @@ public class EncryptedObjectOutputStream {
         }
 
         aes_key = null;
+        hmac_key = null;
         iv = null;
+
+        messageCount = -1;
+        inputReference = null;
     }
 
-    public void setEncryption(SecretKeySpec k, byte[] IVk) {
-        aes_key = k;
+    public long getMessageCount() {
+        return messageCount;
+    }
+
+    public void setMessageCount(long count) {
+        messageCount = count;
+    }
+
+    public void setEncryption(SecretKeySpec confid_k, byte[] IVk) {
+        aes_key = confid_k;
         iv = IVk;
+
+        hmac_key = null;
+    }
+
+    public void setEncryption(SecretKeySpec confid_k, SecretKeySpec integ_k, byte[] IVk) {
+        aes_key = confid_k;
+        hmac_key = integ_k;
+        iv = IVk;
+    }
+
+    public void setInputReference(EncryptedObjectInputStream ref) {
+        inputReference = ref;
     }
 
     public void reset() throws IOException {
@@ -61,6 +89,33 @@ public class EncryptedObjectOutputStream {
         output.writeObject(obj);
     }
 
+    private void establishCount(Envelope obj) {
+        if (obj == null) {
+            System.out.println("===== ERROR: Envelope is null =====");
+        }
+
+        if (inputReference == null) {
+            System.out.println("===== ERROR: Output Reference is not set =====");
+        }
+
+        if (messageCount == -1 && inputReference.getMessageCount() != -1) {
+            System.out.println("===== ERROR: OUTPUT is not synced with input ===== " + inputReference.getMessageCount() + " " + messageCount);
+        }
+
+        if (messageCount == -1) {
+            // Start the count at 0
+            messageCount = initCount;
+            obj.setMessageCount(initCount);
+            inputReference.setMessageCount(initCount);
+        } else {
+            long updatedCount = messageCount + 1;
+            // if (updatedCount == 10)
+            //     updatedCount = messageCount-2;
+            obj.setMessageCount(updatedCount);
+            inputReference.setMessageCount(updatedCount);
+        }
+    }
+
     private void writeEncrypted(Envelope obj) throws IOException {
         Security.addProvider(new BouncyCastleProvider());
         
@@ -69,6 +124,10 @@ public class EncryptedObjectOutputStream {
             Cipher aes = Cipher.getInstance("AES");
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
             aes.init(Cipher.ENCRYPT_MODE, aes_key, ivSpec);
+
+            // Generate the HMAC for the envelope
+            establishCount(obj);
+            obj.generateHash(aes_key); // TODO: change aes_key type
 
             sealedObj = new SealedObject(obj, aes);
         } catch (Exception e) {
