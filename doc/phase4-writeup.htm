@@ -86,8 +86,9 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
       <h2>Overview</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>In this section, broadly overview the types of cryptographic techniques that
-your group has decided to use to address threats T5–T7.</p>
+<p>
+  The types of techniques we are utilizing in this phase are < SOMETHING FOR T5 @Q >, a form of Lazy Revocation where each group will generate new keys every time a user is removed and keep all the old keys in case they are needed, and < SOMETHING FOR T7 @Kyle >. These include use of counters and HMACs, symmetric cryptography using AES in CBC mode, and < something >.
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -169,7 +170,7 @@ your group has decided to use to address threats T5–T7.</p>
 </figure>
 
 <p>
-  The user will request the most recent token for the given group from the group server. The group server will return the most recent token and the unique identifier associated with that key. The user will locally encrypt the given file with K<sub>ID</sub> and then send it to the File server along with their token, the dest_file (or file name/path on the server), the group that the file is associated with, and the key’s unique identifier to the File Server where the all the information will be stored as expected/normal. Should the File Server leak any files uploaded to it along with any information associated with it, there would need to be a leak within the group server or a client who is/was in the group in order for any meaningful information to be exposed. 
+  Utilizing a new request for this phase, <code>CURKEY token groupname</code>, the user will request the most recent token for the given group from the group server. The group server will return the most recent token and the unique identifier associated with that key. The user will locally encrypt the given file with K<sub>ID</sub> and then send it to the File server along with their token, the dest_file (or file name/path on the server), the group that the file is associated with, and the key’s unique identifier to the File Server where the all the information will be stored as expected/normal. Should the File Server leak any files uploaded to it along with any information associated with it, there would need to be a leak within the group server or a client who is/was in the group in order for any meaningful information to be exposed. 
 </p>
 
 <figure>
@@ -178,7 +179,11 @@ your group has decided to use to address threats T5–T7.</p>
 </figure>
 
 <p>
-  The user will first communicate with the File server in order to get the encrypted file, ID, and group the encrypted file is associated with. The client will hold onto the encrypted file and send along their token, the group, and ID returned from the File Server in order to get the group key associated with that unique identifier. Then the client will locally decrypt the file into the given dest_file (or local name/path on the client’s machine). 
+  The user will first communicate with the File server in order to get the encrypted file, ID, and group the encrypted file is associated with. The client will hold onto the encrypted file and send along their token, the group, and ID returned from the File Server in order to get the group key associated with that unique identifier using a new request for this phase, <code>KEYID token groupname ID</code>. Then the client will locally decrypt the file into the given dest_file (or local name/path on the client’s machine).
+</p>
+
+<p>
+  The ID for the keys within a group server are an encoded string of the IV that is used for encryption and decryption of the files since the keys are AES-256 CBC. Once an ID is generated, along with an initialization step for key generation, that information is stored in a Hashtable within the Group subclass from GroupList. To ensure that any keys that are generated are not lost between different runs of a persistent Group Server, we now save the GroupList to its own GroupList.bin instead of parsing it from UserList like we were previously.
 </p>
 
 <p>
@@ -228,12 +233,19 @@ your group has decided to use to address threats T5–T7.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  Conclude with a paragraph or two discussing the interplay between your proposed mechanisms, and commenting on the design process that your group followed. Did you discuss other ideas that didn’t pan out before settling on the above-documented approach? Did you end up designing a really interesting protocol suite that addresses multiple threats at once? Use this space to show off your hard work!
+  Within this phase, there isn’t as much interplay within our proposed mechanisms we proposed for this phase. However, there is quite a bit of interplay with our proposed and implemented mechanisms from phase 3. Notably, T5 has interplay with T1 and T3. T7 also has interplay with T2. 
 </p>
 
 <p>
-  Finally, spend about one paragraph convincing me that your modified protocols
-  still address the threats T1–T4 described in Phase 3 of the project.
+  We approached this phase similar to phase 3 with whiteboarding and spitballing ideas for each threat. We talked about some different approaches and small ideas to mitigate each threat. One that evolved the most would be T6. Initially we discussed utilizing a form of Shamir’s Secret Sharing Scheme that would utilize RSA components. However, being that there were a lot of moving parts required and not being able to wrap our heads around how it would all work properly so we ended up going for a different approach. That leads to a system where users would have to upload files to the group server for encryption before sending them to the file server and decryption after receiving them from the file server. This approach had the benefit of ensuring that any unauthorized user could not decrypt leaked files from a file server and made key management quite easy as there would only need to be one per group. However, this system would impact “availability” quite significantly as any large load could cause the group server to crash and the system would require 3 upload/downloads of the files in order to perform one operation. 
+</p>
+
+<p>
+  All implemented mechanisms directed at the threats from phase 3 are still valid. All implementations remain untouched in their raw implementations and functions. The only alterations that were made were for extending information utilized in these implementations for some other mechanism that was worked on for this phase. 
+</p>
+
+<p>
+  <b>NOTE</b>: We realized that our write up for phase 3 was not entirely accurate to our implementation and have made changes to reflect what we implemented. Specifically, those changes are _______________________. 
 </p>
 
 <p>
