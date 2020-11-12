@@ -92,7 +92,14 @@ public class GroupThread extends Thread {
                             action="\tFAIL-GET | as given username was null\n";
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
-                        } else {
+                        } else if (!my_gs.userList.checkUser(username)) {
+                            k = null;
+                            IVk = null;
+                            response = new Envelope("FAIL");
+                            action="\tFAIL-GET | User is not in system\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            System.out.printf("%s", action);                            
+                        }else {
 
                             String encrypted = (String)message.getObjContents().get(1);
                             if (encrypted == null) {
