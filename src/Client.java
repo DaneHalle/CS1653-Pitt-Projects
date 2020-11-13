@@ -302,7 +302,7 @@ public abstract class Client {
         if(fsPubKey = null){
             System.out.println("FsPubKey is NULL");
         }else{
-            System.out.println("FsPubKey is " +);
+            System.out.println("FsPubKey is " + fsPubKey);
         }
     }
 

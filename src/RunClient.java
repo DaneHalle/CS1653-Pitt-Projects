@@ -89,6 +89,8 @@ public class RunClient {
         System.out.println("GROUP SERVER: " + g_connection);
         System.out.println("FILE SERVER: " + f_connection);
 
+        f_cli.fsPubKeyCheck();
+
         if(token != null) {
             if (token.verify()) {
                 System.out.println("SUCCESS: Token is valid");
