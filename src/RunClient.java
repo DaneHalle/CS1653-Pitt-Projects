@@ -4,6 +4,11 @@ import java.util.List;
 import java.io.BufferedReader;      // Needed to read from the console
 import java.io.InputStreamReader;   // Needed to read from the console
 import java.lang.UnsupportedOperationException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.Base64;
+
 
 // Crypto libraries
 import org.bouncycastle.*;
@@ -13,8 +18,12 @@ import java.security.*;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
+import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.Cipher;
 
 public class RunClient {
     private GroupClient g_cli;
@@ -218,6 +227,48 @@ public class RunClient {
         return true;
     }
 
+    private void encryptFile(String src_file, String idCK, SecretKey key) {
+        try {
+            byte[] iv = Base64.getDecoder().decode(idCK);
+            IvParameterSpec ivParams = new IvParameterSpec(iv);
+            Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+            encrypt.init(Cipher.ENCRYPT_MODE, key, ivParams);
+    
+            FileInputStream fileStream = new FileInputStream(new File(src_file));
+            byte[] fileBytes = new byte[(int) new File(src_file).length()];
+            fileStream.read(fileBytes);
+    
+            byte[] outputBytes = encrypt.doFinal(fileBytes);
+            FileOutputStream fileOutStream = new FileOutputStream(new File(src_file+".enc"));
+            fileOutStream.write(outputBytes);
+            fileStream.close();
+            fileOutStream.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private void decryptFile(String dst_file, String idDF, SecretKey key) {
+        try {
+            byte[] iv = Base64.getDecoder().decode(idDF);
+            IvParameterSpec ivParams = new IvParameterSpec(iv);
+            Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+            decrypt.init(Cipher.DECRYPT_MODE, key, ivParams);
+    
+            FileInputStream fileStream = new FileInputStream(new File(dst_file+".enc"));
+            byte[] fileBytes = new byte[(int) new File(dst_file+".enc").length()];
+            fileStream.read(fileBytes);
+    
+            byte[] outputBytes = decrypt.doFinal(fileBytes);
+            FileOutputStream fileOutStream = new FileOutputStream(new File(dst_file));
+            fileOutStream.write(outputBytes);
+            fileStream.close();
+            fileOutStream.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
     private CommandResult mapServerCommand(String cmd, StringTokenizer args) {
         // For the group server
         String user;
@@ -330,6 +381,8 @@ public class RunClient {
             case "U":
             case "UF":
             case "UPLOADF":
+                if (!groupConnected) 
+                    return CommandResult.GNOT;
                 if (!fileConnected) 
                     return CommandResult.FNOT;
                 if (!checkCmd(args, 3, "Usage: UPLOADF <SRC-FILE> <DST-FILE> <GROUP>", false))
@@ -337,7 +390,17 @@ public class RunClient {
                 src_file = args.nextToken();
                 dst_file = args.nextToken();
                 group = args.nextToken();
-                if(f_cli.upload(src_file, dst_file, group, token))
+
+                Object[] resCK = g_cli.curKey(token, group);
+                if (resCK == null) 
+                    return CommandResult.FAIL;
+
+                SecretKey currentKey = (SecretKey)resCK[0];
+                String idCK = (String)resCK[1];
+
+                encryptFile(src_file, idCK, currentKey);
+
+                if(f_cli.upload(src_file+".enc", dst_file, group, token, idCK))
                     System.out.printf("Uploaded file %s to %s in group %s\n", src_file, dst_file, group);
                 else
                     return CommandResult.FAIL;
@@ -364,16 +427,27 @@ public class RunClient {
                 break;
             case "DOWN":
             case "DOWNLOADF":
+                if (!groupConnected) 
+                    return CommandResult.GNOT;
                 if (!fileConnected) 
                     return CommandResult.FNOT;
                 if (!checkCmd(args, 2, "Usage: DOWNLOADF <SRC-FILE> <DST-FILE>", false))
                     return CommandResult.ARGS;
                 src_file = args.nextToken();
                 dst_file = args.nextToken();
-                if(f_cli.download(src_file, dst_file, token))
-                    System.out.printf("Downloaded file %s into %s\n", src_file, dst_file);
-                else
+                String[] resDF = f_cli.download(src_file, dst_file+".enc", token);
+                if (resDF == null)
                     return CommandResult.FAIL;
+
+                String idDF = resDF[0];
+                String groupname = resDF[1];
+
+                SecretKey key = g_cli.keyID(token, groupname, idDF);
+
+                if (key == null) 
+                    return CommandResult.FAIL;
+
+                decryptFile(dst_file, idDF, key);
                 break;
             case "DELETE":
             case "DELETEF":

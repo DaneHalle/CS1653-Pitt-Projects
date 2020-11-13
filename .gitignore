@@ -3,3 +3,4 @@
 *.class
 *lib*
 .DS_Store
+*/*.enc
