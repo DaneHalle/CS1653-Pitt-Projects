@@ -276,7 +276,7 @@ public class GroupThread extends Thread {
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
-                    if (message.getObjContents().size() != 1) {
+                    if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));

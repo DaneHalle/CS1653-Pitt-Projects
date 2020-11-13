@@ -298,6 +298,14 @@ public abstract class Client {
         }
     }
 
+    public void fsPubKeyCheck(){
+        if(fsPubKey = null){
+            System.out.println("FsPubKey is NULL");
+        }else{
+            System.out.println("FsPubKey is " +);
+        }
+    }
+
     public void readPublicKeyList() {
         // Get the saved public keys
         String publicKeyListFile = "PublicKeyList.bin";
