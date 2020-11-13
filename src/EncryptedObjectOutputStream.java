@@ -111,6 +111,7 @@ public class EncryptedObjectOutputStream {
             long updatedCount = messageCount + 1;
             // if (updatedCount == 10)
             //     updatedCount = messageCount-2;
+            messageCount = updatedCount;
             obj.setMessageCount(updatedCount);
             inputReference.setMessageCount(updatedCount);
         }

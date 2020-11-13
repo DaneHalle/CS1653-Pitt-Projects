@@ -83,7 +83,7 @@ public class FileClient extends Client implements FileClientInterface {
                 } else {
                     System.out.printf("Error reading file %s (%s)\n", sourceFile, env.getMessage());
                     file.delete();
-                    return false;
+                    return null;
                 }
             }
 

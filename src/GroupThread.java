@@ -100,7 +100,8 @@ public class GroupThread extends Thread {
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         } else if (!my_gs.userList.checkUser(username)) {
-                            k = null;
+                            aes_k = null;
+                            hmac_k = null;
                             IVk = null;
                             response = new Envelope("FAIL");
                             action="\tFAIL-GET | User is not in system\n";
