@@ -40,6 +40,8 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
 
+import java.sql.Timestamp;
+
 public class GroupThread extends Thread {
     private final Socket socket;
     private GroupServer my_gs;
@@ -284,7 +286,7 @@ public class GroupThread extends Thread {
                         String username = yourToken.getSubject(); //Get username associated with the token
                         String password = yourToken.getPasswordSecret();
                         if (my_gs.userList.getPasswordHash(username).equals(password)) {
-                            UserToken newToken = createToken(username, true, false); //Create a refreshed token 
+                            UserToken newToken = refreshToken(username, (String)message.getObjContents().get(1)); //Create a refreshed token 
                             // Response to the client. On eror, the clien will reveive a null token
                             response = new Envelope("OK");
                             response.addObject(newToken);
@@ -753,6 +755,22 @@ public class GroupThread extends Thread {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
         }
+    }
+
+    UserToken refreshToken(String username, String fsPubKey){
+        //Issue a refreshed token while maintaining user's scope
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        UserToken yourToken = new Token(
+            my_gs.name,
+            username,
+            my_gs.userList.getUserGroups(username),
+            my_gs.userList.getShown(username),
+            my_gs.userList.getPasswordHash(username),
+            my_gs.getRSAKey(),
+            timestamp,
+            fsPubKey
+        );
+        return yourToken;
     }
 
     //Method to create tokens

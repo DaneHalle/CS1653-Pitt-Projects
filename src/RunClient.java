@@ -473,7 +473,7 @@ public class RunClient {
         String cmd = preformat.toUpperCase();
 
         if (token!=null) {
-            token = g_cli.refreshToken(token);
+            token = g_cli.refreshToken(token, f_cli.getPubKey());
         }
 
         switch(cmd) {

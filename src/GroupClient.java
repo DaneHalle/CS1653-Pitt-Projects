@@ -246,7 +246,7 @@ public class GroupClient extends Client implements GroupClientInterface {
         } 
     }
 
-    public UserToken refreshToken(UserToken token) {
+    public UserToken refreshToken(UserToken token, String fsPubKey) {
         try {
             UserToken newToken = null;
             Envelope message = null, response = null;
@@ -254,6 +254,7 @@ public class GroupClient extends Client implements GroupClientInterface {
             //Tell the server to return a token.
             message = new Envelope("REFRESH");
             message.addObject(token); //Add user name string
+            message.addObject(fsPubKey);
             output.writeObject(message);
 
             //Get the response from the server

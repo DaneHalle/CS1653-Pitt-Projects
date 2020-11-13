@@ -35,11 +35,13 @@ public abstract class Client {
     protected UserToken token;
 
     private SecureRandom secureRandom = null;
-    private final int TAG_LENGTH_BIT = 128;
+    // private final int TAG_LENGTH_BIT = 128;
 
     protected SecretKeySpec k;
     protected byte[] IVk;
     protected PublicKeyList publicKeyList = null;
+
+    protected String fsPubKey = null;
 
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
@@ -259,10 +261,13 @@ public abstract class Client {
                         rsaHashEncoded
                     );
                     writePublicKeyList();
+                    fsPubKey = rsaHashEncoded;
                 }else if(input.toLowerCase().equals("no") || input.toLowerCase().equals("n")){
                     return false;
                 }
             }
+        }else{
+            fsPubKey = rsaHashEncoded;
         }
 
         try {
