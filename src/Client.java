@@ -120,8 +120,8 @@ public abstract class Client {
             byte[] iv = Base64.getDecoder().decode(ivEncoded);
             IVk = iv;
 
-            output.setEncryption(aes_k, iv);
-            input.setEncryption(aes_k, iv);
+            output.setEncryption(aes_k, hmac_k, iv);
+            input.setEncryption(aes_k, hmac_k, iv);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -153,7 +153,7 @@ public abstract class Client {
             hash.update(keys.get(0));
             hash.update(keys.get(1));
             derivedKey = hash.digest();
-            derived = new SecretKeySpec(derivedKey, "AES");
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
             hmac_k = derived;
         } catch(Exception e) {
             e.printStackTrace();

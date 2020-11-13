@@ -115,6 +115,7 @@ public class EncryptedObjectInputStream {
 
             return MessageResult.SUCCESS;
         } else if(messageCount >= msg.getMessageCount()) {
+            System.out.println("Message count error: " + messageCount + " vs " + msg.getMessageCount());
             // message count did not increment by one
             return MessageResult.NONCE;
         } else {

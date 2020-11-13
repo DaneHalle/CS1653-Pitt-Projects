@@ -127,7 +127,7 @@ public class EncryptedObjectOutputStream {
 
             // Generate the HMAC for the envelope
             establishCount(obj);
-            obj.generateHash(aes_key); // TODO: change aes_key type
+            obj.generateHash(hmac_key); // TODO: change aes_key type
 
             sealedObj = new SealedObject(obj, aes);
         } catch (Exception e) {

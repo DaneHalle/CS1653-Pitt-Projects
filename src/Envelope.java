@@ -79,7 +79,15 @@ public class Envelope implements java.io.Serializable {
         str += messageCount + "\n";
         str += msg + "\n";
         for(int i=0; i < objContents.size(); i++) {
-            str += objContents.get(i) + "\n";
+            Object content = objContents.get(i);
+            // System.out.println(content.getClass().getName());
+            if (content.getClass().getName().equals("[B")) {
+                // Byte Array
+                str += Base64.getEncoder().encodeToString((byte[])content);
+            } else {
+                str += objContents.get(i) + "\n";
+            }
+            // System.out.println(objContents.get(i).getClass().getSimpleName());
         }
 
         return str;
@@ -101,7 +109,6 @@ public class Envelope implements java.io.Serializable {
     }
 
     public boolean verifyHash(SecretKeySpec integrity_key) {
-
         if (hmac == null || integrity_key == null) {
             // The hmac has not been established so can not verify
             // OR generate a hash
@@ -122,9 +129,6 @@ public class Envelope implements java.io.Serializable {
             e.printStackTrace();
             return false;
         }
-
-        System.out.println(hmac);
-        System.out.println(compareHmac);
 
         if (hmac.equals(compareHmac)) {
             return true;
@@ -159,6 +163,13 @@ public class Envelope implements java.io.Serializable {
 
         env.addObject(user);
         env.addObject(t);
+
+        try {
+            byte[] arr = "byte array here".getBytes("UTF-8");
+            env.addObject(arr);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
 
         System.out.println(env);
     }

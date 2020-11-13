@@ -46,7 +46,8 @@ public class FileThread extends Thread {
     private final Socket socket;
     private FileServer my_fs;
 
-    private SecretKeySpec k;
+    private SecretKeySpec aes_k;
+    private SecretKeySpec hmac_k;
     private byte[] IVk;
 
     public FileThread(Socket _socket, FileServer _fs) {
@@ -467,21 +468,41 @@ public class FileThread extends Thread {
         ka.doPhase(otherPublicKey, true);
 
         byte[] sharedSecret = ka.generateSecret();
-        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-        hash.update(sharedSecret);
+        deriveKeys(sharedSecret, ourPk, ecc_pub_key);
 
-        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
-        Collections.sort(keys);
-        hash.update(keys.get(0));
-        hash.update(keys.get(1)); 
-
-        byte[] derivedKey = hash.digest();
-        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
-        k = aesSpec;
-                
-        output.setEncryption(k, iv);
-        input.setEncryption(k, iv);
+        output.setEncryption(aes_k, hmac_k, iv);
+        input.setEncryption(aes_k, hmac_k, iv);
 
         return true;
+    }
+
+    private void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
+        try {
+            // Derive the aes Confidentiality Key
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Confidentiality".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            byte[] derivedKey = hash.digest();
+            SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+            aes_k = derived;
+
+            // Derive the aes Integrity Key
+            hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Integrity".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            derivedKey = hash.digest();
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
+            hmac_k = derived;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }

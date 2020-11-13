@@ -148,16 +148,16 @@ public class GroupThread extends Thread {
                                         ka.doPhase(otherPublicKey, true);
     
                                         byte[] sharedSecret = ka.generateSecret();
-                                        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                                        hash.update(sharedSecret);
-                                        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
-                                        Collections.sort(keys);
-                                        hash.update(keys.get(0));
-                                        hash.update(keys.get(1));
-                                        byte[] derivedKey = hash.digest();
-                                        SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
-                                        aes_k = derived;
-                                        // deriveKeys(sharedSecret, ourPk, otherPk);
+                                        // MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                                        // hash.update(sharedSecret);
+                                        // List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+                                        // Collections.sort(keys);
+                                        // hash.update(keys.get(0));
+                                        // hash.update(keys.get(1));
+                                        // byte[] derivedKey = hash.digest();
+                                        // SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+                                        // aes_k = derived;
+                                        deriveKeys(sharedSecret, ourPk, otherPk);
     
                                         SecureRandom challenge = new SecureRandom();
                                         String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
@@ -185,7 +185,7 @@ public class GroupThread extends Thread {
                                             IvParameterSpec newIv = new IvParameterSpec((byte[])message3.getObjContents().get(2));
         
                                             decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                            decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
+                                            decrypt.init(Cipher.DECRYPT_MODE, aes_k, newIv);
                                             byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(thisChallenge));
                                             byte[] decryptOtherChallenge = decrypt.doFinal(Base64.getDecoder().decode(otherChallenge));
     
@@ -194,7 +194,7 @@ public class GroupThread extends Thread {
                                             random = new SecureRandom();
                                             random.nextBytes(iv);
                                             ivParameterSpec = new IvParameterSpec(iv);
-                                            encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
+                                            encrypt.init(Cipher.ENCRYPT_MODE, aes_k, ivParameterSpec);
                                             byte[] encryptOther = encrypt.doFinal(decryptOtherChallenge);
         
                                             if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
@@ -203,8 +203,8 @@ public class GroupThread extends Thread {
                                                 message4.addObject(iv);
                                                 output.writeObject(message4);
     
-                                                output.setEncryption(aes_k, iv);
-                                                input.setEncryption(aes_k, iv);
+                                                output.setEncryption(aes_k, hmac_k, iv);
+                                                input.setEncryption(aes_k, hmac_k, iv);
                                                 Envelope actual = (Envelope)input.readObject();
                                                 if (actual.getMessage().equals("GOOD")) {
                                                     UserToken yourToken = createToken(username, false, true); //Create a token
@@ -800,7 +800,7 @@ public class GroupThread extends Thread {
             hash.update(keys.get(0));
             hash.update(keys.get(1));
             derivedKey = hash.digest();
-            derived = new SecretKeySpec(derivedKey, "AES");
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
             hmac_k = derived;
         } catch(Exception e) {
             e.printStackTrace();
