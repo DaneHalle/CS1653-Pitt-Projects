@@ -54,7 +54,7 @@ public interface FileClientInterface {
      * @return true on success, false on failure
      *
      */
-    public boolean upload(final String sourceFile, final String destFile, final String group, final UserToken token);
+    public boolean upload(final String sourceFile, final String destFile, final String group, final UserToken token, final String id);
 
 
     /**
@@ -68,7 +68,7 @@ public interface FileClientInterface {
      * @return true on success, false on failure
      *
      */
-    public boolean download(final String sourceFile, final String destFile, final UserToken token);
+    public String[] download(final String sourceFile, final String destFile, final UserToken token);
 
 
     /**
