@@ -30,7 +30,7 @@ class Token implements UserToken, java.io.Serializable
 	private String encodedPubKey;
 	private String encodedSign;
 
-	private Timestamp timestamp; 
+	private String timestamp; 
 	private String fsPubKey; //public key for the fs we are making a request to
 
 	/*
@@ -52,13 +52,14 @@ class Token implements UserToken, java.io.Serializable
 		shownGroups=new ArrayList<String>();
 		passwordSecret=passSecret;
 
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		timestamp = temp.toString();
+		System.out.println("This Timestamp: " + timestamp);
+		fsPubKey = "";
+
 		// Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
 		encodedSign = encodeSignature(rsa_key);
-
-		timestamp = new Timestamp(System.currentTimeMillis());
-		System.out.println("This Timestamp: " + timestamp.toString());
-		fsPubKey = "";
 	}
 
 	public Token(
@@ -75,12 +76,13 @@ class Token implements UserToken, java.io.Serializable
 		shownGroups=inShown;
 		passwordSecret=passSecret;
 
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		timestamp = temp.toString();
+		fsPubKey = "";
+
 		//Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
 		encodedSign = encodeSignature(rsa_key);
-
-		timestamp = new Timestamp(System.currentTimeMillis());
-		fsPubKey = "";
 	}
 
 	public Token(
@@ -90,7 +92,7 @@ class Token implements UserToken, java.io.Serializable
 		ArrayList<String> inShown,
 		String passSecret,
 		KeyPair rsa_key,
-		Timestamp inTimestamp,
+		String inTimestamp,
 		String inFsPubKey
 	) {
 		issuer=inIssuer;
@@ -99,12 +101,12 @@ class Token implements UserToken, java.io.Serializable
 		shownGroups=inShown;
 		passwordSecret=passSecret;
 
+		timestamp = inTimestamp;
+		fsPubKey = inFsPubKey;
+
 		//Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
 		encodedSign = encodeSignature(rsa_key);
-
-		timestamp = inTimestamp;
-		fsPubKey = inFsPubKey;
 	}
 
 	private String encodeKey(KeyPair rsa_key) {
@@ -262,7 +264,7 @@ class Token implements UserToken, java.io.Serializable
 		return fsPubKey;
 	}
 
-	public Timestamp getTimestamp(){
+	public String getTimestamp(){
 		return timestamp;
 	}
 

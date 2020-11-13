@@ -767,7 +767,7 @@ public class GroupThread extends Thread {
             my_gs.userList.getShown(username),
             my_gs.userList.getPasswordHash(username),
             my_gs.getRSAKey(),
-            timestamp,
+            timestamp.toString(),
             fsPubKey
         );
         return yourToken;
