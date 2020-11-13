@@ -44,13 +44,15 @@ public class GroupThread extends Thread {
     private final Socket socket;
     private GroupServer my_gs;
 
-    private SecretKeySpec k;
+    private SecretKeySpec aes_k;
+    private SecretKeySpec hmac_k;
     private byte[] IVk;
 
     public GroupThread(Socket _socket, GroupServer _gs) {
         socket = _socket;
         my_gs = _gs;
-        k = null;
+        aes_k = null;
+        hmac_k = null;
         IVk = null;
     }
 
@@ -62,6 +64,9 @@ public class GroupThread extends Thread {
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
+            // Establish I/O Connection
+            input.setOutputReference(output);
+            output.setInputReference(input);
             Envelope response;
 
             response = new Envelope("GROUP");
@@ -76,7 +81,8 @@ public class GroupThread extends Thread {
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
                     if (message.getObjContents().size() != 3) {
-                        k = null;
+                        aes_k = null;
+                        hmac_k = null;
                         IVk = null;
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
@@ -86,14 +92,16 @@ public class GroupThread extends Thread {
                         String username = (String)message.getObjContents().get(0); //Get the username
 
                         if (username == null) {
-                            k = null;
+                            aes_k = null;
+                            hmac_k = null;
                             IVk = null;
                             response = new Envelope("FAIL");
                             action="\tFAIL-GET | as given username was null\n";
                             response.addObject(action.substring(1,action.length()-1));
                             System.out.printf("%s", action);
                         } else if (!my_gs.userList.checkUser(username)) {
-                            k = null;
+                            aes_k = null;
+                            hmac_k = null;
                             IVk = null;
                             response = new Envelope("FAIL");
                             action="\tFAIL-GET | User is not in system\n";
@@ -103,7 +111,8 @@ public class GroupThread extends Thread {
 
                             String encrypted = (String)message.getObjContents().get(1);
                             if (encrypted == null) {
-                                k = null;
+                                aes_k = null;
+                                hmac_k = null;
                                 IVk = null;
                                 response = new Envelope("FAIL");
                                 action="\tFAIL-GET | encryption was null\n";
@@ -113,7 +122,8 @@ public class GroupThread extends Thread {
 
                                 IvParameterSpec ivSpec = new IvParameterSpec((byte[])message.getObjContents().get(2));
                                 if (ivSpec == null) {
-                                    k = null;
+                                    aes_k = null;
+                                    hmac_k = null;
                                     IVk = null;
                                     response = new Envelope("FAIL");
                                     action="\tFAIL-GET | IV was null\n";
@@ -146,15 +156,16 @@ public class GroupThread extends Thread {
                                         ka.doPhase(otherPublicKey, true);
     
                                         byte[] sharedSecret = ka.generateSecret();
-                                        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                                        hash.update(sharedSecret);
-                                        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
-                                        Collections.sort(keys);
-                                        hash.update(keys.get(0));
-                                        hash.update(keys.get(1));
-                                        byte[] derivedKey = hash.digest();
-                                        SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
-                                        k = derived;
+                                        // MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                                        // hash.update(sharedSecret);
+                                        // List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+                                        // Collections.sort(keys);
+                                        // hash.update(keys.get(0));
+                                        // hash.update(keys.get(1));
+                                        // byte[] derivedKey = hash.digest();
+                                        // SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+                                        // aes_k = derived;
+                                        deriveKeys(sharedSecret, ourPk, otherPk);
     
                                         SecureRandom challenge = new SecureRandom();
                                         String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
@@ -182,7 +193,7 @@ public class GroupThread extends Thread {
                                             IvParameterSpec newIv = new IvParameterSpec((byte[])message3.getObjContents().get(2));
         
                                             decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                                            decrypt.init(Cipher.DECRYPT_MODE, derived, newIv);
+                                            decrypt.init(Cipher.DECRYPT_MODE, aes_k, newIv);
                                             byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(thisChallenge));
                                             byte[] decryptOtherChallenge = decrypt.doFinal(Base64.getDecoder().decode(otherChallenge));
     
@@ -191,7 +202,7 @@ public class GroupThread extends Thread {
                                             random = new SecureRandom();
                                             random.nextBytes(iv);
                                             ivParameterSpec = new IvParameterSpec(iv);
-                                            encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
+                                            encrypt.init(Cipher.ENCRYPT_MODE, aes_k, ivParameterSpec);
                                             byte[] encryptOther = encrypt.doFinal(decryptOtherChallenge);
         
                                             if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
@@ -200,8 +211,8 @@ public class GroupThread extends Thread {
                                                 message4.addObject(iv);
                                                 output.writeObject(message4);
     
-                                                output.setEncryption(k, iv);
-                                                input.setEncryption(k, iv);
+                                                output.setEncryption(aes_k, hmac_k, iv);
+                                                input.setEncryption(aes_k, hmac_k, iv);
                                                 Envelope actual = (Envelope)input.readObject();
                                                 if (actual.getMessage().equals("GOOD")) {
                                                     UserToken yourToken = createToken(username, false, true); //Create a token
@@ -244,7 +255,9 @@ public class GroupThread extends Thread {
                                                     response.addObject(yourToken);
                                                     System.out.println("\tSuccess");
                                                 } else {
-                                                    k = null;
+                                                    System.out.println("Message: " + actual.getMessage());
+                                                    aes_k = null;
+                                                    hmac_k = null;
                                                     IVk = null;
                                                     response = new Envelope("FAIL");
                                                     action="\tFAIL-GET | Given challenge was incorrect\n";
@@ -252,7 +265,8 @@ public class GroupThread extends Thread {
                                                     System.out.printf("%s", action);
                                                 }
                                             } else {
-                                                k = null;
+                                                aes_k = null;
+                                                hmac_k = null;
                                                 IVk = null;
                                                 response = new Envelope("FAIL");
                                                 action="\tFAIL-GET | Unexpected response\n";
@@ -260,7 +274,8 @@ public class GroupThread extends Thread {
                                                 System.out.printf("%s", action);
                                             }                                        
                                         } else {
-                                            k = null;
+                                            aes_k = null;
+                                            hmac_k = null;
                                             IVk = null;
                                             response = new Envelope("FAIL");
                                             action="\tFAIL-GET | Unexpected response\n";
@@ -268,7 +283,8 @@ public class GroupThread extends Thread {
                                             System.out.printf("%s", action);
                                         }
                                     } catch (Exception e) {
-                                        k = null;
+                                        aes_k = null;
+                                        hmac_k = null;
                                         IVk = null;
                                         response = new Envelope("FAIL");
                                         action="\tFAIL-GET | Unexpected response\n";
@@ -733,13 +749,13 @@ public class GroupThread extends Thread {
                     output.writeObject(response);
                 } else if (message.getMessage().equals("TEST")) {
                     response = new Envelope("FAILED");
-                    if (k != null && IVk != null) {
+                    if (aes_k != null && IVk != null) {
                         Cipher aes = Cipher.getInstance("AES");
                         
                         byte[] test = "AES Test String".getBytes("UTF-8");
-                        SecretKeySpec aesSpec = new SecretKeySpec(k.getEncoded(), "AES");
+                        SecretKeySpec aesSpec = new SecretKeySpec(aes_k.getEncoded(), "AES");
                         IvParameterSpec ivParams = new IvParameterSpec(IVk);
-                        aes.init(Cipher.ENCRYPT_MODE, k, ivParams);
+                        aes.init(Cipher.ENCRYPT_MODE, aes_k, ivParams);
                         byte[] result = aes.doFinal(test);
                         String resultEncoded = Base64.getEncoder().encodeToString(result);
                         System.out.println("---------------------------------------");
@@ -844,6 +860,13 @@ public class GroupThread extends Thread {
                 } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop
+                } else if (
+                    message.getMessage().equals("FAIL-MSGCOUNT") ||
+                    message.getMessage().equals("FAIL-HMAC")
+                ) { // Error in reading message
+                    response = message;
+                    action = (String) message.getObjContents().get(0);
+                    System.out.printf("\t%s\n", action);
                 } else {
                     response = new Envelope("FAIL"); //Server does not understand client request
                     output.writeObject(response);
@@ -852,6 +875,36 @@ public class GroupThread extends Thread {
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
+        }
+    }
+
+    private void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
+        try {
+            // Derive the aes Confidentiality Key
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Confidentiality".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            byte[] derivedKey = hash.digest();
+            SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+            aes_k = derived;
+
+            // Derive the aes Integrity Key
+            hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Integrity".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            derivedKey = hash.digest();
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
+            hmac_k = derived;
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -46,7 +46,8 @@ public class FileThread extends Thread {
     private final Socket socket;
     private FileServer my_fs;
 
-    private SecretKeySpec k;
+    private SecretKeySpec aes_k;
+    private SecretKeySpec hmac_k;
     private byte[] IVk;
 
     public FileThread(Socket _socket, FileServer _fs) {
@@ -63,6 +64,9 @@ public class FileThread extends Thread {
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
+            // Establish I/O Connection
+            input.setOutputReference(output);
+            output.setInputReference(input);
             Envelope response;
 
             response = new Envelope("FILE");
@@ -233,6 +237,12 @@ public class FileThread extends Thread {
                                     System.out.printf("Transfer successful file %s\n", remotePath);
                                     FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath, id);
                                     response = new Envelope("OK"); // Success
+                                } else if (
+                                    e.getMessage().equals("FAIL-MSGCOUNT") ||
+                                    e.getMessage().equals("FAIL-HMAC")
+                                ) {
+                                    response = e;
+                                    System.out.printf("\t%s\n", e.getObjContents());
                                 } else {
                                     response = new Envelope("ERROR-TRANSFER"); // Success
                                     action = "\tError reading file " + remotePath + " from client\n";
@@ -402,6 +412,9 @@ public class FileThread extends Thread {
                 } else if (e.getMessage().equals("DISCONNECT")) {
                     socket.close();
                     proceed = false;
+                } else if (e.getObjContents().size() == 1) {
+                    System.out.printf("\t%s\n", e.getObjContents().get(0));
+                    output.writeObject(e);
                 }
             } while (proceed);
         } catch (Exception e) {
@@ -460,21 +473,41 @@ public class FileThread extends Thread {
         ka.doPhase(otherPublicKey, true);
 
         byte[] sharedSecret = ka.generateSecret();
-        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-        hash.update(sharedSecret);
+        deriveKeys(sharedSecret, ourPk, ecc_pub_key);
 
-        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
-        Collections.sort(keys);
-        hash.update(keys.get(0));
-        hash.update(keys.get(1)); 
-
-        byte[] derivedKey = hash.digest();
-        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
-        k = aesSpec;
-                
-        output.setEncryption(k, iv);
-        input.setEncryption(k, iv);
+        output.setEncryption(aes_k, hmac_k, iv);
+        input.setEncryption(aes_k, hmac_k, iv);
 
         return true;
+    }
+
+    private void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
+        try {
+            // Derive the aes Confidentiality Key
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Confidentiality".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            byte[] derivedKey = hash.digest();
+            SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+            aes_k = derived;
+
+            // Derive the aes Integrity Key
+            hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Integrity".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            derivedKey = hash.digest();
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
+            hmac_k = derived;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }
