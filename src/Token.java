@@ -14,6 +14,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+import java.security.MessageDigest;
+
 import java.sql.Timestamp;
 
 class Token implements UserToken, java.io.Serializable
@@ -54,7 +56,7 @@ class Token implements UserToken, java.io.Serializable
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
 		timestamp = temp.toString();
-		System.out.println("This Timestamp: " + timestamp);
+		// System.out.println("This Timestamp: " + timestamp);
 		fsPubKey = "";
 
 		// Crypto Stuff
@@ -92,7 +94,6 @@ class Token implements UserToken, java.io.Serializable
 		ArrayList<String> inShown,
 		String passSecret,
 		KeyPair rsa_key,
-		String inTimestamp,
 		String inFsPubKey
 	) {
 		issuer=inIssuer;
@@ -101,7 +102,8 @@ class Token implements UserToken, java.io.Serializable
 		shownGroups=inShown;
 		passwordSecret=passSecret;
 
-		timestamp = inTimestamp;
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		timestamp = temp.toString();
 		fsPubKey = inFsPubKey;
 
 		//Crypto Stuff
@@ -253,7 +255,9 @@ class Token implements UserToken, java.io.Serializable
 
 		try {
 			data = strToken.getBytes("UTF-8");
-			return data;
+			MessageDigest hash = MessageDigest.getInstance("SHA-256");
+			hash.update(data);
+			return hash.digest();
 		} catch(Exception e) {
 			e.printStackTrace();
 			return null;
@@ -287,12 +291,14 @@ class Token implements UserToken, java.io.Serializable
 
 				String name = fields[i].getName();
 				Object value = fields[i].get(this);
-				System.out.println("Name: " + name);
+				// System.out.println("Name: " + name);
 				
 				if (!metaVars.contains(name)) {
-					System.out.println("Value: " + value.toString());
+					// System.out.println("Value: " + value.toString());
 					str += name + ": " + value.toString() + "\n";
-				}else System.out.println("Value: NULL");
+				}else{
+					// System.out.println("Value: NULL");
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

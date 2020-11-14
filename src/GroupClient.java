@@ -88,6 +88,7 @@ public class GroupClient extends Client implements GroupClientInterface {
 
             message1.addObject(Base64.getEncoder().encodeToString(encrypted)); //{g^b mod p}W
             message1.addObject(iv);
+            message1.addObject(fsPubKey);
             output.writeObject(message1); 
             //--------------------------------------------------------------
 

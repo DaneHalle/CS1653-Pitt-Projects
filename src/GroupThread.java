@@ -77,7 +77,7 @@ public class GroupThread extends Thread {
                 String action="";
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
-                    if (message.getObjContents().size() != 3) {
+                    if (message.getObjContents().size() != 4) {
                         k = null;
                         IVk = null;
                         response = new Envelope("FAIL-BADCONTENTS");
@@ -199,7 +199,8 @@ public class GroupThread extends Thread {
                                                 input.setEncryption(k, iv);
                                                 Envelope actual = (Envelope)input.readObject();
                                                 if (actual.getMessage().equals("GOOD")) {
-                                                    UserToken yourToken = createToken(username, false, true); //Create a token
+                                                    String fsPubKey = (String)message.getObjContents().get(0);
+                                                    UserToken yourToken = createToken(username, false, true, fsPubKey); //Create a token
                                                     if (my_gs.userList.isTemp(username)) {
                                                         response = new Envelope("REQUEST-NEW");
                                                         output.writeObject(response);
@@ -759,7 +760,6 @@ public class GroupThread extends Thread {
 
     UserToken refreshToken(String username, String fsPubKey){
         //Issue a refreshed token while maintaining user's scope
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         UserToken yourToken = new Token(
             my_gs.name,
             username,
@@ -767,14 +767,13 @@ public class GroupThread extends Thread {
             my_gs.userList.getShown(username),
             my_gs.userList.getPasswordHash(username),
             my_gs.getRSAKey(),
-            timestamp.toString(),
             fsPubKey
         );
         return yourToken;
     }
 
     //Method to create tokens
-    UserToken createToken(String username, boolean flag, boolean reset) {
+    UserToken createToken(String username, boolean flag, boolean reset, String fsPubKey) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
@@ -785,7 +784,8 @@ public class GroupThread extends Thread {
                     my_gs.userList.getUserGroups(username),
                     my_gs.userList.getShown(username),
                     my_gs.userList.getPasswordHash(username),
-                    my_gs.getRSAKey()
+                    my_gs.getRSAKey(),
+                    fsPubKey
                 );
                 return yourToken;
             } else {
@@ -947,7 +947,7 @@ public class GroupThread extends Thread {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname); //Get current users within group
                     for(int index = 0; index < groupUsers.size(); index++) { //Removes users from group 
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
-                        UserToken remove = createToken(groupUsers.get(index), false, false);
+                        UserToken remove = createToken(groupUsers.get(index), false, false, "");
                         remove.removeFromGroup(groupname);
                     }
                     my_gs.groupList.deleteGroup(groupname); //Why we don't need to remove individual members from the group
@@ -1000,7 +1000,7 @@ public class GroupThread extends Thread {
         }
 
         String requester = token.getSubject();
-        UserToken toAddToken = createToken(toAdd, false, false);
+        UserToken toAddToken = createToken(toAdd, false, false, "");
 
         //Check that user is not only within the groupname group but also has it within their scope
         if (!token.getShownGroups().contains(groupname)) {
@@ -1055,7 +1055,7 @@ public class GroupThread extends Thread {
         }
 
         String requester = token.getSubject();
-        UserToken toRemoveToken = createToken(toRemove, false, false);
+        UserToken toRemoveToken = createToken(toRemove, false, false, "");
 
         //Check that user is not only within the groupname group but also has it within their scope
         if (!token.getShownGroups().contains(groupname) && token.getGroups().contains(groupname)) {
