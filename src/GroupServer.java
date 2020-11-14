@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Base64;
 import java.util.Scanner;
+import java.io.File;
 
 // Crypto Libraries
 import java.security.*;
@@ -59,6 +60,12 @@ public class GroupServer extends Server {
         //This runs a thread that saves the lists on program exit
         Runtime runtime = Runtime.getRuntime();
         runtime.addShutdownHook(new ShutDownListener(this));
+
+        String loggingDir = "./group_logs/";
+        File dir = new File(loggingDir);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
 
         //Open user file to get user list
         try {

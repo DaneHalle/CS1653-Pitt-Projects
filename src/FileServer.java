@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.io.File;
 
 // Crypto Libraries
 import java.security.*;
@@ -44,6 +45,12 @@ public class FileServer extends Server {
         Runtime runtime = Runtime.getRuntime();
         Thread catchExit = new Thread(new ShutDownListenerFS());
         runtime.addShutdownHook(catchExit);
+
+        String loggingDir = "./file_logs/";
+        File dir = new File(loggingDir);
+        if(!dir.exists()) {
+            dir.mkdir();
+        }
 
         //Open user file to get user list
         try {
