@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,6 +40,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.sql.Timestamp;
 import java.security.spec.ECParameterSpec;
 import java.security.interfaces.ECPublicKey;
 
@@ -98,7 +100,12 @@ public class FileThread extends Thread {
                             action = "\tFAIL-LFILES | as request has bad token.\n";
                             response.addObject(action.substring(1, action.length() - 1));
                             System.out.printf("%s", action);
-                        } else {
+                        } else if(!checkToken((Token)t)){
+                            response = new Envelope("FAIL-INVALIDTOKEN");
+                            action = "\tFAIL-LFILES | as request has an invalid token.\n";
+                            response.addObject(action.substring(1, action.length() - 1));
+                            System.out.printf("%s", action);
+                        }else {
                             UserToken token = (UserToken) e.getObjContents().get(0);
                             String requester = token.getSubject();
                             response = new Envelope("OK");
@@ -424,7 +431,53 @@ public class FileThread extends Thread {
     }
 
 
-    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception{
+    private boolean checkToken(Token t) {
+        String actualPubKey = Base64.getEncoder().encodeToString(my_fs.getPublicKey().getEncoded());
+
+        try {
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update(my_fs.getPublicKey().getEncoded());
+            byte[] rsaHash = hash.digest();
+            actualPubKey = Base64.getEncoder().encodeToString(rsaHash);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+
+        String tokenPubKey = t.getFsPubKey();
+
+        // System.out.println("actual pub key: " + actualPubKey);
+        // System.out.println("token pub key: " + tokenPubKey);
+
+        Timestamp curTimestamp = new Timestamp(System.currentTimeMillis());
+        Timestamp tokTimestamp = Timestamp.valueOf(t.getTimestamp());
+
+        long curTimestamp_value = curTimestamp.getTime();
+        long tokTimestamp_value = tokTimestamp.getTime();
+
+        long timeDif = curTimestamp_value - tokTimestamp_value;
+        // System.out.println("####### Timestamp dif(milliseconds): " + timeDif);
+
+        timeDif = TimeUnit.MILLISECONDS.toMinutes(timeDif);
+        // System.out.println("####### Timestamp dif(minutes): " + timeDif);
+
+        boolean check = true;
+
+        //check that the token's pub key matches our own
+        if(actualPubKey.compareTo(tokenPubKey) != 0){
+            check = false;
+            // System.out.println("Check Token Fails Because Bad Public Key");
+        }
+        //check that the token's timestamp is not older than ten minutes
+        if(timeDif > 10){
+            check = false;
+            // System.out.println("Check Token Fails Because Bad Timestamp");
+        }
+
+        return check;
+    }
+
+    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception {
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");

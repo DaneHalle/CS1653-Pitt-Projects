@@ -40,6 +40,8 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
 
+import java.sql.Timestamp;
+
 public class GroupThread extends Thread {
     private final Socket socket;
     private GroupServer my_gs;
@@ -80,7 +82,7 @@ public class GroupThread extends Thread {
                 String action="";
 
                 if (message.getMessage().equals("GET")) { //Client wants a token
-                    if (message.getObjContents().size() != 3) {
+                    if (message.getObjContents().size() != 4) {
                         aes_k = null;
                         hmac_k = null;
                         IVk = null;
@@ -215,7 +217,8 @@ public class GroupThread extends Thread {
                                                 input.setEncryption(aes_k, hmac_k, iv);
                                                 Envelope actual = (Envelope)input.readObject();
                                                 if (actual.getMessage().equals("GOOD")) {
-                                                    UserToken yourToken = createToken(username, false, true); //Create a token
+                                                    String fsPubKey = (String)message.getObjContents().get(0);
+                                                    UserToken yourToken = createToken(username, false, true, fsPubKey); //Create a token
                                                     if (my_gs.userList.isTemp(username)) {
                                                         response = new Envelope("REQUEST-NEW");
                                                         output.writeObject(response);
@@ -297,7 +300,7 @@ public class GroupThread extends Thread {
                     }
                     output.writeObject(response);
                 } else if (message.getMessage().equals("REFRESH")) { //Client needs their token refeshed
-                    if (message.getObjContents().size() != 1) {
+                    if (message.getObjContents().size() != 2) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action="\tFAIL-GET | as request has bad contents.\n";
                         response.addObject(action.substring(1,action.length()-1));
@@ -307,7 +310,7 @@ public class GroupThread extends Thread {
                         String username = yourToken.getSubject(); //Get username associated with the token
                         String password = yourToken.getPasswordSecret();
                         if (my_gs.userList.getPasswordHash(username).equals(password)) {
-                            UserToken newToken = createToken(username, true, false); //Create a refreshed token 
+                            UserToken newToken = refreshToken(username, (String)message.getObjContents().get(1)); //Create a refreshed token 
                             // Response to the client. On eror, the clien will reveive a null token
                             response = new Envelope("OK");
                             response.addObject(newToken);
@@ -878,6 +881,20 @@ public class GroupThread extends Thread {
         }
     }
 
+    UserToken refreshToken(String username, String fsPubKey){
+        //Issue a refreshed token while maintaining user's scope
+        UserToken yourToken = new Token(
+            my_gs.name,
+            username,
+            my_gs.userList.getUserGroups(username),
+            my_gs.userList.getShown(username),
+            my_gs.userList.getPasswordHash(username),
+            my_gs.getRSAKey(),
+            fsPubKey
+        );
+        return yourToken;
+    }
+    
     private void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
         try {
             // Derive the aes Confidentiality Key
@@ -909,7 +926,7 @@ public class GroupThread extends Thread {
     }
 
     //Method to create tokens
-    UserToken createToken(String username, boolean flag, boolean reset) {
+    UserToken createToken(String username, boolean flag, boolean reset, String fsPubKey) {
         //Check that user exists
         if (my_gs.userList.checkUser(username)) {
             if (flag) {
@@ -920,7 +937,8 @@ public class GroupThread extends Thread {
                     my_gs.userList.getUserGroups(username),
                     my_gs.userList.getShown(username),
                     my_gs.userList.getPasswordHash(username),
-                    my_gs.getRSAKey()
+                    my_gs.getRSAKey(),
+                    fsPubKey
                 );
                 return yourToken;
             } else {
@@ -1082,7 +1100,7 @@ public class GroupThread extends Thread {
                     ArrayList<String> groupUsers = my_gs.groupList.getGroupUsers(groupname); //Get current users within group
                     for(int index = 0; index < groupUsers.size(); index++) { //Removes users from group 
                         my_gs.userList.removeGroup(groupUsers.get(index), groupname);
-                        UserToken remove = createToken(groupUsers.get(index), false, false);
+                        UserToken remove = createToken(groupUsers.get(index), false, false, "");
                         remove.removeFromGroup(groupname);
                     }
                     my_gs.groupList.deleteGroup(groupname); //Why we don't need to remove individual members from the group
@@ -1135,7 +1153,7 @@ public class GroupThread extends Thread {
         }
 
         String requester = token.getSubject();
-        UserToken toAddToken = createToken(toAdd, false, false);
+        UserToken toAddToken = createToken(toAdd, false, false, "");
 
         //Check that user is not only within the groupname group but also has it within their scope
         if (!token.getShownGroups().contains(groupname)) {
@@ -1190,7 +1208,7 @@ public class GroupThread extends Thread {
         }
 
         String requester = token.getSubject();
-        UserToken toRemoveToken = createToken(toRemove, false, false);
+        UserToken toRemoveToken = createToken(toRemove, false, false, "");
 
         //Check that user is not only within the groupname group but also has it within their scope
         if (!token.getShownGroups().contains(groupname) && token.getGroups().contains(groupname)) {

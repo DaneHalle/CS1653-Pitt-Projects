@@ -81,9 +81,11 @@ public class Envelope implements java.io.Serializable {
         for(int i=0; i < objContents.size(); i++) {
             Object content = objContents.get(i);
             // System.out.println(content.getClass().getName());
-            if (content.getClass().getName().equals("[B")) {
+            if (content == null) {
+                str += "NULL\n";
+            } else if (content.getClass().getName().equals("[B")) {
                 // Byte Array
-                str += Base64.getEncoder().encodeToString((byte[])content);
+                str += Base64.getEncoder().encodeToString((byte[])content) + "\n";
             } else {
                 str += objContents.get(i) + "\n";
             }
