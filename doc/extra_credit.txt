@@ -67,4 +67,18 @@ phase3
 	To use the client on a Linux machine: java -cp .:<PATH_TO_BOUNCY_CASTLE_JAR> ClientGui
 	From there, the GUI can be used as normal. 
 
+phase 4
 	
+	ExtraCredit Logging - phase4
+	----------------------
+	To allow for usage knowlege and potential attacker mitigation, we have implemented a logging
+	system for the servers to utilize. Whenever a client connects to either group or file server,
+	they will be given a "log_<IP>-<PORT>.log" file within the respective server's log folder 
+	(group_logs and file_logs) which are generated on start. This file will contain all information
+	that was previously output to the console for a user's actions within a server as well as a 
+	little more information depending on the call to the server and level of success that call reaches. 
+
+	ExtraCredit GUI - phase4
+	----------------------
+	While we did not do any specific work on the GUI client, we tested it and ensured that it still 
+	worked within the the system and with the changes we integrated for this phase. 
