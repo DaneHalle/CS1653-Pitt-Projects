@@ -55,6 +55,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		// System.out.println("This Timestamp: " + timestamp);
 		fsPubKey = "";
@@ -79,6 +80,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		fsPubKey = "";
 
@@ -103,6 +105,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		if(inFsPubKey == null) fsPubKey = "";
 		else fsPubKey = inFsPubKey;
