@@ -112,6 +112,28 @@ class Token implements UserToken, java.io.Serializable
 		encodedSign = encodeSignature(rsa_key);
 	}
 
+	/*
+	 * For testing UserToken
+	 */
+	public Token(
+		String inIssuer,
+		String inSubject,
+		ArrayList<String> inGroup,
+		ArrayList<String> inShown,
+		String passSecret,
+		String encPubKey,
+		String encSign
+	) {
+		issuer=inIssuer;
+		subject=inSubject;
+		groups=inGroup;
+		shownGroups=inShown;
+		passwordSecret=passSecret;
+
+		encodedPubKey = encPubKey;
+		encodedSign = encSign;
+	}
+
 	private String encodeKey(KeyPair rsa_key) {
 		PublicKey pubKey = rsa_key.getPublic();
 		return Base64.getEncoder().encodeToString(pubKey.getEncoded());
@@ -251,7 +273,7 @@ class Token implements UserToken, java.io.Serializable
 	}
 
 	public byte[] toByte() {
-		String strToken = toString();
+		String strToken = toStringToken();
 		byte[] data;
 
 		try {
@@ -273,7 +295,7 @@ class Token implements UserToken, java.io.Serializable
 		return timestamp;
 	}
 
-	public String toString() {
+	public String toStringToken() {
 		String str = "";
 
 		// Variables to ignore
@@ -300,6 +322,30 @@ class Token implements UserToken, java.io.Serializable
 				}else{
 					// System.out.println("Value: NULL");
 				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return str;
+	}
+
+	public String toString() {
+		String str = "";
+
+		try {
+			Class<?> objClass = this.getClass();
+
+			Field[] fields = objClass.getDeclaredFields();
+
+			for(int i=0; i < fields.length; i++) {
+				if (fields[i] == null)
+					continue;
+
+				String name = fields[i].getName();
+				Object value = fields[i].get(this);
+
+				str += name + ": " + value.toString() + "\n";
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

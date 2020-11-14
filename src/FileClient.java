@@ -42,12 +42,13 @@ public class FileClient extends Client implements FileClientInterface {
         return true;
     }
 
-    public boolean download(String sourceFile, String destFile, UserToken token) {
+    public String[] download(String sourceFile, String destFile, UserToken token) {
         if (sourceFile.charAt(0)=='/') {
             sourceFile = sourceFile.substring(1);
         }
 
         File file = new File(destFile);
+        String[] out = new String[2];
         try {
 
 
@@ -74,32 +75,34 @@ public class FileClient extends Client implements FileClientInterface {
                 if(env.getMessage().compareTo("EOF")==0) {
                     fos.close();
                     System.out.printf("\nTransfer successful file %s\n", sourceFile);
+                    out[0] = (String)env.getObjContents().get(0);
+                    out[1] = (String)env.getObjContents().get(1);
+
                     env = new Envelope("OK"); //Success
                     output.writeObject(env);
                 } else {
                     System.out.printf("Error reading file %s (%s)\n", sourceFile, env.getMessage());
                     file.delete();
-                    System.out.printf("%s\n", env.getObjContents().get(0));
-                    return false;
+                    return null;
                 }
             }
 
             else {
                 System.out.printf("Error couldn't create file %s\n", destFile);
-                return false;
+                return null;
             }
 
 
         } catch (IOException e1) {
 
             System.out.printf("Error couldn't create file %s\n", destFile);
-            return false;
+            return null;
 
 
         } catch (ClassNotFoundException e1) {
             e1.printStackTrace();
         }
-        return true;
+        return out;
     }
 
     @SuppressWarnings("unchecked")
@@ -172,7 +175,7 @@ public class FileClient extends Client implements FileClientInterface {
     }
 
     public boolean upload(String sourceFile, String destFile, String group,
-                          UserToken token) {
+                          UserToken token, String id) {
 
         if (destFile.charAt(0)!='/') {
             destFile = "/" + destFile;
@@ -186,6 +189,7 @@ public class FileClient extends Client implements FileClientInterface {
             message.addObject(destFile);
             message.addObject(group);
             message.addObject(token); //Add requester's token
+            message.addObject(id);
             output.writeObject(message);
 
 

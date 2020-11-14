@@ -48,7 +48,8 @@ public class FileThread extends Thread {
     private final Socket socket;
     private FileServer my_fs;
 
-    private SecretKeySpec k;
+    private SecretKeySpec aes_k;
+    private SecretKeySpec hmac_k;
     private byte[] IVk;
 
     public FileThread(Socket _socket, FileServer _fs) {
@@ -65,6 +66,9 @@ public class FileThread extends Thread {
             System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
+            // Establish I/O Connection
+            input.setOutputReference(output);
+            output.setInputReference(input);
             Envelope response;
 
             response = new Envelope("FILE");
@@ -170,34 +174,37 @@ public class FileThread extends Thread {
                     output.writeObject(response);
                 } else if (e.getMessage().equals("UPLOADF")) {
 
-                    if (e.getObjContents().size() != 3) {
+                    if (e.getObjContents().size() != 4) {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action = "\tFAIL-UPLOADF | as request has bad contents.\n";
                         response.addObject(action.substring(1, action.length() - 1));
                         System.out.printf("%s", action);
                     } else {
-                        if (e.getObjContents().get(0) == null) {
+                        String remotePath = (String)e.getObjContents().get(0);
+                        String group = (String)e.getObjContents().get(1);
+                        UserToken yourToken = (UserToken)e.getObjContents().get(2);
+                        String id = (String)e.getObjContents().get(3);
+                        if (remotePath == null) {
                             response = new Envelope("FAIL-BADPATH");
                             action = "\tFAIL-UPLOADF | as request has bad path.\n";
                             response.addObject(action.substring(1, action.length() - 1));
                             System.out.printf("%s", action);
-                        }
-                        if (e.getObjContents().get(1) == null) {
+                        } else if (group == null) {
                             response = new Envelope("FAIL-BADGROUP");
                             action = "\tFAIL-UPLOADF | as request has bad group.\n";
                             response.addObject(action.substring(1, action.length() - 1));
                             System.out.printf("%s", action);
-                        }
-                        UserToken t = (UserToken)e.getObjContents().get(2);
-                        if(t == null || !t.verify()) {
+                        } else if (id == null) {
+                            response = new Envelope("FAIL-BADID");
+                            action = "\tFAIL-UPLOADF | request has bad ID.\n";
+                            response.addObject(action.substring(1, action.length() - 1));
+                            System.out.printf("%s", action);                            
+                        } else if(yourToken == null || !yourToken.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action = "\tFAIL-UPLOADF | as request has bad token.\n";
                             response.addObject(action.substring(1, action.length() - 1));
                             System.out.printf("%s", action);
                         } else {
-                            String remotePath = (String) e.getObjContents().get(0);
-                            String group = (String) e.getObjContents().get(1);
-                            UserToken yourToken = (UserToken) e.getObjContents().get(2); // Extract token
 
                             if (FileServer.fileList.checkFile(remotePath)) {
                                 response = new Envelope("FAIL-FILEEXISTS"); // Success
@@ -235,8 +242,14 @@ public class FileThread extends Thread {
 
                                 if (e.getMessage().compareTo("EOF") == 0) {
                                     System.out.printf("Transfer successful file %s\n", remotePath);
-                                    FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath);
+                                    FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath, id);
                                     response = new Envelope("OK"); // Success
+                                } else if (
+                                    e.getMessage().equals("FAIL-MSGCOUNT") ||
+                                    e.getMessage().equals("FAIL-HMAC")
+                                ) {
+                                    response = e;
+                                    System.out.printf("\t%s\n", e.getObjContents());
                                 } else {
                                     response = new Envelope("ERROR-TRANSFER"); // Success
                                     action = "\tError reading file " + remotePath + " from client\n";
@@ -325,6 +338,8 @@ public class FileThread extends Thread {
                                 if (e.getMessage().compareTo("DOWNLOADF") == 0) {
 
                                     e = new Envelope("EOF");
+                                    e.addObject(sf.getID());
+                                    e.addObject(sf.getGroup());
                                     output.writeObject(e);
 
                                     e = (Envelope) input.readObject();
@@ -404,6 +419,9 @@ public class FileThread extends Thread {
                 } else if (e.getMessage().equals("DISCONNECT")) {
                     socket.close();
                     proceed = false;
+                } else if (e.getObjContents().size() == 1) {
+                    System.out.printf("\t%s\n", e.getObjContents().get(0));
+                    output.writeObject(e);
                 }
             } while (proceed);
         } catch (Exception e) {
@@ -508,21 +526,41 @@ public class FileThread extends Thread {
         ka.doPhase(otherPublicKey, true);
 
         byte[] sharedSecret = ka.generateSecret();
-        MessageDigest hash = MessageDigest.getInstance("SHA-256");
-        hash.update(sharedSecret);
+        deriveKeys(sharedSecret, ourPk, ecc_pub_key);
 
-        List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(ecc_pub_key));
-        Collections.sort(keys);
-        hash.update(keys.get(0));
-        hash.update(keys.get(1)); 
-
-        byte[] derivedKey = hash.digest();
-        SecretKeySpec aesSpec = new SecretKeySpec(derivedKey, "AES");
-        k = aesSpec;
-                
-        output.setEncryption(k, iv);
-        input.setEncryption(k, iv);
+        output.setEncryption(aes_k, hmac_k, iv);
+        input.setEncryption(aes_k, hmac_k, iv);
 
         return true;
+    }
+
+    private void deriveKeys(byte[] sharedSecret, byte[] ourPk, byte[] otherPk) {
+        try {
+            // Derive the aes Confidentiality Key
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Confidentiality".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            byte[] derivedKey = hash.digest();
+            SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+            aes_k = derived;
+
+            // Derive the aes Integrity Key
+            hash = MessageDigest.getInstance("SHA-256");
+            hash.update("Integrity".getBytes("UTF-8"));
+            hash.update(sharedSecret);
+            keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+            Collections.sort(keys);
+            hash.update(keys.get(0));
+            hash.update(keys.get(1));
+            derivedKey = hash.digest();
+            derived = new SecretKeySpec(derivedKey, "HmacSHA256");
+            hmac_k = derived;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }

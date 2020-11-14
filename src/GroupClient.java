@@ -112,16 +112,17 @@ public class GroupClient extends Client implements GroupClientInterface {
                 ka.doPhase(otherPublicKey, true);
 
                 byte[] sharedSecret = ka.generateSecret();
-                MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                hash.update(sharedSecret);
-                List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
-                Collections.sort(keys);
-                hash.update(keys.get(0));
-                hash.update(keys.get(1));
-                byte[] derivedKey = hash.digest();
-                // String k = Base64.getEncoder().encodeToString(derivedKey);
-                SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
-                k = derived;
+                // MessageDigest hash = MessageDigest.getInstance("SHA-256");
+                // hash.update(sharedSecret);
+                // List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
+                // Collections.sort(keys);
+                // hash.update(keys.get(0));
+                // hash.update(keys.get(1));
+                // byte[] derivedKey = hash.digest();
+                // // String k = Base64.getEncoder().encodeToString(derivedKey);
+                // SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
+                // aes_k = derived;
+                deriveKeys(sharedSecret, ourPk, otherPk);
 
                 SecureRandom challenge = new SecureRandom();
                 String encodedChallenge = Base64.getEncoder().encodeToString(challenge.generateSeed(64)); 
@@ -130,7 +131,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 random = new SecureRandom();
                 random.nextBytes(iv);
                 ivParameterSpec = new IvParameterSpec(iv);
-                encrypt.init(Cipher.ENCRYPT_MODE, derived, ivParameterSpec);
+                encrypt.init(Cipher.ENCRYPT_MODE, aes_k, ivParameterSpec);
                 byte[] encryptedOther = encrypt.doFinal(otherChallenge); //Server's challenge
                 byte[] encryptedThis = encrypt.doFinal(Base64.getDecoder().decode(encodedChallenge)); //Server's challenge
                 IVk = iv;
@@ -149,12 +150,12 @@ public class GroupClient extends Client implements GroupClientInterface {
                     ivSpec = new IvParameterSpec((byte[])message4.getObjContents().get(1));
 
                     decrypt = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-                    decrypt.init(Cipher.DECRYPT_MODE, derived, ivSpec);
+                    decrypt.init(Cipher.DECRYPT_MODE, aes_k, ivSpec);
                     byte[] decryptThisChallenge = decrypt.doFinal(Base64.getDecoder().decode(encryptedThisChallenge));
 
 
-                    output.setEncryption(k, iv);
-                    input.setEncryption(k, iv);
+                    output.setEncryption(aes_k, hmac_k, iv);
+                    input.setEncryption(aes_k, hmac_k, iv);
                     if (Base64.getEncoder().encodeToString(decryptThisChallenge).equals(encodedChallenge)) {
                         actual = new Envelope("GOOD");
                         output.writeObject(actual);
@@ -194,7 +195,8 @@ public class GroupClient extends Client implements GroupClientInterface {
                         }
                         //Continue
                     } else {
-                        k = null;
+                        aes_k = null;
+                        hmac_k = null;
                         IVk = null;
                         actual = new Envelope("FAIL");
                         output.writeObject(actual);
@@ -202,7 +204,8 @@ public class GroupClient extends Client implements GroupClientInterface {
                         return null;
                     }
                 } else {
-                    k = null;
+                    aes_k = null;
+                    hmac_k = null;
                     IVk = null;
                     actual = new Envelope("FAIL");
                     output.writeObject(actual);
@@ -210,14 +213,16 @@ public class GroupClient extends Client implements GroupClientInterface {
                     return null;
                 }
             } else {
-                k = null;
+                aes_k = null;
+                hmac_k = null;
                 IVk = null;
                 return null;
             }
 
             return null;
         } catch(Exception e) {
-            k = null;
+            aes_k = null;
+            hmac_k = null;
             IVk = null;
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
@@ -231,9 +236,9 @@ public class GroupClient extends Client implements GroupClientInterface {
             Cipher aes = Cipher.getInstance("AES");
                         
             byte[] test = "AES Test String".getBytes("UTF-8");
-            SecretKeySpec aesSpec = new SecretKeySpec(k.getEncoded(), "AES");
+            SecretKeySpec aesSpec = new SecretKeySpec(aes_k.getEncoded(), "AES");
             IvParameterSpec ivParams = new IvParameterSpec(IVk);
-            aes.init(Cipher.ENCRYPT_MODE, k, ivParams);
+            aes.init(Cipher.ENCRYPT_MODE, aes_k, ivParams);
             byte[] result = aes.doFinal(test);
             String resultEncoded = Base64.getEncoder().encodeToString(result);
             System.out.println("---------------------------------------");
@@ -274,6 +279,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                 }
             }
 
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
             return null;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -578,8 +584,56 @@ public class GroupClient extends Client implements GroupClientInterface {
             e.printStackTrace(System.err);
             return false;
         }
-
     }    
+
+    public Object[] curKey(UserToken token, String groupname) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("CURKEY");
+            message.addObject(token); 
+            message.addObject(groupname);
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                Object[] out = {(SecretKey)response.getObjContents().get(0), (String)response.getObjContents().get(1)};
+                return out;
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
+    public SecretKey keyID(UserToken token, String groupname, String id) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("KEYID");
+            message.addObject(token); 
+            message.addObject(groupname);
+            message.addObject(id);
+            output.writeObject(message);
+            
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                return (SecretKey)response.getObjContents().get(0);
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return null;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
 
     private byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {
         try {

@@ -134,15 +134,20 @@ public class UserList implements java.io.Serializable {
     }
 
     public synchronized String getPasswordHash(String username) {
+        if (list.get(username) == null)
+            return null;
         return list.get(username).getPasswordHash();
     }
 
     public synchronized boolean isTemp(String username) {
+        if (list.get(username) == null)
+            return false;
         return list.get(username).getTemp();
     }
 
     public synchronized void resetHash(String username, String newHash) {
-        list.get(username).resetPasswordHash(newHash);
+        if (list.get(username) != null)
+            list.get(username).resetPasswordHash(newHash);
     }
 
     /**
