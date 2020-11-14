@@ -55,6 +55,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		// System.out.println("This Timestamp: " + timestamp);
 		fsPubKey = "";
@@ -79,6 +80,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		fsPubKey = "";
 
@@ -103,6 +105,7 @@ class Token implements UserToken, java.io.Serializable
 		passwordSecret=passSecret;
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
 		timestamp = temp.toString();
 		if(inFsPubKey == null) fsPubKey = "";
 		else fsPubKey = inFsPubKey;
@@ -314,11 +317,18 @@ class Token implements UserToken, java.io.Serializable
 
 				String name = fields[i].getName();
 				Object value = fields[i].get(this);
+				String encodedVal = "";
 				// System.out.println("Name: " + name);
 				
 				if (!metaVars.contains(name)) {
 					// System.out.println("Value: " + value.toString());
-					str += name + ": " + value.toString() + "\n";
+					if (value == null) {
+						encodedVal = Base64.getEncoder().encodeToString("NULL".getBytes());
+						str += name + ": " + encodedVal + "\n";
+					} else {
+						encodedVal = Base64.getEncoder().encodeToString(value.toString().getBytes());
+						str += name + ": " + encodedVal + "\n";
+					}
 				}else{
 					// System.out.println("Value: NULL");
 				}

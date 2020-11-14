@@ -286,12 +286,14 @@ public abstract class Client {
                     );
                     writePublicKeyList();
                     fsPubKey = rsaHashEncoded;
+                    // fsPubKey = "oc4JnOVY+3pxuOTy56Qpq3UjwI4BduSb86vxvns8Pgs=";
                 }else if(input.toLowerCase().equals("no") || input.toLowerCase().equals("n")){
                     return false;
                 }
             }
         }else{
             fsPubKey = rsaHashEncoded;
+            // fsPubKey = "oc4JnOVY+3pxuOTy56Qpq3UjwI4BduSb86vxvns8Pgs=";
         }
 
         try {

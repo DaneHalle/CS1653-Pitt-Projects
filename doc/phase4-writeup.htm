@@ -101,7 +101,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  To ensure integrity and semantic security is provided in the system, all information will be paired with an incrementing value (initially a nonce) and a HMAC of the message and nonce. Before the message is encrypted, a nonce will be generated and that message and nonce will be hashed into an HMAC. This will then be encrypted and sent to its intended recipient.
+  To ensure integrity and semantic security is provided in the system, all information will be paired with an incrementing value (initially a zero) and a HMAC of the message and nonce. Before the message is encrypted, a nonce will be generated and that message and nonce will be hashed into an HMAC. This will then be encrypted and sent to its intended recipient.
 </p>
 
 <figure>
