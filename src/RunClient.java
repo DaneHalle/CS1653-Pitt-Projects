@@ -98,6 +98,8 @@ public class RunClient {
         System.out.println("GROUP SERVER: " + g_connection);
         System.out.println("FILE SERVER: " + f_connection);
 
+        f_cli.fsPubKeyCheck();
+
         if(token != null) {
             if (token.verify()) {
                 System.out.println("SUCCESS: Token is valid");
@@ -547,7 +549,7 @@ public class RunClient {
         String cmd = preformat.toUpperCase();
 
         if (token!=null) {
-            token = g_cli.refreshToken(token);
+            token = g_cli.refreshToken(token, f_cli.getPubKey());
         }
 
         switch(cmd) {

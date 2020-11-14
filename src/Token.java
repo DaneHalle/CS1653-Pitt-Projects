@@ -14,6 +14,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+import java.security.MessageDigest;
+
+import java.sql.Timestamp;
+
 class Token implements UserToken, java.io.Serializable
 {
     private static final long serialVersionUID = 4600343803563417992L;
@@ -27,6 +31,9 @@ class Token implements UserToken, java.io.Serializable
 	private ArrayList<String> metaVars = new ArrayList<String>();
 	private String encodedPubKey;
 	private String encodedSign;
+
+	private String timestamp; 
+	private String fsPubKey; //public key for the fs we are making a request to
 
 	/*
 	 * IMPORTANT NOTE:
@@ -47,6 +54,12 @@ class Token implements UserToken, java.io.Serializable
 		shownGroups=new ArrayList<String>();
 		passwordSecret=passSecret;
 
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
+		timestamp = temp.toString();
+		// System.out.println("This Timestamp: " + timestamp);
+		fsPubKey = "";
+
 		// Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
 		encodedSign = encodeSignature(rsa_key);
@@ -65,6 +78,37 @@ class Token implements UserToken, java.io.Serializable
 		groups=inGroup;
 		shownGroups=inShown;
 		passwordSecret=passSecret;
+
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
+		timestamp = temp.toString();
+		fsPubKey = "";
+
+		//Crypto Stuff
+		encodedPubKey = encodeKey(rsa_key);
+		encodedSign = encodeSignature(rsa_key);
+	}
+
+	public Token(
+		String inIssuer,
+		String inSubject,
+		ArrayList<String> inGroup,
+		ArrayList<String> inShown,
+		String passSecret,
+		KeyPair rsa_key,
+		String inFsPubKey
+	) {
+		issuer=inIssuer;
+		subject=inSubject;
+		groups=inGroup;
+		shownGroups=inShown;
+		passwordSecret=passSecret;
+
+		Timestamp temp = new Timestamp(System.currentTimeMillis());
+		// Timestamp temp = Timestamp.valueOf("2020-11-13 19:53:27.278");
+		timestamp = temp.toString();
+		if(inFsPubKey == null) fsPubKey = "";
+		else fsPubKey = inFsPubKey;
 
 		//Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
@@ -237,11 +281,21 @@ class Token implements UserToken, java.io.Serializable
 
 		try {
 			data = strToken.getBytes("UTF-8");
-			return data;
+			MessageDigest hash = MessageDigest.getInstance("SHA-256");
+			hash.update(data);
+			return hash.digest();
 		} catch(Exception e) {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public String getFsPubKey(){
+		return fsPubKey;
+	}
+
+	public String getTimestamp(){
+		return timestamp;
 	}
 
 	public String toStringToken() {

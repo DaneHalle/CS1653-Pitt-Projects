@@ -278,5 +278,9 @@ public class FileClient extends Client implements FileClientInterface {
             System.out.println(publicKeyList);
         }
     }
+
+	public String getPubKey() {
+		return fsPubKey;
+	}
 }
 

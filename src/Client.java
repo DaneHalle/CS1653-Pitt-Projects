@@ -35,12 +35,14 @@ public abstract class Client {
     protected UserToken token;
 
     private SecureRandom secureRandom = null;
-    private final int TAG_LENGTH_BIT = 128;
+    // private final int TAG_LENGTH_BIT = 128;
 
     protected SecretKeySpec aes_k;
     protected SecretKeySpec hmac_k;
     protected byte[] IVk;
     protected PublicKeyList publicKeyList = null;
+
+    protected String fsPubKey = null;
 
     public boolean connect(final String server, final int port) {
         System.out.println("Attempting to connect...");
@@ -283,10 +285,15 @@ public abstract class Client {
                         rsaHashEncoded
                     );
                     writePublicKeyList();
+                    fsPubKey = rsaHashEncoded;
+                    // fsPubKey = "oc4JnOVY+3pxuOTy56Qpq3UjwI4BduSb86vxvns8Pgs=";
                 }else if(input.toLowerCase().equals("no") || input.toLowerCase().equals("n")){
                     return false;
                 }
             }
+        }else{
+            fsPubKey = rsaHashEncoded;
+            // fsPubKey = "oc4JnOVY+3pxuOTy56Qpq3UjwI4BduSb86vxvns8Pgs=";
         }
 
         try {
@@ -314,6 +321,14 @@ public abstract class Client {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
             return false;
+        }
+    }
+
+    public void fsPubKeyCheck(){
+        if(fsPubKey == null){
+            System.out.println("FsPubKey is NULL");
+        }else{
+            System.out.println("FsPubKey is " + fsPubKey);
         }
     }
 

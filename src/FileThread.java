@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -39,8 +40,17 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.sql.Timestamp;
 import java.security.spec.ECParameterSpec;
 import java.security.interfaces.ECPublicKey;
+
+import java.util.Date;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.LogRecord;
+import java.util.logging.ConsoleHandler;
 
 public class FileThread extends Thread {
     private final Socket socket;
@@ -61,7 +71,52 @@ public class FileThread extends Thread {
         Security.addProvider(new BouncyCastleProvider());
 
         try {
-            System.out.println("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
+
+
+            Logger logging = Logger.getLogger("fileLog");  
+            FileHandler fh;  
+
+            try {  
+
+                // This block configure the logger with handler and formatter  
+                fh = new FileHandler("./file_logs/log_"+socket.getInetAddress().toString().substring(1)+"-"+socket.getPort()+".log", true);  
+                logging.addHandler(fh);
+                ConsoleHandler handler = new ConsoleHandler();
+                fh.setFormatter(new SimpleFormatter() {
+                      private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+
+                      @Override
+                      public synchronized String format(LogRecord lr) {
+                          return String.format(format,
+                                  new Date(lr.getMillis()),
+                                  lr.getLevel().getLocalizedName(),
+                                  lr.getMessage()
+                          );
+                      }
+                  }); 
+                handler.setFormatter(new SimpleFormatter() {
+                      private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+
+                      @Override
+                      public synchronized String format(LogRecord lr) {
+                          return String.format(format,
+                                  new Date(lr.getMillis()),
+                                  lr.getLevel().getLocalizedName(),
+                                  lr.getMessage()
+                          );
+                      }
+                  }); 
+                logging.addHandler(handler);
+
+                // the following statement is used to log any messages  
+
+            } catch (SecurityException e) {  
+                e.printStackTrace();  
+            } catch (IOException e) {  
+                e.printStackTrace();  
+            }  
+
+            logging.info("*** New connection from " + socket.getInetAddress() + ":" + socket.getPort() + "***");
             final EncryptedObjectInputStream input = new EncryptedObjectInputStream(socket.getInputStream());
             final EncryptedObjectOutputStream output = new EncryptedObjectOutputStream(socket.getOutputStream());
             // Establish I/O Connection
@@ -80,8 +135,7 @@ public class FileThread extends Thread {
                 Envelope e = (Envelope) input.readObject();
                 output.reset();
 
-                System.out.println(
-                        socket.getInetAddress() + ":" + socket.getPort() + " | Request received: " + e.getMessage());
+                logging.info(socket.getInetAddress() + ":" + socket.getPort() + " | Request received: " + e.getMessage());
                 String action = "";
                 // Handler to list files that this user is allowed to see
                 if (e.getMessage().equals("LFILES")) {
@@ -90,17 +144,25 @@ public class FileThread extends Thread {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action = "\tFAIL-LFILES | as request has bad contents.\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else {
                         UserToken t = (UserToken)e.getObjContents().get(0);
                         if(t == null || !t.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action = "\tFAIL-LFILES | as request has bad token.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
-                        } else {
+                            logging.info(String.format("%s", action));
+                        } else if(!checkToken((Token)t)){
+                            response = new Envelope("FAIL-INVALIDTOKEN");
+                            action = "\tFAIL-LFILES | as request has an invalid token.\n";
+                            response.addObject(action.substring(1, action.length() - 1));
+                            logging.info(String.format("%s", action));
+                        }else {
                             UserToken token = (UserToken) e.getObjContents().get(0);
                             String requester = token.getSubject();
+
+                            logging.info(String.format("\tLFILES by %s", requester));
+
                             response = new Envelope("OK");
 
                             List<String> requesterGroups = token.getShownGroups();
@@ -120,24 +182,28 @@ public class FileThread extends Thread {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action = "\tFAIL-LFORGROUP | as request has bad contents.\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else {
                         if (e.getObjContents().get(0) == null) {
                             response = new Envelope("FAIL-BADGROUP");
                             action = "\tFAIL-LFORGROUP | as request has bad group.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
+                            logging.info(String.format("%s", action));
                         } 
                         UserToken t = (UserToken)e.getObjContents().get(1);
                         if(t == null || !t.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action = "\tFAIL-LFORGROUP | as request has bad token.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
+                            logging.info(String.format("%s", action));
                         } else {
                             String group = (String) e.getObjContents().get(0);
                             UserToken token = (UserToken) e.getObjContents().get(1);
                             String requester = token.getSubject();
+
+                            logging.info(String.format("\tLFORGROUP %s by %s", group, requester));
+
+
                             if (token.getGroups().contains(group)) {
                                 if (token.getShownGroups().contains(group)) {
                                     response = new Envelope("OK");
@@ -152,14 +218,14 @@ public class FileThread extends Thread {
                                     action = "\tFAIL-LFORGROUP | " + requester
                                             + " has not escalated permissions for group " + group + "\n";
                                     response.addObject(action.substring(1, action.length() - 1));
-                                    System.out.printf("%s", action);
+                                    logging.info(String.format("%s", action));
                                 }
                             } else {
                                 response = new Envelope("FAIL-UNAUTHORIZED");
                                 action = "\tFAIL-LFORGROUP | " + requester + " is not a user within group " + group
                                         + "\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             }
 
                         }
@@ -171,7 +237,7 @@ public class FileThread extends Thread {
                         response = new Envelope("FAIL-BADCONTENTS");
                         action = "\tFAIL-UPLOADF | as request has bad contents.\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else {
                         String remotePath = (String)e.getObjContents().get(0);
                         String group = (String)e.getObjContents().get(1);
@@ -181,45 +247,47 @@ public class FileThread extends Thread {
                             response = new Envelope("FAIL-BADPATH");
                             action = "\tFAIL-UPLOADF | as request has bad path.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
+                            logging.info(String.format("%s", action));
                         } else if (group == null) {
                             response = new Envelope("FAIL-BADGROUP");
                             action = "\tFAIL-UPLOADF | as request has bad group.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
+                            logging.info(String.format("%s", action));
                         } else if (id == null) {
                             response = new Envelope("FAIL-BADID");
                             action = "\tFAIL-UPLOADF | request has bad ID.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);                            
+                            logging.info(String.format("%s", action));                          
                         } else if(yourToken == null || !yourToken.verify()) {
                             response = new Envelope("FAIL-BADTOKEN");
                             action = "\tFAIL-UPLOADF | as request has bad token.\n";
                             response.addObject(action.substring(1, action.length() - 1));
-                            System.out.printf("%s", action);
+                            logging.info(String.format("%s", action));
                         } else {
+
+                            logging.info(String.format("\tUPLOADF %s %s by %s", remotePath, group, yourToken.getSubject()));
 
                             if (FileServer.fileList.checkFile(remotePath)) {
                                 response = new Envelope("FAIL-FILEEXISTS"); // Success
                                 action = "\tError: file already exists at " + remotePath + "\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             } else if (!yourToken.getGroups().contains(group)) {
                                 response = new Envelope("FAIL-UNAUTHORIZED"); // Success
                                 action = "\tError: user missing valid token for group " + group + "\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             } else if (!yourToken.getShownGroups().contains(group)) {
                                 response = new Envelope("FAIL-PRIVILEGE"); // Success
                                 action = "\t" + yourToken.getSubject() + " has not escalated permissions for group "
                                         + group + "\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             } else {
                                 File file = new File("shared_files/" + remotePath.replace('/', '_'));
                                 file.createNewFile();
                                 FileOutputStream fos = new FileOutputStream(file);
-                                System.out.printf("Successfully created file %s\n", remotePath.replace('/', '_'));
+                                logging.info(String.format("Successfully created file %s\n", remotePath.replace('/', '_')));
 
                                 response = new Envelope("READY"); // Success
                                 output.writeObject(response);
@@ -234,7 +302,7 @@ public class FileThread extends Thread {
                                 }
 
                                 if (e.getMessage().compareTo("EOF") == 0) {
-                                    System.out.printf("Transfer successful file %s\n", remotePath);
+                                    logging.info(String.format("Transfer successful file %s\n", remotePath));
                                     FileServer.fileList.addFile(yourToken.getSubject(), group, remotePath, id);
                                     response = new Envelope("OK"); // Success
                                 } else if (
@@ -242,12 +310,12 @@ public class FileThread extends Thread {
                                     e.getMessage().equals("FAIL-HMAC")
                                 ) {
                                     response = e;
-                                    System.out.printf("\t%s\n", e.getObjContents());
+                                    logging.info(String.format("\t%s\n", e.getObjContents()));
                                 } else {
                                     response = new Envelope("ERROR-TRANSFER"); // Success
                                     action = "\tError reading file " + remotePath + " from client\n";
                                     response.addObject(action.substring(1, action.length() - 1));
-                                    System.out.printf("%s", action);
+                                    logging.info(String.format("%s", action));
                                 }
                                 fos.close();
                             }
@@ -263,29 +331,31 @@ public class FileThread extends Thread {
                         e = new Envelope("FAIL-BADTOKEN");
                         action="\tFAIL-DELETEF | as request has bad token.\n";
                         e.addObject(action.substring(1,action.length()-1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                         output.writeObject(response);
                     } else if (sf == null) {
                         e = new Envelope("ERROR_FILEMISSING");
                         action = "\tError: File " + remotePath + " doesn't exist\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                         output.writeObject(e);
 
                     } else if (!t.getGroups().contains(sf.getGroup())) {
                         e = new Envelope("ERROR_PERMISSION");
                         action = "\tError user " + t.getSubject() + " doesn't have permission\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                         output.writeObject(e);
                     } else if (!t.getShownGroups().contains(sf.getGroup())) {
                         e = new Envelope("ERROR_PRIVILEGE");
                         action = "\t" + t.getSubject() + " has not escalated permissions for group " + sf.getGroup()
                                 + "\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                         output.writeObject(e);
                     } else {
+
+                        logging.info(String.format("\tDOWNLOADF %s by %s", remotePath, t.getSubject()));
 
                         try {
                             File f = new File("shared_files/_" + remotePath.replace('/', '_'));
@@ -293,7 +363,7 @@ public class FileThread extends Thread {
                                 e = new Envelope("ERROR_NOTONDISK");
                                 action = "\tError file _" + remotePath.replace('/', '_') + " missing from disk\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                                 output.writeObject(e);
 
                             } else {
@@ -304,17 +374,17 @@ public class FileThread extends Thread {
                                     if (e.getMessage().compareTo("DOWNLOADF") != 0) {
                                         action = "\tServer error: " + e.getMessage() + "\n";
                                         response.addObject(action.substring(1, action.length() - 1));
-                                        System.out.printf("%s", action);
+                                        logging.info(String.format("%s", action));
                                         break;
                                     }
                                     e = new Envelope("CHUNK");
                                     int n = fis.read(buf); // can throw an IOException
                                     if (n > 0) {
-                                        System.out.printf(".");
+                                        logging.info(String.format("."));
                                     } else if (n < 0) {
                                         action = "\tRead error\n";
                                         response.addObject(action.substring(1, action.length() - 1));
-                                        System.out.printf("%s", action);
+                                        logging.info(String.format("%s", action));
 
                                     }
 
@@ -337,16 +407,16 @@ public class FileThread extends Thread {
 
                                     e = (Envelope) input.readObject();
                                     if (e.getMessage().compareTo("OK") == 0) {
-                                        System.out.printf("File data upload successful\n");
+                                        logging.info(String.format("File data upload successful\n"));
                                     } else {
                                         action = "\tUpload failed: " + e.getMessage() + "\n";
                                         response.addObject(action.substring(1, action.length() - 1));
-                                        System.out.printf("%s", action);
+                                        logging.info(String.format("%s", action));
                                     }
                                 } else {
                                     action = "\tUpload failed: " + e.getMessage() + "\n";
                                     response.addObject(action.substring(1, action.length() - 1));
-                                    System.out.printf("%s", action);
+                                    logging.info(String.format("%s", action));
                                 }
                             }
                         } catch (Exception e1) {
@@ -362,24 +432,26 @@ public class FileThread extends Thread {
                         e = new Envelope("FAIL-BADTOKEN");
                         action="\tFAIL-DELETEF | as request has bad token.\n";
                         e.addObject(action.substring(1,action.length()-1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else if (sf == null) {
                         e = new Envelope("ERROR_DOESNTEXIST");
                         action = "\tError: File " + remotePath + " doesn't exist\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else if (!t.getGroups().contains(sf.getGroup())) {
                         e = new Envelope("ERROR_PERMISSION");
                         action = "\tError user " + t.getSubject() + " doesn't have permission\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else if (!t.getShownGroups().contains(sf.getGroup())) {
                         e = new Envelope("ERROR-PRIVILEGE"); // Success
                         action = "\t" + t.getSubject() + " has not escalated permissions for group " + sf.getGroup()
                                 + "\n";
                         response.addObject(action.substring(1, action.length() - 1));
-                        System.out.printf("%s", action);
+                        logging.info(String.format("%s", action));
                     } else {
+
+                        logging.info(String.format("\tDELETEF %s by %s", remotePath, t.getSubject()));
 
                         try {
 
@@ -389,16 +461,16 @@ public class FileThread extends Thread {
                                 e = new Envelope("ERROR_FILEMISSING");
                                 action = "\tError file _" + remotePath.replace('/', '_') + " missing from disk\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             } else if (f.delete()) {
-                                System.out.printf("File %s deleted from disk\n", "_" + remotePath.replace('/', '_'));
+                                logging.info(String.format("File %s deleted from disk\n", "_" + remotePath.replace('/', '_')));
                                 FileServer.fileList.removeFile("/" + remotePath);
                                 e = new Envelope("OK");
                             } else {
                                 e = new Envelope("ERROR_DELETE");
                                 action = "\tError deleting file _" + remotePath.replace('/', '_') + " from disk\n";
                                 response.addObject(action.substring(1, action.length() - 1));
-                                System.out.printf("%s", action);
+                                logging.info(String.format("%s", action));
                             }
 
                         } catch (Exception e1) {
@@ -413,7 +485,7 @@ public class FileThread extends Thread {
                     socket.close();
                     proceed = false;
                 } else if (e.getObjContents().size() == 1) {
-                    System.out.printf("\t%s\n", e.getObjContents().get(0));
+                    logging.info(String.format("\t%s\n", e.getObjContents().get(0)));
                     output.writeObject(e);
                 }
             } while (proceed);
@@ -424,7 +496,53 @@ public class FileThread extends Thread {
     }
 
 
-    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception{
+    private boolean checkToken(Token t) {
+        String actualPubKey = Base64.getEncoder().encodeToString(my_fs.getPublicKey().getEncoded());
+
+        try {
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            hash.update(my_fs.getPublicKey().getEncoded());
+            byte[] rsaHash = hash.digest();
+            actualPubKey = Base64.getEncoder().encodeToString(rsaHash);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+
+        String tokenPubKey = t.getFsPubKey();
+
+        // logging.info("actual pub key: " + actualPubKey);
+        // logging.info("token pub key: " + tokenPubKey);
+
+        Timestamp curTimestamp = new Timestamp(System.currentTimeMillis());
+        Timestamp tokTimestamp = Timestamp.valueOf(t.getTimestamp());
+
+        long curTimestamp_value = curTimestamp.getTime();
+        long tokTimestamp_value = tokTimestamp.getTime();
+
+        long timeDif = curTimestamp_value - tokTimestamp_value;
+        // logging.info("####### Timestamp dif(milliseconds): " + timeDif);
+
+        timeDif = TimeUnit.MILLISECONDS.toMinutes(timeDif);
+        // logging.info("####### Timestamp dif(minutes): " + timeDif);
+
+        boolean check = true;
+
+        //check that the token's pub key matches our own
+        if(actualPubKey.compareTo(tokenPubKey) != 0){
+            check = false;
+            // logging.info("Check Token Fails Because Bad Public Key");
+        }
+        //check that the token's timestamp is not older than ten minutes
+        if(timeDif > 10){
+            check = false;
+            // logging.info("Check Token Fails Because Bad Timestamp");
+        }
+
+        return check;
+    }
+
+    boolean establishConnection(EncryptedObjectInputStream input, EncryptedObjectOutputStream output) throws Exception {
         Envelope response;
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
