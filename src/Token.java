@@ -263,9 +263,20 @@ class Token implements UserToken, java.io.Serializable
 
 				String name = fields[i].getName();
 				Object value = fields[i].get(this);
-
+				String encodedVal = "";
+				// System.out.println("Name: " + name);
+				
 				if (!metaVars.contains(name)) {
-					str += name + ": " + value.toString() + "\n";
+					// System.out.println("Value: " + value.toString());
+					if (value == null) {
+						encodedVal = Base64.getEncoder().encodeToString("NULL".getBytes());
+						str += name + ": " + encodedVal + "\n";
+					} else {
+						encodedVal = Base64.getEncoder().encodeToString(value.toString().getBytes());
+						str += name + ": " + encodedVal + "\n";
+					}
+				}else{
+					// System.out.println("Value: NULL");
 				}
 			}
 		} catch (Exception e) {
