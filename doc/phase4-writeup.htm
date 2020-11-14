@@ -101,7 +101,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  To ensure integrity and semantic security is provided in the system, all information will be paired with an incrementing value (initially a zero) and a HMAC of the message and nonce. Before the message is encrypted, a nonce will be generated and that message and nonce will be hashed into an HMAC. This will then be encrypted and sent to its intended recipient.
+  To ensure integrity and semantic security is provided in the system, all information will be paired with an incrementing value (initially a nonce) and a HMAC of the message and nonce. Before the message is encrypted, a nonce will be generated and that message and nonce will be hashed into an HMAC. This will then be encrypted and sent to its intended recipient.
 </p>
 
 <figure>
@@ -201,7 +201,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  We will do this using a similar mechanism used to protect against T2. We will modify the token to include two new fields, file server public key and a timestamp. Then every time the user makes a file server request, they will first request a refreshed token from the group server that includes the current timestamp and the file server public key of the file server they are making a request to. That refreshed token will be signed by the group server just like in T2 using their private key. Below is a visual refresher of how T2 works. In this iteration of our product we modified the order of the string encodings as well as hash the inputs using SHA-256 in order to ensure certain user input (such as group names like ‘ADMIN,everyone’) doesn’t give a user inaccurate accesses.
+  We will do this using a similar mechanism used to protect against T2. We will modify the token to include two new fields, file server public key and a timestamp. Then every time the user makes a file server request, they will first request a refreshed token from the group server that includes the public key for the file server they are making a request to. That refreshed token will be created with the group server’s current timestamp and the public key the group server receives from the client. It will then be signed by the group server just like in T2 using their private key. Below is a visual refresher of how T2 works. In this iteration of our project we modified how the string encodes as well as hash the inputs using SHA-256 in order to ensure a certain length in the token. We encode every value within the token individually to help parse out special characters prior to concatenating them all together and signing the whole token.
 </p>
 
 <figure>
@@ -210,7 +210,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </figure>
 
 <p>
-  Once the user gets this refreshed token with the timestamp, file server id, and group server signature, they will send all of that over to the file server they are making the request to. Once the file server gets that from the user, they will verify the token signature using the group server public key they got from the out of bounds operation in T2. They will then check if the timestamp is not over 10 minutes old. They will then check if the token’s file server public key matches its own public key.
+  Once the user gets this refreshed token with the timestamp, file server id, and group server signature, they will send all of that over to the file server they are making the request to. Once the file server gets that from the user, they will verify the token signature using the group server public key they got from the out of bounds operation in T2. They will then check if the timestamp is not over 10 minutes old. They will also check if the token’s file server public key matches its own public key. If both of these checks pass, the file server will process the user’s request.
 </p>
 
 <figure>
@@ -223,7 +223,7 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
 </p>
 
 <p>
-  This mechanism protects against token theft in multiple ways. Only the group server can sign the tokens, so if a user gets a hold of a stolen token they won’t be able to use it on a non corrupt file server since they don't have a way to spoof the group server signature. The timestamp prevents a user from using the stolen token on the same file server the request is being made on after a brief period of time.
+  This mechanism protects against token theft in multiple ways. Only the group server can sign the tokens, so if a user gets a hold of a stolen token they won’t be able to use it on a non corrupt file server since they don't have a way to spoof the group server signature. The timestamp prevents a user from using the stolen token on the same file server the request is being made on after a brief period of time. Having the file server use it’s own timestamp instead of one it gets from the user makes sure that.
 </p>
 
 <!-- END CHANGES HERE -->
