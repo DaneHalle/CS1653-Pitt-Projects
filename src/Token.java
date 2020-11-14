@@ -104,7 +104,8 @@ class Token implements UserToken, java.io.Serializable
 
 		Timestamp temp = new Timestamp(System.currentTimeMillis());
 		timestamp = temp.toString();
-		fsPubKey = inFsPubKey;
+		if(inFsPubKey == null) fsPubKey = "";
+		else fsPubKey = inFsPubKey;
 
 		//Crypto Stuff
 		encodedPubKey = encodeKey(rsa_key);
