@@ -1,7 +1,14 @@
 import java.lang.Math;
+import java.time.OffsetDateTime;
 public class pwdmeter {
 	public static void main(String args[]) {
 		System.out.println(args[0]);
+		
+		//Timestamp test
+		System.out.println(OffsetDateTime.now().plusMonths(3).toString()); //https://docs.oracle.com/javase/8/docs/api/java/time/OffsetDateTime.html
+		OffsetDateTime t = OffsetDateTime.now();
+		System.out.println(OffsetDateTime.now().plusMonths(3).plusDays(1).isAfter(OffsetDateTime.now().plusMonths(3)));
+
 		// Simultaneous variable declaration and value assignment aren't supported in IE apparently
 		// so I'm forced to assign the same value individually per var to support a crappy browser *sigh* 
 		double nScore=0, nLength=0, nAlphaUC=0, nAlphaLC=0, nNumber=0, nSymbol=0, nMidChar=0, nRequirements=0, nAlphasOnly=0, nNumbersOnly=0, nUnqChar=0, nRepChar=0, nConsecAlphaUC=0, nConsecAlphaLC=0, nConsecNumber=0, nConsecSymbol=0, nConsecCharType=0, nSeqAlpha=0, nSeqNumber=0, nSeqSymbol=0, nRepInc=0, nSeqChar=0, nReqChar=0, nMultConsecCharType=0;

@@ -75,6 +75,7 @@ public class GroupServer extends Server {
             groupStream = new ObjectInputStream(fis);
 
             userList = (UserList)userStream.readObject();
+            userList.checkExpired();
             groupList = (GroupList)groupStream.readObject();
         } catch(FileNotFoundException e) {
             System.out.println("UserList File Does Not Exist. Creating UserList...");
@@ -216,6 +217,7 @@ class AutoSave extends Thread {
                 System.out.println("Autosave group and user lists...");
                 ObjectOutputStream outStream;
                 try {
+                    my_gs.userList.checkExpired();
                     outStream = new ObjectOutputStream(new FileOutputStream("UserList.bin"));
                     outStream.writeObject(my_gs.userList);
                     outStream = new ObjectOutputStream(new FileOutputStream("GroupList.bin"));
