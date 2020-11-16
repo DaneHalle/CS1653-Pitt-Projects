@@ -1,5 +1,7 @@
 /* This list represents the users on the server */
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Hashtable;
 import java.util.Base64;
 import java.util.Enumeration;
@@ -154,6 +156,12 @@ public class UserList implements java.io.Serializable {
         }
     }
 
+    public synchronized boolean checkRecent(String username, String toCheck) {
+        if (list.get(username) != null) 
+            return list.get(username).checkRecent(toCheck);
+        return false;
+    }
+
     /**
      * Function to get all groups accessible to any given user. To be used by 
      * groupList. 
@@ -184,6 +192,8 @@ public class UserList implements java.io.Serializable {
         private String passHash;
         private boolean temp;
         private OffsetDateTime expire;
+        private String[] prevHash;
+        private int idx;
 
         public User(String inPass) {
             groups = new ArrayList<String>();
@@ -192,6 +202,8 @@ public class UserList implements java.io.Serializable {
             passHash=inPass;
             temp=true;
             expire=OffsetDateTime.now();
+            prevHash = new String[5];
+            idx=0;
         }
 
         public ArrayList<String> getGroups() {
@@ -269,12 +281,23 @@ public class UserList implements java.io.Serializable {
             }        
         }
 
+        public boolean checkRecent(String checkHash) {
+            List<String> check = Arrays.asList(prevHash);
+            for (int i = 0; i<5; i++) {
+                System.out.println(prevHash[i]);
+            }
+            return check.contains(checkHash);
+        }
+
         public void resetPasswordHash(String newHash) {
-            if (temp)
+            if (temp){
+                prevHash[idx]=passHash;
+                idx=(idx+1)%5;
                 passHash=newHash;
-            temp=false;
+                temp=false;
+                expire = OffsetDateTime.now().plusMinutes(1);
+            }
             // expire = OffsetDateTime.now().plusMonths(3);
-            expire = OffsetDateTime.now().plusMinutes(5);
         }
     }
 

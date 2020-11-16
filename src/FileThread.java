@@ -73,7 +73,7 @@ public class FileThread extends Thread {
         try {
 
 
-            Logger logging = Logger.getLogger("fileLog");  
+            Logger logging = Logger.getLogger("fileLog_"+socket.getPort());  
             FileHandler fh;  
 
             try {  
@@ -83,7 +83,7 @@ public class FileThread extends Thread {
                 logging.addHandler(fh);
                 ConsoleHandler handler = new ConsoleHandler();
                 fh.setFormatter(new SimpleFormatter() {
-                      private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+                      private static final String format = "[%1$tF %1$tT] [%2$s] %3$s %n";
 
                       @Override
                       public synchronized String format(LogRecord lr) {
@@ -95,7 +95,7 @@ public class FileThread extends Thread {
                       }
                   }); 
                 handler.setFormatter(new SimpleFormatter() {
-                      private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+                      private static final String format = "[%1$tF %1$tT] [%2$s] %3$s %n";
 
                       @Override
                       public synchronized String format(LogRecord lr) {

@@ -154,7 +154,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                         StringTokenizer cmd;
                         do {
                             if (response.getMessage().equals("REQUEST-NEW")) {
-                                String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered was not strong enough or is the same as the previous password, please enter a new password: ";
+                                String print = (String)response.getObjContents().get(0);
                                 if(gui){
                                     cmd = new StringTokenizer(JOptionPane.showInputDialog(print));
                                 } else {

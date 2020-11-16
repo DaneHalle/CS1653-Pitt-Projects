@@ -71,7 +71,7 @@ public class GroupThread extends Thread {
         boolean proceed = true;
         Security.addProvider(new BouncyCastleProvider());
         try {            
-            Logger logging = Logger.getLogger("fileLog");  
+            Logger logging = Logger.getLogger("groupLog_"+socket.getPort());  
             logging.setUseParentHandlers(false);
             FileHandler fh;  
 
@@ -267,6 +267,7 @@ public class GroupThread extends Thread {
                                                     UserToken yourToken = createToken(username, false, true, fsPubKey); //Create a token
                                                     if (my_gs.userList.isTemp(username)) {
                                                         response = new Envelope("REQUEST-NEW");
+                                                        response.addObject("The password entered for this user has expired, please enter a new password: ");
                                                         output.writeObject(response);
                                                         Envelope returned = null;
                                                         String newPassSecret = passSecret;
@@ -280,6 +281,8 @@ public class GroupThread extends Thread {
                                                             if (returned.getMessage().equals("NEW")) {
                                                                 password = (String)returned.getObjContents().get(0);
                                                                 if (!isStrong(password)) {
+                                                                    response = new Envelope("REQUEST-NEW");
+                                                                    response.addObject("The password entered is not strong enough, please enter a new password: ");
                                                                     output.writeObject(response);
                                                                     continue;
                                                                 }
@@ -287,7 +290,9 @@ public class GroupThread extends Thread {
                                                                 saltBytes = salt.getBytes();
                                                                 hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
                                                                 newPassSecret = Base64.getEncoder().encodeToString(hashedBytes);
-                                                                if (newPassSecret.equals(passSecret)) {
+                                                                if (newPassSecret.equals(passSecret) || my_gs.userList.checkRecent(username, newPassSecret)) {
+                                                                    response = new Envelope("REQUEST-NEW");
+                                                                    response.addObject("The password entered has been used by this user recently, please enter a new password: ");
                                                                     output.writeObject(response);
                                                                     continue;
                                                                 } else {
