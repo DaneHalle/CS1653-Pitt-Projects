@@ -345,7 +345,7 @@ public class GroupThread extends Thread {
                                         hmac_k = null;
                                         IVk = null;
                                         response = new Envelope("FAIL");
-                                        action="\tFAIL-GET | Unexpected response\n";
+                                        action="\tFAIL-GET | Unexpected response crash\n";
                                         response.addObject(action.substring(1,action.length()-1));
                                         logging.info(String.format("%s", action));
                                     }
