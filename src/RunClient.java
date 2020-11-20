@@ -534,6 +534,17 @@ public class RunClient {
                     return CommandResult.FAIL;
                 }
                 break;
+            case "RESET":
+                if (!groupConnected)
+                    return CommandResult.GNOT;
+                if (!checkCmd(args, 1, "Usage: RESET password", true))
+                    return CommandResult.ARGS;
+                pass = args.nextToken();
+                if (g_cli.reset(token, pass)) 
+                    System.out.printf("Password reset will be prompted on next login");
+                else
+                    return CommandResult.FAIL;
+                break;
             default:
                 return CommandResult.NOTCMD;
         }

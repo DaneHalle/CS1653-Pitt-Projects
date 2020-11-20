@@ -925,6 +925,42 @@ public class GroupThread extends Thread {
 
                     }
                     output.writeObject(response);
+                } else if (message.getMessage().equals("RESET")) {
+                    response = new Envelope("FAILED");
+                    if (message.getObjContents().size() != 2) {
+                        response = new Envelope("FAIL-BADCONTENTS");
+                        action="\tFAIL-RESET | as request has bad contents.\n";
+                        response.addObject(action.substring(1,action.length()-1));
+                        logging.info(String.format("%s", action));
+                    } else {
+                        UserToken token = (UserToken)message.getObjContents().get(0);
+                        String passHash = (String)message.getObjContents().get(1);
+
+                        if (token == null) {
+                            response = new Envelope("FAIL-BADTOKEN");
+                            action="\tFAIL-RESET | as request has bad token.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            logging.info(String.format("%s", action));
+                        } else if (passHash == null) {
+                            response = new Envelope("FAIL-BADPASS");
+                            action="\tFAIL-RESET | as request has a bad password.\n";
+                            response.addObject(action.substring(1,action.length()-1));
+                            logging.info(String.format("%s", action));
+                        } else {
+                            String usrHash = my_gs.userList.getPasswordHash(token.getSubject());
+                            if (usrHash == null) {
+                                response = new Envelope("FAIL-BADTOKEN");
+                                action="\tFAIL-RESET | as user is not in the system.\n";
+                                response.addObject(action.substring(1,action.length()-1));
+                                logging.info(String.format("%s", action));
+                            } else {
+                                my_gs.userList.reset(token.getSubject());
+                                response = new Envelope("OK");
+                                logging.info("\tSuccess");
+                            }
+                        }
+                    }
+                    output.writeObject(response);
                 } else if (message.getMessage().equals("DISCONNECT")) { //Client wants to disconnect
                     socket.close(); //Close the socket
                     proceed = false; //End this communication loop

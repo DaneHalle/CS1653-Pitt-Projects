@@ -162,6 +162,10 @@ public class UserList implements java.io.Serializable {
         return false;
     }
 
+    public synchronized void reset(String username) {
+        list.get(username).reset();
+    }
+
     /**
      * Function to get all groups accessible to any given user. To be used by 
      * groupList. 
@@ -275,6 +279,10 @@ public class UserList implements java.io.Serializable {
             return temp;
         }
 
+        public void reset() {
+            temp=true;
+        }
+
         public void checkExpire() {
             if (expire.isBefore(OffsetDateTime.now())) {
                 temp=true;
@@ -295,9 +303,8 @@ public class UserList implements java.io.Serializable {
                 idx=(idx+1)%5;
                 passHash=newHash;
                 temp=false;
-                expire = OffsetDateTime.now().plusMinutes(1);
+                expire = OffsetDateTime.now().plusMonths(3);
             }
-            // expire = OffsetDateTime.now().plusMonths(3);
         }
     }
 

@@ -624,6 +624,38 @@ public class GroupClient extends Client implements GroupClientInterface {
         }
     }
 
+    public boolean reset(UserToken token, String password) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("RESET");
+            message.addObject(token); 
+
+            String salt = token.getSubject();
+            int iterations = 10000;
+            int keyLength = 256;
+            char[] passwordChars = password.toCharArray();
+            byte[] saltBytes = salt.getBytes();
+            byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+            String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
+
+            message.addObject(passSecret);
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                return true;
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
+        }
+    }
+
     private byte[] hashPassword(final char[] password, final byte[] salt, final int iterations, final int keyLength ) {
         try {
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
