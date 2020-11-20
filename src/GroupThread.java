@@ -937,6 +937,23 @@ public class GroupThread extends Thread {
         }
     }
 
+    private boolean verifyServer(
+        EncryptedObjectInputStream input,
+        EncryptedObjectOutputStream output
+    ) {
+        Envelope response = new Envelope("GROUP");
+        String puzzle = ComputationPuzzle.generatePuzzle();
+        response.addObject(puzzle);
+        output.writeObject(response);
+
+        response = (Envelope)input.readObject();
+        if (response.getMessage().equals("FAIL")) {
+            return false;
+        }
+
+         
+    }
+
     UserToken refreshToken(String username, String fsPubKey){
         //Issue a refreshed token while maintaining user's scope
         UserToken yourToken = new Token(
