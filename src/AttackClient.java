@@ -98,9 +98,9 @@ public class AttackClient {
 			// Total:		   7 minutes	54 seconds
 
             // Linux cluster
-            // STARTED AT:     2020-11-19T19:10:41.261-05:00
-            // ENDED AT:       2020-11-19T19:24:34.398-05:00
-            // Total:          13 minutes   53 seconds
+            // STARTED AT:     2020-11-20T08:43:52.798-05:00
+            // ENDED AT:       2020-11-20T09:00:02.634-05:00
+            // Total:          16 minutes   10 seconds
 
 			// john.txt - 21.4KB
             // Personal Machine
@@ -109,9 +109,9 @@ public class AttackClient {
 			// Total:		   2 minutes	44 seconds
 
             // Linux cluster
-            // STARTED AT:     2020-11-19T19:28:43.329-05:00
-            // ENDED AT:       2020-11-19T19:30:20.480-05:00
-            // Total:          1 minutes    37 seconds
+            // STARTED AT:     2020-11-20T09:01:21.466-05:00
+            // ENDED AT:       2020-11-20T09:03:01.258-05:00
+            // Total:          1 minutes    40 seconds
 
 			// PasswordPro.txt - 29.5MB
             // Personal Machine
@@ -131,14 +131,19 @@ public class AttackClient {
 			// Total:		   4 minutes	38 seconds
 
             // Linux cluster
-            // STARTED AT:     2020-11-19T19:32:51.879-05:00
-            // ENDED AT:       2020-11-19T19:34:46.065-05:00
-            // Total:          1 minutes    55 seconds
+            // STARTED AT:     2020-11-20T09:04:25.402-05:00
+            // ENDED AT:       2020-11-20T09:06:24.007-05:00
+            // Total:          1 minutes    59 seconds
 
 			// rockyou.txt - 133MB
 			// STARTED AT:     2020-11-17T20:40:43.088-05:00
 			// ENDED AT:       2020-11-17T20:46:35.414-05:00
 			// Total:		   5 minutes	52 seconds
+
+            // Linux cluster
+            // STARTED AT:     2020-11-20T09:07:29.416-05:00
+            // ENDED AT:       2020-11-20T10:14:09.323-05:00
+            // Total:          1 hours  6 minutes   40 seconds
 
 			// top1000000.txt - 8.13MB
             // Personal Machine
