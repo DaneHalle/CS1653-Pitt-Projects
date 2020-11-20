@@ -38,7 +38,7 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.security.interfaces.ECPublicKey;
 
-public class AttackGroup extends Client implements GroupClientInterface {
+public class AttackGroup extends AttackedClient implements GroupClientInterface {
 
     private boolean gui = false;
 

