@@ -40,3 +40,14 @@ USAGE:
  
  Note that this implementation supports server side directories.
 
+Attack Client Usage:
+
+To run Attack java -cp "<PATH_TO_BOUNCY_CASTLE_JAR>;" AttackClient [MODULE] [THREADS] (OPTIONAL)[USERNAME] [LIST]
+* Module is whether the attack client will perform a dictionary attack against the server or a DOS attack
+    This can be prompted by running either the `DICT` or `DOS` module
+* The threads specify the number of threads the attacker client will generate to brute force/dos the server
+* The Username and List will be used in the DIST module to specify the user being bruteforced and the dictionary
+for the dictionary attack
+
+To test the group server without the computational puzzles run:
+java -cp "<PATH_TO_BOUNCY_CASTLE_JAR>;" GroupServer [PORT] no-puzz
