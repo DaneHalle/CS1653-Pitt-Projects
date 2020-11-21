@@ -6,7 +6,7 @@ public class RunGroupServer {
         boolean puzzle = true;
         if (args.length> 0) {
             try {
-                if (args.length > 1 && args[1].toLowerCase().equals("puzz")) {
+                if (args.length > 1 && args[1].toLowerCase().equals("no-puzz")) {
                     puzzle = false;
                 }
 
