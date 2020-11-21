@@ -373,12 +373,33 @@ public abstract class Client {
     public boolean verifyServer(String sign) {
         try {
             Envelope server_type = (Envelope)input.readObject();
+            Envelope response;
+
             if (!server_type.getMessage().equals(sign)) {
                 System.out.printf("Server is not a %s server\n", sign);
+
+                response = new Envelope("FAIL");
+                response.addObject(null);
+                output.writeObject(response);
+
                 disconnect();
                 return false;
             }
 
+            String puzzle = (String)server_type.getObjContents().get(0);
+            String target = ComputationPuzzle.solvePuzzle(puzzle);
+
+            response = new Envelope("GROUP");
+            response.addObject(target);
+            output.writeObject(response);
+
+            response = (Envelope)input.readObject();
+            if (server_type.getMessage().equals("FAIL")) {
+                System.out.println("Failed Computational Puzzle");
+                disconnect();
+                return false;
+            }
+            
             return true;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
