@@ -947,7 +947,12 @@ public class GroupThread extends Thread {
     ) {
         try {
             Envelope response = new Envelope("GROUP");
-            String puzzle = ComputationPuzzle.generatePuzzle();
+            String puzzle = "";
+            if (my_gs.getCompPuzzle()) {
+                puzzle = ComputationPuzzle.generatePuzzle();
+            } else {
+                puzzle = ComputationPuzzle.generateKnownPuzzle();
+            }
             response.addObject(puzzle);
             output.writeObject(response);
 

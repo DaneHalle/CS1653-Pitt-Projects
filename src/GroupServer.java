@@ -42,9 +42,12 @@ public class GroupServer extends Server {
     private SecureRandom secureRandom = null;
     private final int keySize = 2048;
 
-    public GroupServer(int _port) {
+    private boolean compPuzzle = false;
+
+    public GroupServer(int _port, boolean puzzle) {
         super(_port, "beta");
 
+        compPuzzle = puzzle;
         Security.addProvider(new BouncyCastleProvider());
     }
 
@@ -175,6 +178,10 @@ public class GroupServer extends Server {
         } catch ( NoSuchAlgorithmException | InvalidKeySpecException e ) {
             throw new RuntimeException( e );
         }
+    }
+
+    public boolean getCompPuzzle() {
+        return compPuzzle;
     }
 
 }

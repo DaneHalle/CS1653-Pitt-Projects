@@ -21,6 +21,29 @@ public class ComputationPuzzle {
         return generatePuzzle(N);
     }
 
+    public static String generateKnownPuzzle() {
+        try {
+            long target = 0;
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.putLong(0, target);
+
+            MessageDigest sha = MessageDigest.getInstance("SHA-256");
+            sha.update(buffer.array());
+            byte[] hash = sha.digest();
+
+            byte[] res = new byte[N];
+            for (int i=0; i < N; i++) {
+                res[i] = hash[hash.length-i-1];
+            }
+
+            String result = Base64.getEncoder().encodeToString(res);
+            return result;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static String generatePuzzle(int n) {
         Security.addProvider(new BouncyCastleProvider());
 
@@ -58,6 +81,7 @@ public class ComputationPuzzle {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -88,7 +112,7 @@ public class ComputationPuzzle {
                 buffer.putLong(0, target);
             }
             long endTime = System.nanoTime();
-            double duration = (double)(endTime - startTime) / 1_000_000_000.0;
+            double duration = (double)(endTime - startTime) / 10_000_000_000.0;
             System.out.println("Connection time took: " + duration + " seconds");
 
             return Base64.getEncoder().encodeToString(buffer.array());
