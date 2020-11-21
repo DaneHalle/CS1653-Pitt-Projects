@@ -78,9 +78,7 @@ public class RunClient {
         switch(server_type) {
             case "GROUP":
                 g_cli.connect(server, port);
-                // TODO: Change username
-                g_cli.verifyServer("GROUP");
-                break;            
+                return g_cli.verifyServer("GROUP");     
             case "FILE":
                 f_cli.connect(server, port);
                 f_cli.keyExchange("FILE", rsa_key, gui);

@@ -125,9 +125,13 @@ public class GroupThread extends Thread {
             output.setInputReference(input);
             Envelope response;
 
-            response = new Envelope("GROUP");
-            response.addObject(null);
-            output.writeObject(response);
+            // response = new Envelope("GROUP");
+            // response.addObject(null);
+            // output.writeObject(response);
+            if (!verifyServer(input, output)) {
+                socket.close();
+                return;
+            }
 
             do {
                 Envelope message = (Envelope)input.readObject();
@@ -981,6 +985,46 @@ public class GroupThread extends Thread {
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
+        }
+    }
+
+    private boolean verifyServer(
+        EncryptedObjectInputStream input,
+        EncryptedObjectOutputStream output
+    ) {
+        try {
+            Envelope response = new Envelope("GROUP");
+            String puzzle = "";
+            if (my_gs.getCompPuzzle()) {
+                puzzle = ComputationPuzzle.generatePuzzle();
+            } else {
+                puzzle = ComputationPuzzle.generateKnownPuzzle();
+            }
+            response.addObject(puzzle);
+            output.writeObject(response);
+
+            response = (Envelope)input.readObject();
+            if (response.getMessage().equals("FAIL")) {
+                return false;
+            }
+
+            String target = (String)response.getObjContents().get(0);
+            if (ComputationPuzzle.compareResults(puzzle, target)) {
+                System.out.println("Computational Puzzle Succeeded");
+                response = new Envelope("SUCCESS");
+                response.addObject(null);
+                output.writeObject(response);
+                return true;
+            } else {
+                System.out.println("Computational Puzzle Failed");
+                response = new Envelope("FAIL");
+                response.addObject(null);
+                output.writeObject(response);
+                return false;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
