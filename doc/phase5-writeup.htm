@@ -86,8 +86,9 @@ Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pi
       <h2>Overview</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>In this section, broadly overview your threat model, attacks, and
-countermeasures.</p>
+<p>
+  We have come up with three different potential threats to our system. Each of these comes with attack information and countermeasures. Two of them, T8 and T9, have implementations as well as an attack script. The three threats outlined in this document are User Account Breach, Denial of Service, and Malicious Insider. 
+</p>
 
 <!-- END CHANGES HERE -->
     </section>
@@ -96,7 +97,7 @@ countermeasures.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  At any point, an active attacker could attempt to access any user’s account within the system. This could include a brute force, a dictionary attack, or extraction of a password form a user in an out of bounds manner. We must provide a way to ensure that a brute force attack is more difficult to do. We must also provide a way to ensure that a dictionary attack is, at minimum, unlikely to succeed. We must also allow a way for a user to reset their password or to flag their account for password reset.
+  At any point, an active attacker could attempt to access any user’s account within the system. This could include a brute force, a dictionary attack, or extraction of a password form a user in an out of bounds manner. We must provide a way to ensure that a brute force attack is more difficult to do . We must also provide a way to ensure that a dictionary attack is, at minimum, unlikely to succeed. We must also allow a way for a user to reset their password or to flag their account for password reset.
 </p>
 
 <!-- END CHANGES HERE -->
@@ -164,7 +165,7 @@ countermeasures.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  This proposed threat is the danger of User Accounts being Breached. This can either happen by their weak secret or password used to generate the weak secret being leaked/exposed or if the user’s password was weak enough to allow for a successful brute force attack or dictionary attack.
+  This proposed threat is the danger of User Accounts being Breached. This can either happen by their weak secret or password used to generate the weak secret being leaked/exposed or if the user’s password was weak enough to allow for a successful brute force attack or dictionary attack. 
 </p>
 
 <p>
@@ -172,11 +173,15 @@ countermeasures.</p>
 </p>
 
 <p>
-  To ensure that strong passwords are used, we will integrate a password strength checker and ensure that it is above a certain threshold before accepting a password. The checker uses an existing framework that checks for number of characters, number of those characters that are A-Z, a-z, 0-9, and symbols, and amount of repetition within the characters to generate a percentage score for the given password string. Should the password be above or equal to 60%, or what this framework considers a “strong” password, it will be accepted, otherwise, it will be rejected and prompt for another password. When an ADMIN initializes an account, they will need to provide a password that is equal to or above 40% on the strength checker so it has some semblance of security. Within this checker, we will also check if the password is part of the NIST Bad Passwords top 1,000,000 common passwords. If it is, it will request a different password. Similar to this, we will check the new password against the previous 5 user-given passwords to ensure that the user does not reuse a password within a reasonable timeframe. This will be done by checking against an array of the previous hashes within the User class of UserList. The password will also have an expiration date associated with it. At the start of a server with an existing UserList.bin and when the GroupServer autosaves every 5 minutes, it will run a check over all users within the system to check if their password is expired based on a value set when a new hash is given. Should it expire, it will set a flag within the User class within UserList to request a new password the next time the user calls a GET request. All of this happens during the GET request to ensure a strong, secure password that isn’t reused. 
+  To ensure that strong passwords are used, we will integrate a password strength checker and ensure that it is above a certain threshold before accepting a password. The checker uses an existing framework that checks for number of characters, number of those characters that are A-Z, a-z, 0-9, and symbols, and amount of repetition within the characters to generate a percentage score for the given password string. Should the password be above or equal to 60%, or what this framework considers a “strong” password, it will be accepted, otherwise, it will be rejected and prompt for another password. When an ADMIN initializes an account, they will need to provide a password that is equal to or above 40% on the strength checker so it has some semblance of security. Within this checker, we will also check if the password is part of the NIST Bad Passwords top 1,000,000 common passwords. If it is, it will request a different password. During this check against the NIST Bad Passwords list, it will check if the given password is equal to or more than 80% similar to any of the passwords from the list by utilizing Levenshtein Distance which is a way to compare similarities between two strings by the amount of steps requires to transmute one string into the other. 
 </p>
 
 <p>
-  This implementation ensures that the threat of User Accounts being Breached is much lower than it was previously. Due to password expiry and recent password rejection, a user who uses the same password for multiple systems/servers and has another server leak their passwords, they will be more protected than they otherwise might be. The insurance that the password is strong makes a brute force or known password attack quite difficult and exhaustive.
+  We also check the new password against the previous 5 user-given password hashes to ensure that the user does not reuse a password within a reasonable timeframe. This will be done by checking against an array of the previous hashes within the User class of UserList. The password will also have an expiration date associated with it. At the start of a server with an existing UserList.bin and when the GroupServer autosaves every 5 minutes, it will run a check over all users within the system to check if their password is expired based on a value set when a new hash is given. Should it expire, it will set a flag within the User class within UserList to request a new password the next time the user calls a GET request. All of this happens during the GET request to ensure a strong, secure password that isn’t reused.
+</p>
+
+<p>
+  This implementation ensures that the threat of User Accounts being Breached is much lower than it was previously. Due to password expiry and recent password rejection, a user who uses the same password for multiple systems/servers and has another server leak their passwords, they will be more protected than they otherwise might be. The insurance that the password is strong, uncommon, and dis-similar to common passwords makes a brute force or known password attack quite difficult and exhaustive.
 </p>
 
 <p>
@@ -201,7 +206,7 @@ countermeasures.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  Currently the system will accept any connections before authentication. The attacker just needs to create a client that will establish several connections. The server will need to allocate resources to these connections thus taking away resources from future users. Legitimate users will not be able to connect and/or run commands and thus will be unable to use the system entirely. This denial of service (or DOS) can be done with a powerful computer or with several distributed computers making it a DDOS attack.
+  Currently the system will accept any connections before authentication. The attacker just needs to create a client that will establish many connections. The server will need to allocate resources to these connections thus taking away resources from current and future users. Legitimate users will not be able to connect and/or run commands and thus will be unable to use the system entirely. This denial of service (or DOS) can be done with a powerful computer or with several distributed computers making it a DDOS attack.
 </p>
 
 <!-- END CHANGES HERE -->
@@ -211,7 +216,7 @@ countermeasures.</p>
 <!-- BEGIN CHANGES HERE -->
 
 <p>
-  It needs to be computationally expensive for the client to connect to the server; however, the computation can not be too expensive or else it may not also throttle the client from connecting. Also the computation should be easy for the server to generate and expensive for the client to solve. This will help provide availability because if several bogus requests are made to connect to the server, it will incur a connection cost that will add up overtime. Upon connection to the group server, the group server will generate an inverted SHA-256. The first n bits (in this case 10) of the SHA-256 will be sent to the client where the client will try to find a collision in the n bits. Once a collision is found, the client will send that value to the server. The server will verify that the value being sent has matching n bits of the hash.
+  It needs to be computationally expensive for the client to connect to the server; however, the computation can not be too expensive or else it may not also throttle the client from connecting. Also the computation should be easy for the server to generate and expensive for the client to solve. This will help provide availability because if several bogus requests are made to connect to the server, it will incur a connection cost that will add up overtime. Upon connection to the group server, the group server will generate a SHA-256 using the current date a random nonce. The first n bits (in this case 24 bits) of the SHA-256 will be sent to the client where the client will try to find a collision in the n bits by incrementing a value until the hash of that value has the same n bits. Once a collision is found, the client will send that value to the server. The server will then allow the connection to if the hash is correctly calculated.
 </p>
 
 <p>
@@ -228,9 +233,8 @@ countermeasures.</p>
   <figcaption>Diagram T9.2</figcaption>
 </figure>
 
-
 <p>
-
+  An attacker script was created to generate several threads and try to connect a single instance of the group server. The computational puzzle requires roughly 0.7 seconds to connect to the server. This implementation deters availability attacks, because a normal user will only be deterred for a short amount of time. However if an attacker generates 100 threads it will need to allocate resources to resolve the computational puzzle of each of those connections.
 </p>
 
 <p>
@@ -239,26 +243,86 @@ countermeasures.</p>
 
 <!-- END CHANGES HERE -->
     </section>
+    <section id="threatmodel10">
+      <h2>Threat Model 10: Malicious Insider</h2>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  A user may be trusted when they are initially added to the group, then become a malicious actor later on. They would then be able to cause permanent damage or leak the files within the group before the ADMIN is able to remove them. Therefore, some users should be trusted more than others, therefore we must create a way to set different group privileges for different users. The creator of a group is fully trusted. Since it is their group they are allowed to do what they want with it. Any other user is granted privileges based on the discretion of the group owner. We must provide the group owner a way to granularly control what users have various privileges within their group.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="attackT10">
+      <h3>Attacks</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  To protect against this threat, we would implement access controls via user hierarchy within groups. The privileges in this hierarchy are ADMIN, co-ADMIN, upload, download, and delete. A user may be in more than one class of this hierarchy, except for ADMIN. The ADMIN is the owner/creator of the group and inherently has all privileges.
+</p>
+
+<p>
+  One way they could attack the group is to upload a bunch of random garbage to the system. Doing this would make it difficult to navigate all the files, as well as distinguish what files are legit versus what files are garbage. They could also potentially upload over a file already in a system to alter its contents to whatever they want. Another way they could take advantage of the group is deleting any files they want from it. Lastly, they have the ability to download any file from the group, unencrypt, and distribute it to anyone outside of the group that they want, potentially leaking sensitive data.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="countermeasureT10">
+      <h3>Countermeasures</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  To protect against this threat, we would implement access controls via user hierarchy within groups. The privileges in this hierarchy are ADMIN, co-ADMIN, upload, download, and delete. A user may be in more than one class of this hierarchy, except for ADMIN. The ADMIN is the owner/creator of the group and inherently has all privileges.
+</p>
+
+<p>
+  The creator of the group will always be put in the ADMIN category. They will have full control over the group. They can add users, remove users, change any user’s privileges, upload files, download files, and delete files.
+</p>
+
+<p>
+  Similar to the ADMIN is the co-ADMIN category. An ADMIN may choose to delegate managing group member’s access to another user. In this case, a co-ADMIN would have the ability to add users, remove users, and change any user’s privileges (except for the ADMIN).
+</p>
+
+<p>
+  Below the ADMIN level we have permutations of users with upload, download, and or delete privileges. Any user can have any combination of these privileges. All privileges are set by the ADMIN or any co-ADMINs.
+</p>
+
+<p>
+  On top of the upload, download, and delete privileges, they each have a set of parameters the ADMIN or co-ADMIN can set. A user with upload privileges has a max number of uploads, set by the admin, that they can perform before needing to ask the ADMIN for more uploads. Similarly, a user with download privileges can only download a certain number of files before needing to ask the ADMIN for more downloads. Users with the delete privilege also have a max number of operations. On top of that, every delete they perform first goes to the ADMIN’s delete queue where the ADMIN will either approve or deny the deletion to prevent the loss of any important information. The diagram below lays out the entire user privilege hierarchy within a group.
+</p>
+
+<figure>
+  <img src="./images/T10.1.png" alt="T10.1" class="center">
+  <figcaption>Diagram T10.1</figcaption>
+</figure>
+
+<p>
+  This countermeasure effectively solves the threat of trusted users becoming malicious actors and damaging files in the group. Any activity performed within the group is now heavily regulated by the group creator, who is the source of trust within any group. They know who should have access to each of the commands performed on the group, and can therefore confidently delegate those privileges to users who need them.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
     <section id="discussion">
       <h2>Discussion</h2>
 <!-- BEGIN CHANGES HERE -->
 
-<p>Conclude with a paragraph or two discussing your threat model and
-countermeasure mechanisms. How realistic is your threat model for a real-life
-file sharing system? Comment on the design process that your group followed. Did
-you discuss other ideas that didn’t pan out before settling on the
-above-documented approach? Did you design attacks that you were unable to
-mitigate, or that you think are impossible to mitigate? Use this space to show
-off your hard work!</p>
+<p>
+  With the three threat models and countermeasures, we had to work carefully to not infringe upon existing threat models. Both T8 and T9 involve establishing a connection with the group server and providing integrity and availability. T10 involves operations after establishing a connection and the user has been verified, it concerns mainly integrity and confidentiality. We feel that our new threat models are quite realistic for a real-life file sharing system that utilizes groups. We want to ensure that the GroupServer is never DDoSed so we made it more difficult to flood the server with connections. We want to ensure that passwords are strong enough and uncommon enough to make any dictionary attack or brute force ineffective so we add a password strength requirement, a similarity checker against existing common passwords, a password expiry system, and a way for a user to reset their current password should they choose to do so. This is all to ensure that any user with malicious intent would not be able to do any damage should they get added to a Group so we proposed a User Hierarchy similar to that proposed in phase 1.
+</p>
 
-<p>Finally, spend a paragraph discussing the interplay between the
-countermeasures for your proposed attacks and your techniques for mitigating
-threats T1–T7 from Phases P3 and P4 of the project. Did you have to design your
-countermeasures in a particular way so as not to re-introduce these older
-threats?</p>
+<p>
+  We accomplished this task the same way we tackled project 3 and project 4. We created a central document to white board our ideas and provide comments, feedback, and research for each other. We continued this model of discussion and planning with this project. A few ideas that were considered but scrapped due to time and the amount of work we already were doing were Two Factor Authentication and File Integrity. We considered what would happen if the GroupServer would become insecure/untrusted at any point and quickly realized how that would cause our entire system to potentially fail if that were to happen.
+</p>
 
-<p>If your group implemented the countermeasures or did any extra credit, please
-discuss these additional contributions in this section, as well.</p>
+<p>
+  Both T8 and T9 had implementations along with them so we had to ensure that any change made there would not affect the integrity of previously implemented systems. In T9, it was fairly easy as the only time this implementation takes effect is during the connection, where a computational puzzle is made for the user to solve before being allowed into the group server. In T8, it affects talk within the GET which was heavily affected during the implementation of T1. As T8 only adds to this, the only potential issue is the Availability being worsened as it takes longer for a GET to be successful due to performing more computations/calculations. However, it is not noticeable when using the system. 
+</p>
+
+<h3>Extra Credit</h3>
+
+<p>
+  As we obviously did significantly more than was expected for this project with a broader acceptance scope, we were unsure as to how to lay out each part and what would be considered “Extra Credit” for this phase. Because of this, we laid out the file in a similar manner to the previous phase writeups. 
+</p>
 
 <!-- END CHANGES HERE -->
     </section>

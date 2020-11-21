@@ -3,8 +3,8 @@ public class sim {
 		String pass = "Password";
 		String leet = "P@55w0rd";
 		double res = similarity(pass, leet);
-		double res1 = similarity(pass, "w0rdP@55");
-		System.out.println(res1);
+		double res1 = similarity
+		System.out.println(res);
 	}
 
 	// Example implementation of the Levenshtein Edit Distance
