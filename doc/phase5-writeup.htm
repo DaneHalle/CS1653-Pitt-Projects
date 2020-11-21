@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CS 1653 Project P5 Writeup</title>
+  <style>
+/* BEGIN CHANGES HERE */
+
+/* In this section, you may add CSS styling if desired */
+@media screen {
+
+  body {
+      background: black;
+      color: cornflowerblue;
+  }
+
+  .center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tablecenter {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  figcaption {
+    color: aquamarine;
+  }
+
+  h3 {
+      color: coral;
+  }
+
+  h2 {
+      color: coral;
+  }
+
+  h1 {
+      color: crimson;
+  }
+
+  table, th, td {
+    border: 1px solid cornflowerblue;
+  }
+}
+
+header {
+  text-align: center;
+}  
+
+table, th, td {
+  border: 1px solid cornflowerblue;
+}
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tablecenter {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+figcaption {
+  text-align: center;
+}
+
+/* END CHANGES HERE */
+  </style>
+  <body>
+    <header>
+      <h1>CS 1653 Project P5 Writeup</h1>
+      <h2>
+<!-- BEGIN CHANGES HERE -->
+
+Dane Halle dmh148@pitt.edu | Kyle O'Malley jko12@pitt.edu | Quinnan Gill qcg1@pitt.edu
+
+<!-- END CHANGES HERE -->
+      </h2>
+    </header>
+    <section id="overview">
+      <h2>Overview</h2>
+<!-- BEGIN CHANGES HERE -->
+
+<p>In this section, broadly overview your threat model, attacks, and
+countermeasures.</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="threatmodel8">
+      <h2>Threat Model 8: User Account Breach</h2>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  At any point, an active attacker could attempt to access any user’s account within the system. This could include a brute force, a dictionary attack, or extraction of a password form a user in an out of bounds manner. We must provide a way to ensure that a brute force attack is more difficult to do. We must also provide a way to ensure that a dictionary attack is, at minimum, unlikely to succeed. We must also allow a way for a user to reset their password or to flag their account for password reset.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="attackT8">
+      <h3>Attacks</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  As a password extraction is not terribly possible in an example, attack, we will not have that included in this attack. This script has one password aspect to it. The script takes in several arguments, server IP, server Port, username we want to attack, a path to a dictionary of passwords, and roughly the number of threads we want to work on the problem. The script will then utilize the given dictionary and spawn roughly the number of threads given to connect to the group server and attempt to retrieve the token of the given user.
+</p>
+
+<p>
+  For this, I utilized several known and large password dictionaries. Dictionaries utilized were the <code>cain.txt</code> from the Cain and Abel password cracking software, <code>john.txt</code> from the John the Ripper password cracking software, <code>phpbb.txt</code> which is a list of leaked passwords, <code>rockyou.txt</code> which is a large list of leaked passwords, and lastly, <code>top1000000.txt</code> from the NIST Bad Passwords list. The results for timings on how long it took to finish were using roughly 1000 threads regardless of the amount of passwords and finishing till each list was exhausted.
+</p>
+
+<table class="tablecenter">
+  <tr>
+    <th>Dictionaries</th>
+    <th>Personal Machine</th>
+    <th>Linux Clusters</th>
+  </tr>
+  <tr>
+    <td><code>cain.txt</code></td>
+    <td>7 minutes 54 seconds</td>
+    <td>13 minutes 53 seconds</td>
+  </tr>
+  <tr>
+    <td><code>john.txt</code></td>
+    <td>2 minutes 44 seconds</td>
+    <td>1 minute 37 seconds</td>
+  </tr>
+  <tr>
+    <td><code>phpbb.txt</code></td>
+    <td>4 minutes 38 seconds</td>
+    <td>1 minute 55 seconds</td>
+  </tr>
+  <tr>
+    <td><code>rockyou.txt</code></td>
+    <td>5 minutes 52 seconds</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><code>top1000000.txt</code></td>
+    <td>24 minutes 36 seconds</td>
+    <td></td>
+  </tr>
+</table>
+
+<p>
+  The findings were that, should your password exist within any of these lists, it would not take an attacker terribly long to extract a password of a user and gain access to their account.
+</p>
+
+<p>
+  Sources: <br>
+  <a href="https://wiki.skullsecurity.org/Passwords" target="_blank">Passwords - SkullSecurity</a>
+  <br>
+  <a href="https://cry.github.io/nbp/" target="_blank">NIST Bad Passwords</a>
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="countermeasureT8">
+      <h3>Countermeasures</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  This proposed threat is the danger of User Accounts being Breached. This can either happen by their weak secret or password used to generate the weak secret being leaked/exposed or if the user’s password was weak enough to allow for a successful brute force attack or dictionary attack.
+</p>
+
+<p>
+  The account setup will be altered to ensure stronger user accounts and allow for account recovery. These alterations will force stronger passwords within the system for a user-generated password. The passwords will have a “timeout” feature where a password will need to be changed after a certain amount of time. There will be a new functionality to the system, <code>RESET token cur_pass</code>, which will flag the user’s account for a password reset the next time they do a GET. Lastly, there will be a log of the previous 5 password weak secrets to ensure that a user does not reuse a password within reason.
+</p>
+
+<p>
+  To ensure that strong passwords are used, we will integrate a password strength checker and ensure that it is above a certain threshold before accepting a password. The checker uses an existing framework that checks for number of characters, number of those characters that are A-Z, a-z, 0-9, and symbols, and amount of repetition within the characters to generate a percentage score for the given password string. Should the password be above or equal to 60%, or what this framework considers a “strong” password, it will be accepted, otherwise, it will be rejected and prompt for another password. When an ADMIN initializes an account, they will need to provide a password that is equal to or above 40% on the strength checker so it has some semblance of security. Within this checker, we will also check if the password is part of the NIST Bad Passwords top 1,000,000 common passwords. If it is, it will request a different password. Similar to this, we will check the new password against the previous 5 user-given passwords to ensure that the user does not reuse a password within a reasonable timeframe. This will be done by checking against an array of the previous hashes within the User class of UserList. The password will also have an expiration date associated with it. At the start of a server with an existing UserList.bin and when the GroupServer autosaves every 5 minutes, it will run a check over all users within the system to check if their password is expired based on a value set when a new hash is given. Should it expire, it will set a flag within the User class within UserList to request a new password the next time the user calls a GET request. All of this happens during the GET request to ensure a strong, secure password that isn’t reused. 
+</p>
+
+<p>
+  This implementation ensures that the threat of User Accounts being Breached is much lower than it was previously. Due to password expiry and recent password rejection, a user who uses the same password for multiple systems/servers and has another server leak their passwords, they will be more protected than they otherwise might be. The insurance that the password is strong makes a brute force or known password attack quite difficult and exhaustive.
+</p>
+
+<p>
+  Sources: <br>
+  <a href="http://www.passwordmeter.com/" target="_blank">Password Strength Checker</a>
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="threatmodel9">
+      <h2>Threat Model 9: Denial of Service</h2>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  For the entire system, the group server is the only trusted service. If the group server were to go down, tokens would not be generated rendering all commands useless. The current group server accepts all connections before authentication. If an attacker DOS’s the group server, legitimate user connections will be throttled and normal operations will be grinded to a halt. This will affect the availability of the system.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="attackT9">
+      <h3>Attacks</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  Currently the system will accept any connections before authentication. The attacker just needs to create a client that will establish several connections. The server will need to allocate resources to these connections thus taking away resources from future users. Legitimate users will not be able to connect and/or run commands and thus will be unable to use the system entirely. This denial of service (or DOS) can be done with a powerful computer or with several distributed computers making it a DDOS attack.
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="countermeasureT9">
+      <h3>Countermeasures</h3>
+<!-- BEGIN CHANGES HERE -->
+
+<p>
+  It needs to be computationally expensive for the client to connect to the server; however, the computation can not be too expensive or else it may not also throttle the client from connecting. Also the computation should be easy for the server to generate and expensive for the client to solve. This will help provide availability because if several bogus requests are made to connect to the server, it will incur a connection cost that will add up overtime. Upon connection to the group server, the group server will generate an inverted SHA-256. The first n bits (in this case 10) of the SHA-256 will be sent to the client where the client will try to find a collision in the n bits. Once a collision is found, the client will send that value to the server. The server will verify that the value being sent has matching n bits of the hash.
+</p>
+
+<p>
+  This can be seen in diagram T9.1 and T9.2.
+</p>
+
+<figure>
+  <img src="./images/T9.1.png" alt="T9.1" class="center">
+  <figcaption>Diagram T9.1</figcaption>
+</figure>
+
+<figure>
+  <img src="./images/T9.2.png" alt="T9.2" class="center">
+  <figcaption>Diagram T9.2</figcaption>
+</figure>
+
+
+<p>
+
+</p>
+
+<p>
+  
+</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+    <section id="discussion">
+      <h2>Discussion</h2>
+<!-- BEGIN CHANGES HERE -->
+
+<p>Conclude with a paragraph or two discussing your threat model and
+countermeasure mechanisms. How realistic is your threat model for a real-life
+file sharing system? Comment on the design process that your group followed. Did
+you discuss other ideas that didn’t pan out before settling on the
+above-documented approach? Did you design attacks that you were unable to
+mitigate, or that you think are impossible to mitigate? Use this space to show
+off your hard work!</p>
+
+<p>Finally, spend a paragraph discussing the interplay between the
+countermeasures for your proposed attacks and your techniques for mitigating
+threats T1–T7 from Phases P3 and P4 of the project. Did you have to design your
+countermeasures in a particular way so as not to re-introduce these older
+threats?</p>
+
+<p>If your group implemented the countermeasures or did any extra credit, please
+discuss these additional contributions in this section, as well.</p>
+
+<!-- END CHANGES HERE -->
+    </section>
+  </body>
+</html>
+

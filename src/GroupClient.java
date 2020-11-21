@@ -112,16 +112,6 @@ public class GroupClient extends Client implements GroupClientInterface {
                 ka.doPhase(otherPublicKey, true);
 
                 byte[] sharedSecret = ka.generateSecret();
-                // MessageDigest hash = MessageDigest.getInstance("SHA-256");
-                // hash.update(sharedSecret);
-                // List<ByteBuffer> keys = Arrays.asList(ByteBuffer.wrap(ourPk), ByteBuffer.wrap(otherPk));
-                // Collections.sort(keys);
-                // hash.update(keys.get(0));
-                // hash.update(keys.get(1));
-                // byte[] derivedKey = hash.digest();
-                // // String k = Base64.getEncoder().encodeToString(derivedKey);
-                // SecretKeySpec derived = new SecretKeySpec(derivedKey, "AES");
-                // aes_k = derived;
                 deriveKeys(sharedSecret, ourPk, otherPk);
 
                 SecureRandom challenge = new SecureRandom();
@@ -164,8 +154,7 @@ public class GroupClient extends Client implements GroupClientInterface {
                         StringTokenizer cmd;
                         do {
                             if (response.getMessage().equals("REQUEST-NEW")) {
-                                //Get some new password...how though?
-                                String print = first ? "The password entered for this user has expired, please enter a new password: " : "The password entered is the same as the previous password, please enter a new password: ";
+                                String print = (String)response.getObjContents().get(0);
                                 if(gui){
                                     cmd = new StringTokenizer(JOptionPane.showInputDialog(print));
                                 } else {
@@ -632,6 +621,38 @@ public class GroupClient extends Client implements GroupClientInterface {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
             return null;
+        }
+    }
+
+    public boolean reset(UserToken token, String password) {
+        try {
+            Envelope message = null, response = null;
+            message = new Envelope("RESET");
+            message.addObject(token); 
+
+            String salt = token.getSubject();
+            int iterations = 10000;
+            int keyLength = 256;
+            char[] passwordChars = password.toCharArray();
+            byte[] saltBytes = salt.getBytes();
+            byte[] hashedBytes = hashPassword(passwordChars, saltBytes, iterations, keyLength);
+            String passSecret = Base64.getEncoder().encodeToString(hashedBytes);
+
+            message.addObject(passSecret);
+            output.writeObject(message);
+
+            response = (Envelope)input.readObject();
+
+            if (response.getMessage().equals("OK")) {
+                return true;
+            }
+
+            System.out.printf("FAILED: %s\n", response.getObjContents().get(0));
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace(System.err);
+            return false;
         }
     }
 
