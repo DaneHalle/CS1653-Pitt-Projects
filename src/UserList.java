@@ -1,9 +1,11 @@
 /* This list represents the users on the server */
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Hashtable;
 import java.util.Base64;
-
 import java.util.Enumeration;
+import java.time.OffsetDateTime;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -27,9 +29,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 public class UserList implements java.io.Serializable {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 7600343803563417992L;
     private String publicKey = null;
     private String privateKey = null;
@@ -150,6 +149,23 @@ public class UserList implements java.io.Serializable {
             list.get(username).resetPasswordHash(newHash);
     }
 
+    public synchronized void checkExpired() {
+        ArrayList<String> users = getAllUsers();
+        for (int i = 0; i < users.size(); i++) {
+            list.get(users.get(i)).checkExpire();
+        }
+    }
+
+    public synchronized boolean checkRecent(String username, String toCheck) {
+        if (list.get(username) != null) 
+            return list.get(username).checkRecent(toCheck);
+        return false;
+    }
+
+    public synchronized void reset(String username) {
+        list.get(username).reset();
+    }
+
     /**
      * Function to get all groups accessible to any given user. To be used by 
      * groupList. 
@@ -179,6 +195,9 @@ public class UserList implements java.io.Serializable {
         private ArrayList<String> shown;
         private String passHash;
         private boolean temp;
+        private OffsetDateTime expire;
+        private String[] prevHash;
+        private int idx;
 
         public User(String inPass) {
             groups = new ArrayList<String>();
@@ -186,6 +205,9 @@ public class UserList implements java.io.Serializable {
             shown = new ArrayList<String>();
             passHash=inPass;
             temp=true;
+            expire=OffsetDateTime.now();
+            prevHash = new String[5];
+            idx=0;
         }
 
         public ArrayList<String> getGroups() {
@@ -257,10 +279,29 @@ public class UserList implements java.io.Serializable {
             return temp;
         }
 
+        public void reset() {
+            temp=true;
+        }
+
+        public void checkExpire() {
+            if (expire.isBefore(OffsetDateTime.now())) {
+                temp=true;
+            }        
+        }
+
+        public boolean checkRecent(String checkHash) {
+            List<String> check = Arrays.asList(prevHash);
+            return check.contains(checkHash);
+        }
+
         public void resetPasswordHash(String newHash) {
-            if (temp)
+            if (temp){
+                prevHash[idx]=passHash;
+                idx=(idx+1)%5;
                 passHash=newHash;
-            temp=false;
+                temp=false;
+                expire = OffsetDateTime.now().plusMonths(3);
+            }
         }
     }
 
