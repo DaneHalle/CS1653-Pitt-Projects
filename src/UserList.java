@@ -291,9 +291,6 @@ public class UserList implements java.io.Serializable {
 
         public boolean checkRecent(String checkHash) {
             List<String> check = Arrays.asList(prevHash);
-            for (int i = 0; i<5; i++) {
-                System.out.println(prevHash[i]);
-            }
             return check.contains(checkHash);
         }
 

@@ -541,7 +541,7 @@ public class RunClient {
                     return CommandResult.ARGS;
                 pass = args.nextToken();
                 if (g_cli.reset(token, pass)) 
-                    System.out.printf("Password reset will be prompted on next login");
+                    System.out.printf("Password reset will be prompted on next login\n");
                 else
                     return CommandResult.FAIL;
                 break;
