@@ -72,6 +72,7 @@ public class ComputationPuzzle {
         try {
             MessageDigest sha = MessageDigest.getInstance("SHA-256");
 
+            long startTime = System.nanoTime();
             while(target < Long.MAX_VALUE) {
                 sha.reset();
 
@@ -86,6 +87,9 @@ public class ComputationPuzzle {
                 target += 1;
                 buffer.putLong(0, target);
             }
+            long endTime = System.nanoTime();
+            double duration = (double)(endTime - startTime) / 1_000_000_000.0;
+            System.out.println("Connection time took: " + duration + " seconds");
 
             return Base64.getEncoder().encodeToString(buffer.array());
         } catch(Exception e) {

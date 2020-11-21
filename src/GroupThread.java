@@ -123,9 +123,13 @@ public class GroupThread extends Thread {
             output.setInputReference(input);
             Envelope response;
 
-            response = new Envelope("GROUP");
-            response.addObject(null);
-            output.writeObject(response);
+            // response = new Envelope("GROUP");
+            // response.addObject(null);
+            // output.writeObject(response);
+            if (!verifyServer(input, output)) {
+                socket.close();
+                return;
+            }
 
             do {
                 Envelope message = (Envelope)input.readObject();
@@ -941,17 +945,35 @@ public class GroupThread extends Thread {
         EncryptedObjectInputStream input,
         EncryptedObjectOutputStream output
     ) {
-        Envelope response = new Envelope("GROUP");
-        String puzzle = ComputationPuzzle.generatePuzzle();
-        response.addObject(puzzle);
-        output.writeObject(response);
+        try {
+            Envelope response = new Envelope("GROUP");
+            String puzzle = ComputationPuzzle.generatePuzzle();
+            response.addObject(puzzle);
+            output.writeObject(response);
 
-        response = (Envelope)input.readObject();
-        if (response.getMessage().equals("FAIL")) {
+            response = (Envelope)input.readObject();
+            if (response.getMessage().equals("FAIL")) {
+                return false;
+            }
+
+            String target = (String)response.getObjContents().get(0);
+            if (ComputationPuzzle.compareResults(puzzle, target)) {
+                System.out.println("Computational Puzzle Succeeded");
+                response = new Envelope("SUCCESS");
+                response.addObject(null);
+                output.writeObject(response);
+                return true;
+            } else {
+                System.out.println("Computational Puzzle Failed");
+                response = new Envelope("FAIL");
+                response.addObject(null);
+                output.writeObject(response);
+                return false;
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
             return false;
         }
-
-         
     }
 
     UserToken refreshToken(String username, String fsPubKey){

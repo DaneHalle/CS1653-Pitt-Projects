@@ -386,13 +386,20 @@ public abstract class Client {
                 return false;
             }
 
-            String puzzle = server_type.getObjContents().get(0);
+            String puzzle = (String)server_type.getObjContents().get(0);
             String target = ComputationPuzzle.solvePuzzle(puzzle);
 
-            Envelope response = new Envelope("GROUP");
+            response = new Envelope("GROUP");
             response.addObject(target);
             output.writeObject(response);
 
+            response = (Envelope)input.readObject();
+            if (server_type.getMessage().equals("FAIL")) {
+                System.out.println("Failed Computational Puzzle");
+                disconnect();
+                return false;
+            }
+            
             return true;
         } catch(Exception e) {
             System.err.println("Error: " + e.getMessage());
