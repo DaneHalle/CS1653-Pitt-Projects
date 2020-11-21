@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Base64;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.Scanner;
+import java.io.File;
 
 // Crypto libraries
 import javax.crypto.SecretKey;
@@ -1472,6 +1474,20 @@ public class GroupThread extends Thread {
     }
 
     boolean isStrong(String pwd) {
+        try {
+            File dictionary = new File("top1000000.txt");
+            Scanner dictRead = new Scanner(dictionary);
+            while (dictRead.hasNextLine()) {
+                String ref = dictRead.nextLine();
+                if (pwd.equals(ref) || similarity(ref, pwd) >= 80.0) {
+                    System.out.println(ref);
+                    return false;
+                }
+            }
+        } catch(Exception e) {
+
+        }
+
         double nScore=0, nLength=0, nAlphaUC=0, nAlphaLC=0, nNumber=0, nSymbol=0, nMidChar=0, nRequirements=0, nAlphasOnly=0, nNumbersOnly=0, nUnqChar=0, nRepChar=0, nConsecAlphaUC=0, nConsecAlphaLC=0, nConsecNumber=0, nConsecSymbol=0, nConsecCharType=0, nSeqAlpha=0, nSeqNumber=0, nSeqSymbol=0, nRepInc=0, nSeqChar=0, nReqChar=0, nMultConsecCharType=0;
         double nMultRepChar=1, nMultConsecSymbol=1;
         double nMultMidChar=2, nMultRequirements=2, nMultConsecAlphaUC=2, nMultConsecAlphaLC=2, nMultConsecNumber=2;
@@ -1483,8 +1499,6 @@ public class GroupThread extends Thread {
         String sAlphas = "abcdefghijklmnopqrstuvwxyz";
         String sNumerics = "01234567890";
         String sSymbols = ")!@#$%^&*()";
-        String sComplexity = "Too Short";
-        String sStandards = "Below";
         double nMinPwdLen = 8;
         double nd = 0;
 
@@ -1632,16 +1646,40 @@ public class GroupThread extends Thread {
             nScore = (nScore - (nSeqSymbol * nMultSeqSymbol)); 
             sSeqSymbol = "- " + (nSeqSymbol * nMultSeqSymbol);
         }
-        
-        /* Determine complexity based on overall score */
-        if (nScore > 100) { nScore = 100; } else if (nScore < 0) { nScore = 0; }
-        if (nScore >= 0 && nScore < 20) { sComplexity = "Very Weak"; }
-        else if (nScore >= 20 && nScore < 40) { sComplexity = "Weak"; }
-        else if (nScore >= 40 && nScore < 60) { sComplexity = "Good"; }
-        else if (nScore >= 60 && nScore < 80) { sComplexity = "Strong"; }
-        else if (nScore >= 80 && nScore <= 100) { sComplexity = "Very Strong"; }
         return nScore>=60;
-        // System.out.println(nScore);
-        // System.out.println(sComplexity);
+    }
+
+    public static double similarity(String ref, String toCompare) {
+        String longer = ref.toLowerCase();
+        String shorter = toCompare.toLowerCase();
+        if (ref.length() < toCompare.length()) { // longer should always have greater length
+            longer = toCompare; shorter = ref;
+        }
+        if (longer.length() == 0) { return 1.0; /* both strings are zero length */ }
+
+        int[] costs = new int[shorter.length() + 1];
+        for (int i = 0; i <= longer.length(); i++) {
+            int last = i;
+            for (int j = 0; j <= shorter.length(); j++) {
+                if (i == 0) {
+                    costs[j] = j;
+                } else {
+                    if (j > 0) {
+                        int val = costs[j - 1];
+                        if (longer.charAt(i - 1) != shorter.charAt(j - 1)) {
+                            val = Math.min(last, val);
+                            val = Math.min(costs[j], val) + 1;
+                        }
+                        costs[j - 1] = last;
+                        last = val;
+                    }
+                }
+            }
+            if (i > 0) {
+                costs[shorter.length()] = last;
+            }
+        }
+
+        return ((longer.length() - costs[shorter.length()]) / (double) longer.length())*100;
     }
 }
